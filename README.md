@@ -1,70 +1,98 @@
-# Getting Started with Create React App
+# Fitness IA
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Application de fitness personnalisée utilisant la recherche web pour créer des programmes d'entraînement et des plans nutritionnels adaptés à vos besoins.
 
-## Available Scripts
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/username/fitness/deploy.yml?branch=main)
+![React](https://img.shields.io/badge/React-19.1.0-blue)
+![Firebase](https://img.shields.io/badge/Firebase-latest-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-In the project directory, you can run:
+## Fonctionnalités
 
-### `npm start`
+- 🏋️ **Programmes d'entraînement personnalisés** basés sur votre équipement disponible et votre niveau
+- 🥗 **Plans nutritionnels** adaptés à votre régime alimentaire et vos objectifs
+- 📊 **Suivi de progression** pour visualiser vos performances
+- 🔍 **Recherche web en temps réel** pour trouver des exercices et recettes adaptés
+- 📱 **Interface responsive** utilisable sur tous les appareils
+- 🔐 **Authentification** et stockage sécurisé des données avec Firebase
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Architecture
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+L'application utilise une architecture moderne et optimisée :
 
-### `npm test`
+- **React 19** avec les dernières fonctionnalités et hooks
+- **React Query** pour la gestion d'état côté serveur et le caching
+- **Firebase** pour l'authentification, le stockage de données et l'hébergement
+- **Zustand** pour une gestion d'état globale légère
+- **React Hook Form** pour des formulaires performants
+- **TailwindCSS** pour le design UI responsive
+- **Recharts** pour la visualisation des données
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Installation
 
-### `npm run build`
+```bash
+# Cloner le dépôt
+git clone https://github.com/username/fitness.git
+cd fitness
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Installer les dépendances
+npm install
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Créer un fichier .env basé sur .env.example
+cp .env.example .env
+# Remplir les variables d'environnement
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Lancer l'application en développement
+npm start
+```
 
-### `npm run eject`
+## Déploiement
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+L'application est configurée pour un déploiement automatique sur Firebase Hosting via GitHub Actions.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+# Déploiement manuel
+npm run build
+firebase deploy
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Infrastructure
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **CI/CD** : GitHub Actions pour l'intégration et le déploiement continus
+- **Hosting** : Firebase Hosting avec mise en cache optimisée
+- **Database** : Firestore pour le stockage des données en temps réel
+- **Authentication** : Firebase Auth pour la gestion des utilisateurs
+- **Storage** : Firebase Storage pour les médias
+- **Analytics** : Firebase Analytics pour le suivi des utilisateurs
 
-## Learn More
+## Structure du projet
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```plaintext
+fitness/
+├── public/             # Ressources statiques
+├── src/
+│   ├── components/     # Composants React
+│   │   ├── ui/         # Composants d'interface utilisateur
+│   │   └── views/      # Vues principales de l'application
+│   ├── context/        # Contextes React et gestion d'état global
+│   ├── hooks/          # Hooks personnalisés
+│   ├── services/       # Services (API, Firebase, etc.)
+│   ├── styles/         # Styles et thèmes
+│   └── utils/          # Fonctions utilitaires
+├── .github/            # Configuration GitHub Actions
+└── firebase/           # Configuration Firebase
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Contribution
 
-### Code Splitting
+Les contributions sont les bienvenues ! N'hésitez pas à soumettre une pull request ou ouvrir une issue.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+1. Fork le projet
+2. Créez votre branche (`git checkout -b feature/amazing-feature`)
+3. Commit vos changements (`git commit -m 'Ajout d'une fonctionnalité'`)
+4. Push vers la branche (`git push origin feature/amazing-feature`)
+5. Ouvrez une Pull Request
 
-### Analyzing the Bundle Size
+## Licence
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.

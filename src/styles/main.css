@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Styles personnalisés */
+:root {
+  --primary-gradient: linear-gradient(to right, theme('colors.purple.500'), theme('colors.pink.500'));
+  --secondary-gradient: linear-gradient(to right, theme('colors.green.500'), theme('colors.green.600'));
+}
+
+body {
+  @apply antialiased text-gray-800;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, select {
+  -webkit-appearance: none;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scrollbar personnalisé */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-purple-300 rounded-full transition-all;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-purple-500;
+} 
