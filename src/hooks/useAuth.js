@@ -16,14 +16,53 @@ export function useAuth() {
   const queryClient = useQueryClient();  // Observer les changements d'état d'authentification
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log('État d\'authentification changé:', currentUser?.uid || 'non connecté');
+      console.log('🔄 Changement d\'état d\'authentification:', currentUser?.uid || 'déconnecté');
+      
+      // Si changement d'utilisateur (pas juste première connexion)
+      const previousUser = user;
+      const isUserChange = previousUser && currentUser && previousUser.uid !== currentUser.uid;
+      const isLogout = previousUser && !currentUser;
+      
+      if (isUserChange || isLogout) {
+        console.log('👤 Changement d\'utilisateur détecté, nettoyage complet...');
+        // Nettoyer complètement les données de l'utilisateur précédent
+        profileSyncService.clearLocalStorage();
+        queryClient.clear();
+        
+        // Nettoyer TOUTES les données utilisateur, y compris hasSeenWelcome
+        const keysToRemove = [
+          'personalizedSuggestions',
+          'user',
+          'userData',
+          'nutrition_recipes',
+          'nutrition_favorites',
+          'nutrition_mass_gain_recipes',
+          'hasSeenWelcome',
+          'userProfile',
+          'equipmentProfile',
+          'nutritionProfile',
+          'authToken',
+          'refreshToken'
+        ];
+        
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        // Forcer un rechargement pour s'assurer que tout est nettoyé
+        if (isUserChange) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
+          return; // Sortir pour éviter le traitement ci-dessous
+        }
+      }
+      
       setUser(currentUser);
       
-      if (currentUser) {
+      if (currentUser && !isUserChange) {
         // Attendre un peu plus longtemps pour s'assurer que Firebase est complètement prêt
         setTimeout(async () => {
           try {
-            console.log('Synchronisation du profil pour utilisateur connecté');
+            console.log('🔄 Synchronisation du profil pour utilisateur connecté:', currentUser.uid);
             const profileData = await profileSyncService.syncOnStartup();
             
             if (profileData) {
@@ -31,11 +70,12 @@ export function useAuth() {
               await queryClient.invalidateQueries(['userProfile']);
               await queryClient.invalidateQueries(['equipmentProfile']);
               await queryClient.invalidateQueries(['nutritionProfile']);
+              await queryClient.invalidateQueries(['nutrition']);
               
               // Forcer le refetch immédiat des données critiques
               queryClient.refetchQueries(['userProfile'], { active: true });
               
-              console.log('Profil synchronisé et cache mis à jour');
+              console.log('✅ Profil synchronisé et cache mis à jour');
               
               // Déclencher un événement personnalisé pour notifier les composants
               window.dispatchEvent(new CustomEvent('profileSynced', { 
@@ -43,22 +83,40 @@ export function useAuth() {
               }));
             }
           } catch (error) {
-            console.error('Erreur lors de la synchronisation du profil:', error);
+            console.error('❌ Erreur lors de la synchronisation du profil:', error);
             setError('Erreur de synchronisation du profil');
           }
-        }, 1000); // Augmenter le délai pour une meilleure fiabilité
-      } else {
+        }, 1000);
+      } else if (!currentUser) {
         // Nettoyer localStorage à la déconnexion
-        console.log('Nettoyage des données locales à la déconnexion');
+        console.log('🧹 Nettoyage des données locales à la déconnexion');
         profileSyncService.clearLocalStorage();
         queryClient.clear();
+        
+        // Nettoyer toutes les données utilisateur
+        const keysToRemove = [
+          'personalizedSuggestions',
+          'user',
+          'userData',
+          'nutrition_recipes',
+          'nutrition_favorites',
+          'nutrition_mass_gain_recipes',
+          'hasSeenWelcome',
+          'userProfile',
+          'equipmentProfile',
+          'nutritionProfile',
+          'authToken',
+          'refreshToken'
+        ];
+        
+        keysToRemove.forEach(key => localStorage.removeItem(key));
       }
       
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [queryClient]);
+  }, [queryClient, user]);
 
   // Connexion utilisateur
   const login = async (email, password) => {

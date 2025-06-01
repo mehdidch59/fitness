@@ -14,14 +14,14 @@ const firebaseConfig = {
 };
 
 // Vérifier la configuration Firebase
-console.log('Firebase Config:', {
-  apiKey: firebaseConfig.apiKey ? '✓ Définie' : '✗ Manquante',
-  authDomain: firebaseConfig.authDomain ? '✓ Définie' : '✗ Manquante',
-  projectId: firebaseConfig.projectId ? '✓ Définie' : '✗ Manquante',
-  storageBucket: firebaseConfig.storageBucket ? '✓ Définie' : '✗ Manquante',
-  messagingSenderId: firebaseConfig.messagingSenderId ? '✓ Définie' : '✗ Manquante',
-  appId: firebaseConfig.appId ? '✓ Définie' : '✗ Manquante'
-});
+// console.log('Firebase Config:', {
+//   apiKey: firebaseConfig.apiKey ? '✓ Définie' : '✗ Manquante',
+//   authDomain: firebaseConfig.authDomain ? '✓ Définie' : '✗ Manquante',
+//   projectId: firebaseConfig.projectId ? '✓ Définie' : '✗ Manquante',
+//   storageBucket: firebaseConfig.storageBucket ? '✓ Définie' : '✗ Manquante',
+//   messagingSenderId: firebaseConfig.messagingSenderId ? '✓ Définie' : '✗ Manquante',
+//   appId: firebaseConfig.appId ? '✓ Définie' : '✗ Manquante'
+// });
 
 // Initialiser Firebase
 const app = initializeApp(firebaseConfig);
@@ -34,16 +34,16 @@ export const authService = {
   // Connexion
   login: async (email, password) => {
     try {
-      console.log('Tentative de connexion pour:', email);
+      // console.log('Tentative de connexion pour:', email);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Connexion réussie:', userCredential.user.uid);
+      // console.log('Connexion réussie:', userCredential.user.uid);
       
       // Récupérer le profil utilisateur depuis Firestore
       const userProfile = await userService.getUserProfile(userCredential.user.uid);
       if (userProfile) {
         // Stocker le profil dans localStorage pour les services API
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        console.log('Profil utilisateur chargé depuis Firestore');
+        // console.log('Profil utilisateur chargé depuis Firestore');
       }
       
       return userCredential.user;
@@ -56,12 +56,12 @@ export const authService = {
   // Inscription
   register: async (email, password, displayName) => {
     try {
-      console.log('Tentative d\'inscription pour:', email);
+      // console.log('Tentative d\'inscription pour:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('Utilisateur créé dans Firebase Auth:', userCredential.user.uid);
+      // console.log('Utilisateur créé dans Firebase Auth:', userCredential.user.uid);
       
       await updateProfile(userCredential.user, { displayName });
-      console.log('Profil mis à jour avec displayName:', displayName);
+      // console.log('Profil mis à jour avec displayName:', displayName);
       
       // Créer un document utilisateur basique dans Firestore
       const initialProfile = {
@@ -87,7 +87,7 @@ export const authService = {
       };
       
       await setDoc(doc(db, 'users', userCredential.user.uid), initialProfile);
-      console.log('Document utilisateur créé dans Firestore avec profils par défaut');
+      // console.log('Document utilisateur créé dans Firestore avec profils par défaut');
       
       // Stocker le profil initial dans localStorage
       localStorage.setItem('userProfile', JSON.stringify(initialProfile.userProfile));
@@ -147,7 +147,7 @@ export const userService = {
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (userDoc.exists()) {
         const data = userDoc.data();
-        console.log('Profil utilisateur récupéré:', data);
+        // console.log('Profil utilisateur récupéré:', data);
         
         // Séparer les différents profils pour l'état global
         return {
@@ -173,16 +173,16 @@ export const userService = {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`Tentative ${attempt}/${maxRetries} de chargement du profil pour:`, uid);
+        // console.log(`Tentative ${attempt}/${maxRetries} de chargement du profil pour:`, uid);
         
         const userDoc = await getDoc(doc(db, 'users', uid));
         
         if (userDoc.exists()) {
           const data = userDoc.data();
-          console.log('Profil chargé avec succès:', data);
+          // console.log('Profil chargé avec succès:', data);
           return data;
         } else {
-          console.log('Aucun document trouvé pour cet utilisateur');
+          // console.log('Aucun document trouvé pour cet utilisateur');
           return null;
         }
       } catch (error) {
@@ -208,7 +208,7 @@ export const userService = {
       };
       
       await updateDoc(doc(db, 'users', userId), updateData);
-      console.log('Profil utilisateur mis à jour dans Firestore:', updateData);
+      // console.log('Profil utilisateur mis à jour dans Firestore:', updateData);
       
       // Mettre à jour localStorage
       if (profileData.userProfile) {
@@ -236,7 +236,7 @@ export const userService = {
       };
       
       await setDoc(doc(db, 'users', userId), completeData, { merge: true });
-      console.log('Profil complet sauvegardé dans Firestore:', completeData);
+      // console.log('Profil complet sauvegardé dans Firestore:', completeData);
       
       // Synchroniser avec localStorage
       if (profileData.userProfile) {
@@ -258,7 +258,7 @@ export const userService = {
   // Méthode pour sauvegarder le profil complet avec validation
   saveCompleteProfileWithValidation: async (uid, profileData) => {
     try {
-      console.log('Sauvegarde du profil complet pour:', uid, profileData);
+      // console.log('Sauvegarde du profil complet pour:', uid, profileData);
       
       // Validation des données
       const validatedData = {
@@ -272,7 +272,7 @@ export const userService = {
       const userRef = doc(db, 'users', uid);
       await setDoc(userRef, validatedData, { merge: true });
       
-      console.log('Profil sauvegardé avec succès');
+      // console.log('Profil sauvegardé avec succès');
       return validatedData;
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du profil:', error);
@@ -310,7 +310,7 @@ export const userService = {
       // Tentative de lecture d'un document test
       const testRef = doc(db, 'test', 'connection');
       await getDoc(testRef);
-      console.log('Connexion Firestore OK');
+      // console.log('Connexion Firestore OK');
       return true;
     } catch (error) {
       console.error('Problème de connexion Firestore:', error);

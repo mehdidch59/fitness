@@ -31,48 +31,42 @@ const MobilePopup = ({
 }) => {
   // Déterminer les styles selon le type de popup
   const getTypeStyles = () => {
-    switch (type) {
-      case 'error':
+    switch (type) {      case 'error':
         return {
           icon: '❌',
           titleColor: 'text-red-600',
-          buttonBg: 'bg-gradient-to-r from-red-500 to-pink-500',
+          buttonBg: 'bg-gradient-to-r from-red-600 to-red-700',
           iconBg: 'bg-red-100'
-        };
-      case 'success':
+        };      case 'success':
         return {
           icon: '✓',
           titleColor: 'text-green-600',
-          buttonBg: 'bg-gradient-to-r from-green-500 to-emerald-500',
+          buttonBg: 'bg-gradient-to-r from-emerald-600 to-teal-700',
           iconBg: 'bg-green-100'
-        };
-      case 'alert':
+        };      case 'alert':
         return {
           icon: '⚠️',
           titleColor: 'text-yellow-600',
-          buttonBg: 'bg-gradient-to-r from-yellow-500 to-orange-500',
+          buttonBg: 'bg-gradient-to-r from-orange-600 to-red-600',
           iconBg: 'bg-yellow-100'
-        };
-      case 'profile':
+        };      case 'profile':
         return {
           icon: '👤',
           titleColor: 'text-indigo-600',
-          buttonBg: 'bg-gradient-to-r from-indigo-500 to-purple-500',
+          buttonBg: 'bg-gradient-to-r from-indigo-600 to-purple-700',
           iconBg: 'bg-indigo-100'
-        };
-      case 'search':
+        };      case 'search':
         return {
           icon: '🔍',
           titleColor: 'text-blue-600',
-          buttonBg: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+          buttonBg: 'bg-gradient-to-r from-blue-600 to-indigo-700',
           iconBg: 'bg-blue-100'
-        };
-      case 'info':
+        };      case 'info':
       default:
         return {
           icon: 'ℹ️',
           titleColor: 'text-blue-600',
-          buttonBg: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+          buttonBg: 'bg-gradient-to-r from-blue-600 to-indigo-700',
           iconBg: 'bg-blue-100'
         };
     }

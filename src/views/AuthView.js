@@ -75,9 +75,6 @@ const AuthView = () => {
       // Mettre à jour le contexte local
       actions.updateUserProfile(profileData);
       
-      // Synchroniser avec localStorage
-      profileSyncService.syncAllProfilesToLocalStorage(profileData);
-      
       actions.setSearchStatus('Compte créé avec succès ! Suggestions personnalisées préparées.');
       navigate('/');
     } catch (error) {

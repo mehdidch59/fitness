@@ -1,115 +1,1031 @@
-import React, { useState } from 'react';
-import { Apple, Clock, Search, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  Apple,
+  AlertCircle,
+  Clock,
+  Search,
+  RefreshCw,
+  ArrowLeft,
+  Users,
+  Target,
+  Heart,
+  Eye,
+  Bookmark,
+  Plus,
+  LogIn,
+  Utensils
+} from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
-import { useMassGainRecipes } from '../../hooks/useNutrition';
+import {
+  useMassGainRecipes,
+  useFavoriteMutations,
+  useRecipeView,
+  useIsRecipeFavorite,
+  useFavoriteRecipes
+} from '../../hooks/useNutrition';
+import { mistralService } from '../../services/mistralNutritionService';
+import { nutritionFirestoreService } from '../../services/nutritionFirestoreService';
 
-function NutritionView() {
-  const { actions } = useAppContext();
-  const [refreshKey, setRefreshKey] = useState(0);
-  
-  // Utiliser le hook pour rechercher automatiquement des recettes de prise de masse
-  const { 
-    data: recipes, 
-    isLoading, 
-    isError, 
-    error,
-    refetch 
-  } = useMassGainRecipes({
-    key: ['nutrition', 'massGain', refreshKey],
-    onSuccess: () => {
-      actions.setSearchStatus('Recettes trouvées !');
-    },
-    onError: (err) => {
-      console.error('Erreur de recherche:', err);
-      actions.setSearchStatus('Erreur lors de la recherche');
+// Hook d'authentification stable avec état et invalidation des queries
+const useAuth = () => {
+  // Utiliser useState pour suivre l'état d'authentification
+  const [authState, setAuthState] = useState(() => {
+    try {
+      console.log('🔍 NutritionView: Vérification données utilisateur localStorage...');
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        console.log('👤 NutritionView: Utilisateur trouvé:', user?.uid);
+        return { user, uid: user?.uid };
+      } else {
+        console.log('❌ NutritionView: Aucune donnée utilisateur dans localStorage');
+      }
+    } catch (error) {
+      console.log('⚠️ NutritionView: Erreur lecture données utilisateur:', error);
     }
+    return { user: null, uid: null };
   });
 
-  // Rechercher de nouvelles recettes
-  const handleRefreshRecipes = () => {
-    actions.setSearchStatus('Recherche de recettes...');
-    setRefreshKey(prev => prev + 1);
-    refetch();
-  };
+  // Effect pour vérifier périodiquement le changement d'utilisateur
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const userData = localStorage.getItem('user');
+        const currentUser = userData ? JSON.parse(userData) : null;
+        
+        // Vérifier si l'utilisateur a changé
+        const hasUserChanged = currentUser?.uid !== authState.user?.uid;
+        
+        if (hasUserChanged) {
+          if (currentUser?.uid) {
+            console.log('🔄 NutritionView: Nouvel utilisateur connecté:', currentUser.uid);
+            setAuthState({ user: currentUser, uid: currentUser.uid });
+          } else {
+            console.log('🔄 NutritionView: Utilisateur déconnecté');
+            setAuthState({ user: null, uid: null });
+          }
+        }
+      } catch (error) {
+        console.log('⚠️ NutritionView: Erreur vérification auth:', error);
+      }
+    };
 
-  return (
-    <div className="pb-20 p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-center">Nutrition IA</h2>
+    // Vérifier immédiatement puis périodiquement
+    checkAuth();
+    const interval = setInterval(checkAuth, 1000); // Plus fréquent pour détecter rapidement les changements
+    
+    return () => clearInterval(interval);
+  }, [authState.user?.uid]);
 
-      {isLoading && (
-        <div className="flex justify-center items-center py-8">
-          <RefreshCw size={32} className="text-purple-500 animate-spin" />
-          <p className="ml-3 text-purple-700">Recherche de recettes en cours...</p>
-        </div>
-      )}
+  return authState;
+};
 
-      {isError && (
-        <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
-          <p className="text-red-600">Erreur: {error?.message || "Impossible de trouver des recettes"}</p>
-          <button 
-            onClick={handleRefreshRecipes}
-            className="mt-2 bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm"
+// Composant Error Boundary stable
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-xl">
+          <div className="flex items-center mb-3">
+            <AlertCircle size={20} className="text-red-600 mr-2" />
+            <h3 className="font-semibold text-red-800">Une erreur s'est produite</h3>
+          </div>
+          <p className="text-red-700 text-sm mb-4">
+            Impossible d'afficher cette section. Essayez de rafraîchir la page.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm hover:bg-red-200"
           >
-            Réessayer
+            Rafraîchir la page
           </button>
         </div>
-      )}
+      );
+    }
 
-      {recipes && recipes.length > 0 ? (
-        <div className="space-y-4">
-          {recipes.map((recipe) => (
-            <div key={recipe.id} className="bg-white rounded-xl p-4 shadow-lg">
-              {recipe.image && (
-                <div className="mb-3">
-                  <img 
-                    src={recipe.image} 
-                    alt={recipe.name} 
-                    className="w-full h-40 object-cover rounded-lg"
-                  />
+    return this.props.children;
+  }
+}
+
+// Composant AuthPrompt séparé
+const AuthPrompt = ({ onClose }) => (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+      <div className="text-center">
+        <LogIn size={48} className="mx-auto mb-4 text-purple-600" />
+        <h3 className="text-xl font-bold mb-2">Connexion requise</h3>
+        <p className="text-gray-600 mb-6">
+          Connectez-vous pour sauvegarder vos recettes favorites et accéder à vos préférences personnalisées.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            Plus tard
+          </button>
+          <button
+            onClick={() => {
+              onClose();
+              console.log('Redirection vers page de connexion');
+            }}
+            className="flex-1 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800"
+          >
+            Se connecter
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Composant RecipeDetail séparé - Respect des règles des hooks
+const RecipeDetail = ({
+  recipe,
+  onBack,
+  user,
+  incrementView,
+  addToFavorites,
+  removeFromFavorites,
+  isAddingToFavorites,
+  isRemovingFromFavorites,
+  refetchFavorites,
+  onShowAuthPrompt
+}) => {
+  const [detailError, setDetailError] = useState(null);
+
+  // ✅ Hooks au niveau supérieur du composant
+  const { data: isFavorite, refetch: refetchIsFavorite } = useIsRecipeFavorite(recipe?.id);
+
+  // Fonction stable pour incrémenter les vues
+  const safeIncrementView = useCallback(async (recipeId) => {
+    try {
+      if (recipeId && incrementView) {
+        incrementView(recipeId);
+      }
+    } catch (error) {
+      console.warn('Erreur incrémentation vue (non bloquante):', error);
+    }
+  }, [incrementView]);
+
+  useEffect(() => {
+    if (recipe?.id) {
+      safeIncrementView(recipe.id);
+    }
+  }, [recipe?.id, safeIncrementView]);
+
+  const handleToggleFavorite = useCallback(async () => {
+    try {
+      setDetailError(null);
+
+      if (!user) {
+        onShowAuthPrompt(true);
+        return;
+      }
+
+      if (isFavorite) {
+        await removeFromFavorites(recipe.id);
+      } else {
+        await addToFavorites(recipe.id);
+      }
+
+      refetchIsFavorite();
+      refetchFavorites();
+    } catch (error) {
+      console.error('Erreur toggle favori:', error);
+      setDetailError('Erreur lors de la gestion des favoris');
+    }
+  }, [user, isFavorite, recipe?.id, removeFromFavorites, addToFavorites, refetchIsFavorite, refetchFavorites, onShowAuthPrompt]);
+
+  // Fonction stable pour générer une image
+  const getRecipeImage = useCallback((recipe) => {
+    try {
+      const keywords = recipe.name?.toLowerCase()
+        .replace(/[^a-z\s]/g, '')
+        .split(' ')
+        .slice(0, 2)
+        .join('+') || 'food';
+      return `https://source.unsplash.com/400x300/?${keywords}+food+meal`;
+    } catch (error) {
+      return 'https://source.unsplash.com/400x300/?food+meal';
+    }
+  }, []);
+
+  if (!recipe) {
+    return (
+      <div className="p-6 text-center">
+        <AlertCircle size={48} className="mx-auto mb-4 text-red-400" />
+        <p className="text-red-600">Recette introuvable</p>
+        <button onClick={onBack} className="mt-4 px-4 py-2 bg-gray-100 rounded-lg">
+          Retour
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <ErrorBoundary>
+      <div className="pb-20 p-6 bg-gray-50 min-h-screen">
+        <div className="mb-4 flex items-center justify-between">
+          <button
+            onClick={onBack}
+            className="flex items-center text-purple-700 hover:text-purple-800 font-medium"
+          >
+            <ArrowLeft size={20} className="mr-2" />
+            Retour aux recettes
+          </button>
+
+          <button
+            onClick={handleToggleFavorite}
+            disabled={isAddingToFavorites || isRemovingFromFavorites}
+            className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all ${!user
+              ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              : isFavorite
+                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              }`}
+          >
+            <Heart
+              size={18}
+              className={`mr-2 ${isFavorite ? 'fill-current' : ''}`}
+            />
+            {!user
+              ? 'Se connecter pour favoris'
+              : isAddingToFavorites || isRemovingFromFavorites
+                ? 'Chargement...'
+                : isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'
+            }
+          </button>
+        </div>
+
+        {detailError && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-4">
+            <p className="text-red-600 text-sm">{detailError}</p>
+          </div>
+        )}
+
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="h-48 bg-gradient-to-r from-indigo-800 to-purple-900 flex items-center justify-center relative">
+            <img
+              src={getRecipeImage(recipe)}
+              alt={recipe.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden w-full h-full bg-gradient-to-r from-purple-700 to-pink-700 items-center justify-center">
+              <Apple size={48} className="text-white" />
+            </div>
+
+            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700">
+              {recipe.source || 'IA Nutritionnelle'}
+            </div>
+          </div>
+
+          <div className="p-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{recipe.name}</h1>
+            <p className="text-gray-600 mb-4">{recipe.description}</p>
+
+            <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
+              {recipe.viewCount > 0 && (
+                <div className="flex items-center">
+                  <Eye size={14} className="mr-1" />
+                  <span>{recipe.viewCount} vues</span>
                 </div>
               )}
-              <h3 className="font-bold text-lg">{recipe.name}</h3>
-              <p className="text-sm text-gray-600 mt-1 mb-2">{recipe.description}</p>
-              <div className="flex justify-between items-center mt-2">
-                <div className="flex gap-3 text-sm">
-                  <span className="text-yellow-600">{recipe.calories} kcal</span>
-                  <span className="text-blue-600">{recipe.protein}g protéines</span>
+              {recipe.favoriteCount > 0 && (
+                <div className="flex items-center">
+                  <Heart size={14} className="mr-1" />
+                  <span>{recipe.favoriteCount} favoris</span>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-yellow-50 p-4 rounded-xl">
+                <div className="text-yellow-700 font-semibold text-lg">{recipe.calories || 'N/A'}</div>
+                <div className="text-yellow-800 text-sm">Calories</div>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-xl">
+                <div className="text-blue-700 font-semibold text-lg">{recipe.protein || 'N/A'}g</div>
+                <div className="text-blue-800 text-sm">Protéines</div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-xl">
+                <div className="text-green-700 font-semibold text-lg">{recipe.carbs || 'N/A'}g</div>
+                <div className="text-green-800 text-sm">Glucides</div>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-xl">
+                <div className="text-orange-700 font-semibold text-lg">{recipe.fats || 'N/A'}g</div>
+                <div className="text-orange-800 text-sm">Lipides</div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center mb-6 p-4 bg-gray-50 rounded-xl">
+              <div className="flex items-center">
+                <Clock size={18} className="text-gray-600 mr-2" />
+                <span className="text-gray-700">{recipe.time || 'N/A'} min</span>
+              </div>
+              <div className="flex items-center">
+                <Users size={18} className="text-gray-600 mr-2" />
+                <span className="text-gray-700">{recipe.servings || 1} portion{(recipe.servings || 1) > 1 ? 's' : ''}</span>
+              </div>
+              <div className="flex items-center">
+                <Target size={18} className="text-gray-600 mr-2" />
+                <span className="text-gray-700">{recipe.difficulty || 'Facile'}</span>
+              </div>
+            </div>
+
+            {recipe.massGainScore && (
+              <div className="mb-6 p-4 bg-purple-50 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <span className="text-purple-800 font-medium">Score Prise de Masse</span>
                   <div className="flex items-center">
-                    <Clock size={14} className="text-gray-600 mr-1" />
-                    <span className="text-gray-600">{recipe.time} min</span>
+                    <div className="w-24 bg-purple-200 rounded-full h-2 mr-3">
+                      <div
+                        className="bg-purple-700 h-2 rounded-full"
+                        style={{ width: `${Math.min(recipe.massGainScore, 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-purple-800 font-bold">{recipe.massGainScore}/100</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center mt-2 text-xs text-purple-600">
-                <Search size={12} className="mr-1" />
-                <span>Recherche Web IA</span>
+            )}
+
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Ingrédients</h3>
+              <div className="bg-gray-50 p-4 rounded-xl">
+                {recipe.ingredients && recipe.ingredients.length > 0 ? (
+                  <ul className="space-y-2">
+                    {recipe.ingredients.map((ingredient, index) => (
+                      <li key={`ingredient-${index}-${ingredient.name || index}`} className="flex justify-between items-center">
+                        <span className="text-gray-700">{ingredient.name || 'Ingrédient'}</span>
+                        <span className="text-gray-600 font-medium">
+                          {ingredient.quantity || ''} {ingredient.unit || ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-600 italic">Ingrédients non spécifiés</p>
+                )}
               </div>
             </div>
-          ))}
 
-          <button
-            onClick={handleRefreshRecipes}
-            className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 rounded-2xl font-semibold"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Recherche en cours...' : 'Nouvelles Recettes'}
-          </button>
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Instructions</h3>
+              <div className="bg-gray-50 p-4 rounded-xl">
+                {recipe.instructions && recipe.instructions.length > 0 ? (
+                  <ol className="space-y-3">
+                    {recipe.instructions.map((instruction, index) => (
+                      <li key={`instruction-${index}`} className="flex items-start">
+                        <span className="bg-purple-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mr-3 mt-0.5 flex-shrink-0">
+                          {index + 1}
+                        </span>
+                        <span className="text-gray-700">{instruction}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-gray-600 italic">Instructions non spécifiées</p>
+                )}
+              </div>
+            </div>
+
+            {recipe.tips && recipe.tips.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Conseils Pratiques</h3>
+                <div className="bg-blue-50 p-4 rounded-xl">
+                  <ul className="space-y-2">
+                    {recipe.tips.map((tip, index) => (
+                      <li key={`tip-${index}`} className="text-blue-900 flex items-start">
+                        <span className="text-blue-700 mr-2 mt-1">•</span>
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {recipe.tags && recipe.tags.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {recipe.tags.map((tag, index) => (
+                    <span
+                      key={`tag-${index}-${tag}`}
+                      className="bg-purple-100 text-purple-900 px-3 py-1 rounded-full text-sm font-medium"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {recipe.nutritionTips && (
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Conseils Nutrition</h3>
+                <div className="bg-green-50 p-4 rounded-xl border-l-4 border-green-500">
+                  <p className="text-green-900">{recipe.nutritionTips}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 text-sm text-gray-500">
+              <div className="flex items-center">
+                <Search size={16} className="text-purple-700 mr-2" />
+                <span className="text-purple-700 font-medium">
+                  {recipe.source || 'IA Nutritionnelle'}
+                </span>
+              </div>
+              {recipe.createdAt && (
+                <span>
+                  Créé le {new Date(recipe.createdAt).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-      ) : !isLoading && !isError ? (
-        <div className="text-center">
-          <Apple className="mx-auto mb-4 text-gray-400" size={64} />
-          <p className="text-gray-600 mb-4">Aucune recette trouvée</p>
-          <button
-            onClick={handleRefreshRecipes}
-            className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Recherche en cours...' : 'Rechercher des recettes'}
-          </button>
+      </div>
+    </ErrorBoundary>
+  );
+};
+
+// Composant principal NutritionView
+function NutritionView() {
+  const { actions } = useAppContext();
+  const { user } = useAuth();
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [viewMode, setViewMode] = useState('discover');
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [error, setError] = useState(null);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationStage, setGenerationStage] = useState('');
+  const [isGeneratingNutrition, setIsGeneratingNutrition] = useState(false);
+  const [lastUserId, setLastUserId] = useState(null);
+
+  // Callbacks stables pour les hooks
+  const onSuccess = useCallback(() => {
+    actions.setSearchStatus('Recettes trouvées !');
+    setError(null);
+  }, [actions]);
+
+  const onError = useCallback((err) => {
+    console.error('Erreur de recherche:', err);
+    actions.setSearchStatus('Erreur lors de la recherche');
+    setError(err?.message || 'Erreur de récupération des recettes');
+  }, [actions]);
+
+  // Options stables pour les hooks
+  const hookOptions = useMemo(() => ({
+    onSuccess,
+    onError
+  }), [onSuccess, onError]);
+  
+  // Hooks principaux avec options stables
+  const {
+    data: recipes,
+    isLoading,
+    isError,
+    error: fetchError,
+    generateNew,
+    isGenerating,
+    refetch: refetchRecipes
+  } = useMassGainRecipes(hookOptions);
+
+  // Hook pour les favoris
+  const favoritesHookOptions = useMemo(() => ({
+    onError: (err) => console.error('Erreur favoris:', err)
+  }), []);
+
+  const {
+    data: favoriteRecipes,
+    isLoading: isLoadingFavorites,
+    refetch: refetchFavorites
+  } = useFavoriteRecipes(favoritesHookOptions);
+
+  // Mutations pour favoris
+  const {
+    addToFavorites,
+    removeFromFavorites,
+    isAddingToFavorites,
+    isRemovingFromFavorites
+  } = useFavoriteMutations();
+
+  // Hook pour vues
+  const { incrementView } = useRecipeView();
+
+  // Détecter le changement d'utilisateur et forcer la mise à jour des queries
+  useEffect(() => {
+    const currentUserId = user?.uid;
+    
+    if (currentUserId !== lastUserId) {
+      console.log('🔄 Changement d\'utilisateur détecté:', lastUserId, '->', currentUserId);
+      setLastUserId(currentUserId);
+      
+      if (currentUserId) {
+        // Nouvel utilisateur connecté - charger SEULEMENT les recettes existantes
+        console.log('👤 Chargement des recettes EXISTANTES pour nouvel utilisateur:', currentUserId);
+        setTimeout(() => {
+          refetchRecipes(); // Charge seulement les recettes existantes, pas de génération
+          refetchFavorites();
+        }, 500);
+      } else {
+        // Utilisateur déconnecté - nettoyer les données
+        console.log('🚪 Utilisateur déconnecté - nettoyage des données');
+        setError(null);
+        actions.setSearchStatus('');
+      }
+    }
+  }, [user?.uid, lastUserId, refetchRecipes, refetchFavorites, actions]);
+
+  // Fonction stable pour générer de nouvelles recettes
+  const handleRefreshRecipes = useCallback(() => {
+    try {
+      if (!user?.uid) {
+        setError('Connectez-vous pour générer des recettes');
+        setShowAuthPrompt(true);
+        return;
+      }
+      
+      setError(null);
+      actions.setSearchStatus('Génération de nouvelles recettes...');
+      generateNew();
+    } catch (error) {
+      console.error('Erreur génération:', error);
+      setError('Erreur lors de la génération');
+    }
+  }, [actions, generateNew, user?.uid]);
+
+  // Effect pour afficher le statut utilisateur
+  useEffect(() => {
+    if (user?.uid) {
+      console.log('✅ Utilisateur actuel dans NutritionView:', user.uid);
+    } else {
+      console.log('❌ Aucun utilisateur connecté dans NutritionView');
+    }
+  }, [user?.uid]);
+
+  const handleNutritionGeneration = useCallback(async () => {
+    try {
+      setIsGeneratingNutrition(true);
+      setGenerationStage('Démarrage de la génération du plan nutritionnel...');
+      setGenerationProgress(0);
+      setError(null);
+
+      // Update progress incrementally
+      setGenerationProgress(20);
+      setGenerationStage('Analyse des besoins nutritionnels...');
+      
+      // Récupérer le profil utilisateur depuis le localStorage ou définir des valeurs par défaut
+      let userProfile = {};
+      try {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          userProfile = {
+            goal: 'prise de masse',
+            level: user.fitnessLevel || 'intermédiaire',
+            weight: user.weight || 75,
+            height: user.height || 175,
+            age: user.age || 25,
+            gender: user.gender || 'homme'
+          };
+        }
+      } catch (error) {
+        console.log('Utilisation profil par défaut');
+        userProfile = {
+          goal: 'prise de masse',
+          level: 'intermédiaire',
+          weight: 75,
+          age: 25,
+          gender: 'homme'
+        };
+      }
+
+      setGenerationProgress(40);
+      setGenerationStage('Génération de nouvelles recettes IA...');
+
+      // Générer de nouvelles recettes via Mistral uniquement
+      try {
+        console.log('🤖 Génération via Mistral avec profil:', userProfile);
+        
+        const newRecipes = await mistralService.generateMassGainRecipes(userProfile);
+        
+        if (!newRecipes || newRecipes.length === 0) {
+          throw new Error('Aucune recette générée par Mistral');
+        }
+        
+        console.log('✅ Nouvelles recettes générées via Mistral:', newRecipes.length);
+
+        setGenerationProgress(70);
+        setGenerationStage('Sauvegarde des recettes...');
+
+        // Sauvegarder les nouvelles recettes
+        try {
+          await nutritionFirestoreService.saveMultipleRecipes(newRecipes, user?.uid);
+          console.log('✅ Recettes sauvegardées en base');
+        } catch (saveError) {
+          console.warn('⚠️ Erreur sauvegarde, recettes en cache local:', saveError);
+        }
+
+        setGenerationProgress(90);
+        setGenerationStage('Finalisation du plan nutritionnel...');
+
+        // Appeler le refresh pour actualiser les données affichées
+        try {
+          console.log('🔄 Actualisation des recettes...');
+          await generateNew();
+          console.log('✅ Recettes actualisées');
+        } catch (generateError) {
+          console.warn('⚠️ Erreur génération hook:', generateError);
+        }
+
+        // Attendre un peu pour que les nouvelles recettes soient disponibles
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        setGenerationProgress(100);
+        setGenerationStage('Plan nutritionnel généré avec succès !');
+
+        // Actualiser les données après génération
+        actions.setSearchStatus('Plan nutritionnel généré avec succès !');
+
+      } catch (mistralError) {
+        console.error('❌ Erreur Mistral:', mistralError);
+        throw new Error(`Erreur lors de la génération des recettes: ${mistralError.message}`);
+      }
+
+      // Reset after completion
+      setTimeout(() => {
+        setGenerationProgress(0);
+        setGenerationStage('');
+        setIsGeneratingNutrition(false);
+      }, 2000);
+
+    } catch (error) {
+      console.error('❌ Erreur lors de la génération du plan nutritionnel:', error);
+      setGenerationStage('Erreur lors de la génération - Veuillez réessayer');
+      setError(error?.message || 'Erreur lors de la génération du plan nutritionnel');
+      
+      setTimeout(() => {
+        setGenerationProgress(0);
+        setGenerationStage('');
+        setIsGeneratingNutrition(false);
+      }, 3000);
+    }
+  }, [generateNew, user?.uid, actions]);
+
+  // Fonction stable pour basculer entre les vues
+  const toggleViewMode = useCallback((mode) => {
+    try {
+      if (mode === 'favorites' && !user) {
+        setShowAuthPrompt(true);
+        return;
+      }
+
+      setViewMode(mode);
+      if (mode === 'favorites') {
+        refetchFavorites();
+      }
+    } catch (error) {
+      console.error('Erreur changement de mode:', error);
+      setError('Erreur lors du changement de vue');
+    }
+  }, [user, refetchFavorites]);
+
+  // Données actuelles selon le mode - mémorisées
+  const currentRecipes = useMemo(() =>
+    viewMode === 'favorites' ? favoriteRecipes : recipes,
+    [viewMode, favoriteRecipes, recipes]
+  );
+
+  const currentLoading = useMemo(() =>
+    viewMode === 'favorites' ? isLoadingFavorites : isLoading,
+    [viewMode, isLoadingFavorites, isLoading]
+  );
+
+  // Callbacks stables pour la sélection
+  const handleRecipeSelect = useCallback((recipe) => {
+    setSelectedRecipe(recipe);
+  }, []);
+
+  const handleBackToList = useCallback(() => {
+    setSelectedRecipe(null);
+  }, []);
+
+  const handleCloseAuthPrompt = useCallback(() => {
+    setShowAuthPrompt(false);
+  }, []);
+
+  // Si une recette est sélectionnée, afficher ses détails
+  if (selectedRecipe) {
+    return (
+      <>
+        <RecipeDetail
+          recipe={selectedRecipe}
+          onBack={handleBackToList}
+          user={user}
+          incrementView={incrementView}
+          addToFavorites={addToFavorites}
+          removeFromFavorites={removeFromFavorites}
+          isAddingToFavorites={isAddingToFavorites}
+          isRemovingFromFavorites={isRemovingFromFavorites}
+          refetchFavorites={refetchFavorites}
+          onShowAuthPrompt={setShowAuthPrompt}
+        />
+        {showAuthPrompt && <AuthPrompt onClose={handleCloseAuthPrompt} />}
+      </>
+    );
+  }
+
+  // Vue principale avec la liste des recettes
+  return (
+    <ErrorBoundary>
+      <div className="pb-20 p-6 bg-gray-50 min-h-screen">
+        {showAuthPrompt && <AuthPrompt onClose={handleCloseAuthPrompt} />}
+
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-3xl font-bold">Nutrition IA</h2>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleViewMode('discover')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${viewMode === 'discover'
+                ? 'bg-purple-100 text-purple-700'
+                : 'text-gray-600 hover:bg-gray-100'
+                }`}
+            >
+              <Search size={16} className="inline mr-2" />
+              Découvrir
+            </button>
+            <button
+              onClick={() => toggleViewMode('favorites')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all relative ${viewMode === 'favorites'
+                ? 'bg-red-100 text-red-700'
+                : 'text-gray-600 hover:bg-gray-100'
+                }`}
+            >
+              <Heart size={16} className="inline mr-2" />
+              Favoris {favoriteRecipes?.length ? `(${favoriteRecipes.length})` : ''}
+              {!user && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-600 rounded-full"></div>
+              )}
+            </button>
+          </div>
         </div>
-      ) : null}
-    </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
+            <div className="flex items-center">
+              <AlertCircle size={20} className="text-red-600 mr-3" />
+              <div>
+                <p className="text-red-600 font-medium">Erreur</p>
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'favorites' && !user && (
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-6">
+            <div className="flex items-center">
+              <LogIn size={20} className="text-amber-700 mr-3" />
+              <div>
+                <p className="text-amber-900 font-medium">Connexion requise</p>
+                <p className="text-amber-800 text-sm">Connectez-vous pour accéder à vos favoris</p>
+                <button 
+                  onClick={() => setShowAuthPrompt(true)}
+                  className="mt-2 text-amber-800 underline text-sm font-medium"
+                >
+                  Se connecter maintenant
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!user && viewMode === 'discover' && (
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6">
+            <div className="flex items-center">
+              <LogIn size={20} className="text-blue-700 mr-3" />
+              <div>
+                <p className="text-blue-900 font-medium">Accès limité</p>
+                <p className="text-blue-800 text-sm">Connectez-vous pour générer des recettes personnalisées</p>
+                <button 
+                  onClick={() => setShowAuthPrompt(true)}
+                  className="mt-2 text-blue-800 underline text-sm font-medium"
+                >
+                  Se connecter maintenant
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentLoading && (
+          <div className="flex justify-center items-center py-8">
+            <RefreshCw size={32} className="text-purple-600 animate-spin" />
+            <p className="ml-3 text-purple-800">
+              {viewMode === 'favorites' ? 'Chargement des favoris...' : 'Recherche de recettes en cours...'}
+            </p>
+          </div>
+        )}
+
+        {isError && viewMode === 'discover' && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
+            <p className="text-red-600">Erreur: {fetchError?.message || "Impossible de trouver des recettes"}</p>
+            <button
+              onClick={handleRefreshRecipes}
+              className="mt-2 bg-red-100 text-red-800 px-4 py-2 rounded-lg text-sm"
+            >
+              Réessayer
+            </button>
+          </div>
+        )}
+
+        {currentRecipes && currentRecipes.length > 0 ? (
+          <div className="space-y-4">
+            {currentRecipes.map((recipe, index) => (
+              <div
+                key={recipe.id || `recipe-${index}-${recipe.name?.substring(0, 10)}`}
+                className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                onClick={() => handleRecipeSelect(recipe)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-bold text-lg flex-1">{recipe.name || 'Recette sans nom'}</h3>
+                  <div className="flex items-center gap-2 ml-4">
+                    {recipe.favoriteCount > 0 && (
+                      <div className="flex items-center text-red-600 text-xs">
+                        <Heart size={12} className="mr-1" />
+                        <span>{recipe.favoriteCount}</span>
+                      </div>
+                    )}
+                    {recipe.viewCount > 0 && (
+                      <div className="flex items-center text-gray-500 text-xs">
+                        <Eye size={12} className="mr-1" />
+                        <span>{recipe.viewCount}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-600 mt-1 mb-2">{recipe.description || 'Aucune description'}</p>
+
+                <div className="flex justify-between items-center mt-2">
+                  <div className="flex gap-3 text-sm">
+                    <span className="text-yellow-700 font-medium">{recipe.calories || 'N/A'} kcal</span>
+                    <span className="text-blue-700 font-medium">{recipe.protein || 'N/A'}g protéines</span>
+                    <div className="flex items-center">
+                      <Clock size={14} className="text-gray-600 mr-1" />
+                      <span className="text-gray-600">{recipe.time || 'N/A'} min</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center text-xs text-purple-700">
+                    <Search size={12} className="mr-1" />
+                    <span>{recipe.source || 'Recette IA'}</span>
+                  </div>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                    Cliquez pour voir détails
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {viewMode === 'discover' && (
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={handleRefreshRecipes}
+                  disabled={isGenerating}
+                  className="bg-purple-100 text-purple-800 px-4 py-2 rounded-lg text-sm hover:bg-purple-200 disabled:opacity-50"
+                >
+                  🍽️ Nouvelles Recettes IA
+                </button>
+                <button
+                  onClick={() => refetchRecipes()}
+                  disabled={isLoading}
+                  className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg text-sm hover:bg-blue-200 disabled:opacity-50 flex items-center"
+                >
+                  <RefreshCw size={14} className={`mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+                  Recharger
+                </button>
+              </div>
+            )}
+          </div>
+        ) : !currentLoading && !isError ? (
+          <div className="text-center py-12">
+            {viewMode === 'favorites' ? (
+              <div>
+                <Bookmark className="mx-auto mb-4 text-gray-400" size={64} />
+                <p className="text-gray-600 mb-4">
+                  {!user ? 'Connectez-vous pour sauvegarder vos favoris' : 'Aucune recette en favoris'}
+                </p>
+                <button
+                  onClick={() => toggleViewMode('discover')}
+                  className="bg-gradient-to-r from-purple-700 to-blue-800 text-white px-6 py-3 rounded-xl font-medium hover:from-purple-800 hover:to-blue-900 transition-all"
+                >
+                  Découvrir des recettes
+                </button>
+              </div>
+            ) : (
+              <div>
+                <Apple className="mx-auto mb-4 text-gray-400" size={64} />
+                <p className="text-gray-600 mb-4">
+                  {!user ? 'Connectez-vous pour accéder à vos recettes personnalisées' : 'Aucune recette trouvée'}
+                </p>
+                
+                {!user ? (
+                  <button
+                    onClick={() => setShowAuthPrompt(true)}
+                    className="w-full mb-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium"
+                  >
+                    Se connecter pour commencer
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => refetchRecipes()} 
+                    disabled={isLoading}
+                    className="w-full mb-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center justify-center disabled:opacity-50"
+                  >
+                    <RefreshCw size={18} className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    Recharger les recettes
+                  </button>
+                )}
+                
+                <button
+                  onClick={handleNutritionGeneration}
+                  disabled={isGeneratingNutrition || !user}
+                  className={`w-full py-4 rounded-2xl font-semibold text-white transition-all relative overflow-hidden ${isGeneratingNutrition || !user
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-yellow-600 via-red-600 to-pink-700 hover:from-yellow-700 hover:via-red-700 hover:to-pink-800 shadow-lg hover:shadow-xl'
+                    }`}
+                >
+                  {/* Barre de progression animée */}
+                  {isGeneratingNutrition && (
+                    <div
+                      className="absolute left-0 top-0 h-full bg-white bg-opacity-20 transition-all duration-500 ease-out"
+                      style={{ width: `${generationProgress}%` }}
+                    />
+                  )}
+
+                  <div className="relative z-10 flex items-center justify-center">
+                    {isGeneratingNutrition ? (
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center mb-1">
+                          <Utensils size={20} className="mr-2 animate-pulse" />
+                          <span>Génération plan nutritionnel...</span>
+                        </div>
+                        <div className="flex items-center text-xs opacity-90 mb-1">
+                          <span className="mr-2">{generationProgress}%</span>
+                        </div>
+                        <div className="text-xs opacity-75">
+                          {generationStage}
+                        </div>
+                      </div>
+                    ) : !user ? (
+                      <>
+                        <AlertCircle size={20} className="mr-2" />
+                        Connectez-vous pour générer
+                      </>
+                    ) : (
+                      <div className="flex items-center">
+                        <Apple size={20} className="mr-2" />
+                        <div className="flex flex-col">
+                          <span>Génération Plan Nutritionnel</span>
+                          <span className="text-xs opacity-90">
+                            🥗 Menus • Recettes • Répartition macros • Planning hebdomadaire
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </ErrorBoundary>
   );
 }
 
-export default NutritionView; 
+export default NutritionView;

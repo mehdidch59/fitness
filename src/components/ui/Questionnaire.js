@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { useAuth } from '../../hooks/useAuth';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { Check } from 'lucide-react';
 
 function Questionnaire() {
-  const { questionnaireStep, equipmentProfile, actions } = useAppContext();
+  const { questionnaireStep, equipmentProfile, nutritionProfile, actions } = useAppContext();
+  const { user } = useAuth();
   const [selectedEquipment, setSelectedEquipment] = useState([]);
   const [showEquipmentQuestion, setShowEquipmentQuestion] = useState(false);
 
@@ -25,6 +29,41 @@ function Questionnaire() {
       setSelectedEquipment(equipmentProfile.homeEquipment);
     }
   }, [equipmentProfile.location, equipmentProfile.homeEquipment]);
+
+  // Fonction pour sauvegarder dans Firestore
+  const saveToFirestore = async (profileType, data) => {
+    if (!user?.uid) {
+      console.error('Aucun utilisateur connecté pour sauvegarder');
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      
+      if (profileType === 'equipmentProfile') {
+        await updateDoc(userDocRef, {
+          equipmentProfile: {
+            ...equipmentProfile,
+            ...data
+          },
+          updatedAt: new Date().toISOString()
+        });
+        // console.log('✅ EquipmentProfile sauvegardé dans Firestore:', data);
+      } 
+      else if (profileType === 'nutritionProfile') {
+        await updateDoc(userDocRef, {
+          nutritionProfile: {
+            ...nutritionProfile,
+            ...data
+          },
+          updatedAt: new Date().toISOString()
+        });
+        // console.log('✅ NutritionProfile sauvegardé dans Firestore:', data);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la sauvegarde Firestore:', error);
+    }
+  };
 
   // Questions du questionnaire - maintenant dynamique avec questions conditionnelles
   const getQuestions = () => {
@@ -96,13 +135,18 @@ function Questionnaire() {
   const currentQuestion = questions[questionnaireStep] || questions[0];
 
   // Gérer la sélection d'option pour les questions à choix unique
-  const handleOptionSelect = (value) => {
-    // Mettre à jour le profil selon le type
+  const handleOptionSelect = async (value) => {
+    const updateData = { [currentQuestion.field]: value };
+    
+    // Mettre à jour le contexte local
     if (currentQuestion.targetProfile === 'equipmentProfile') {
-      actions.updateEquipmentProfile({ [currentQuestion.field]: value });
+      actions.updateEquipmentProfile(updateData);
     } else if (currentQuestion.targetProfile === 'nutritionProfile') {
-      actions.updateNutritionProfile({ [currentQuestion.field]: value });
+      actions.updateNutritionProfile(updateData);
     }
+    
+    // Sauvegarder dans Firestore
+    await saveToFirestore(currentQuestion.targetProfile, updateData);
     
     // Passer à la question suivante ou terminer
     handleNext();
@@ -121,8 +165,15 @@ function Questionnaire() {
   };
   
   // Sauvegarder les équipements sélectionnés et passer à la question suivante
-  const handleEquipmentSave = () => {
-    actions.updateEquipmentProfile({ homeEquipment: selectedEquipment });
+  const handleEquipmentSave = async () => {
+    const updateData = { homeEquipment: selectedEquipment };
+    
+    // Mettre à jour le contexte local
+    actions.updateEquipmentProfile(updateData);
+    
+    // Sauvegarder dans Firestore
+    await saveToFirestore('equipmentProfile', updateData);
+    
     handleNext();
   };
 
@@ -135,7 +186,23 @@ function Questionnaire() {
       actions.setQuestionnaire(false);
       actions.setQuestionnaireStep(0);
       actions.setSearchStatus('Configuration terminée !');
+      
+      // console.log('🎉 Questionnaire terminé !');
+      // console.log('📊 EquipmentProfile final:', equipmentProfile);
+      // console.log('🍽️ NutritionProfile final:', nutritionProfile);
     }
+  };
+
+  // Fonction pour passer une question sans répondre
+  const handleSkip = async () => {
+    // Si c'est la question d'équipement, on sauvegarde un tableau vide
+    if (currentQuestion.type === 'multiselect' && currentQuestion.field === 'homeEquipment') {
+      const updateData = { homeEquipment: [] };
+      actions.updateEquipmentProfile(updateData);
+      await saveToFirestore('equipmentProfile', updateData);
+    }
+    
+    handleNext();
   };
 
   return (
@@ -177,7 +244,7 @@ function Questionnaire() {
             </div>
             <div className="flex space-x-3">
               <button
-                onClick={handleNext}
+                onClick={handleSkip}
                 className="flex-1 bg-gray-200 text-gray-700 py-4 rounded-2xl font-semibold text-lg hover:bg-gray-300 transition-colors"
               >
                 Passer
@@ -185,8 +252,9 @@ function Questionnaire() {
               <button
                 onClick={handleEquipmentSave}
                 className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-2xl font-semibold text-lg"
+                disabled={selectedEquipment.length === 0}
               >
-                Enregistrer
+                Enregistrer {selectedEquipment.length > 0 && `(${selectedEquipment.length})`}
               </button>
             </div>
           </>
@@ -205,16 +273,27 @@ function Questionnaire() {
               ))}
             </div>
             <button
-              onClick={handleNext}
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-2xl font-semibold text-lg"
+              onClick={handleSkip}
+              className="w-full bg-gray-300 text-gray-700 py-3 rounded-2xl font-semibold text-lg mb-3 hover:bg-gray-400 transition-colors"
             >
-              {questionnaireStep === questions.length - 1 ? 'Terminer' : 'Passer'}
+              Passer cette question
             </button>
           </>
         )}
+
+        {/* Debug info - à retirer en production */}
+        <div className="mt-4 p-3 bg-gray-100 rounded-lg text-xs">
+          <p className="font-semibold">🔍 Debug:</p>
+          <p>Question {questionnaireStep + 1}/{questions.length}</p>
+          <p>Type: {currentQuestion.targetProfile}</p>
+          <p>Champ: {currentQuestion.field}</p>
+          {currentQuestion.type === 'multiselect' && (
+            <p>Sélectionnés: {selectedEquipment.length} équipements</p>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-export default Questionnaire; 
+export default Questionnaire;

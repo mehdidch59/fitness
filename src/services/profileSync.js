@@ -10,7 +10,7 @@ export const profileSyncService = {  // Charger le profil depuis Firestore
       const user = auth.currentUser;
       if (!user) return null;
       
-      console.log('Chargement du profil depuis Firestore pour:', user.uid);
+      //console.log('Chargement du profil depuis Firestore pour:', user.uid);
       
       // Vérifier la connexion Firestore d'abord
       const isConnected = await userService.checkFirestoreConnection();
@@ -22,13 +22,13 @@ export const profileSyncService = {  // Charger le profil depuis Firestore
       const profile = await userService.getUserProfileWithRetry(user.uid);
       
       if (profile) {
-        console.log('Profil trouvé dans Firestore:', profile);
+        //console.log('Profil trouvé dans Firestore:', profile);
         // Synchroniser avec localStorage
         localStorage.setItem('userProfile', JSON.stringify(profile));
         return profile;
       }
       
-      console.log('Aucun profil trouvé dans Firestore');
+      //console.log('Aucun profil trouvé dans Firestore');
       return null;
     } catch (error) {
       console.error('Erreur lors du chargement du profil:', error);
@@ -48,7 +48,7 @@ export const profileSyncService = {  // Charger le profil depuis Firestore
         updatedAt: new Date().toISOString()
       };
       
-      console.log('Sauvegarde du profil dans Firestore:', updatedProfile);
+      //console.log('Sauvegarde du profil dans Firestore:', updatedProfile);
       await userService.updateUserProfile(user.uid, updatedProfile);
       
       // Synchroniser avec localStorage
@@ -64,17 +64,17 @@ export const profileSyncService = {  // Charger le profil depuis Firestore
   syncOnStartup: async () => {
     try {
       const user = auth.currentUser;      if (!user) {
-        console.log('Aucun utilisateur connecté, nettoyage du localStorage');
+        //console.log('Aucun utilisateur connecté, nettoyage du localStorage');
         profileSyncService.clearLocalStorage();
         return null;
       }
-        console.log('Synchronisation du profil au démarrage pour:', user.uid);
+        //console.log('Synchronisation du profil au démarrage pour:', user.uid);
       
       // Essayer de charger depuis Firestore
       const firestoreData = await userService.getUserProfile(user.uid);
       
       if (firestoreData) {
-        console.log('Profil synchronisé depuis Firestore:', firestoreData);
+        //console.log('Profil synchronisé depuis Firestore:', firestoreData);
         
         // Synchroniser tous les profils avec localStorage
         profileSyncService.syncAllProfilesToLocalStorage(firestoreData);
@@ -84,12 +84,12 @@ export const profileSyncService = {  // Charger le profil depuis Firestore
         // Vérifier s'il y a des données en localStorage à migrer
         const localData = profileSyncService.getLocalStorageData();
         if (localData.hasData) {
-          console.log('Migration des profils localStorage vers Firestore');
+          //console.log('Migration des profils localStorage vers Firestore');
           await profileSyncService.migrateLocalDataToFirestore(localData);
           return localData;
         }
       }
-        console.log('Aucun profil trouvé, création d\'un profil vide');
+        //console.log('Aucun profil trouvé, création d\'un profil vide');
       const emptyProfile = profileSyncService.createEmptyProfile(user);
       await userService.saveCompleteProfileWithValidation(user.uid, emptyProfile);
       profileSyncService.syncAllProfilesToLocalStorage(emptyProfile);
@@ -113,7 +113,7 @@ export const profileSyncService = {  // Charger le profil depuis Firestore
       if (data.nutritionProfile) {
         localStorage.setItem('nutritionProfile', JSON.stringify(data.nutritionProfile));
       }
-      console.log('Tous les profils synchronisés avec localStorage');
+      //console.log('Tous les profils synchronisés avec localStorage');
     } catch (error) {
       console.error('Erreur lors de la synchronisation localStorage:', error);
     }
@@ -151,7 +151,7 @@ export const profileSyncService = {  // Charger le profil depuis Firestore
       };
 
       await userService.saveCompleteProfile(user.uid, completeProfile);
-      console.log('Migration terminée vers Firestore');
+      //console.log('Migration terminée vers Firestore');
       return completeProfile;
     } catch (error) {
       console.error('Erreur lors de la migration:', error);
@@ -180,28 +180,44 @@ export const profileSyncService = {  // Charger le profil depuis Firestore
       }
     };
   },
-
   // Nettoyer localStorage
   clearLocalStorage: () => {
-    localStorage.removeItem('userProfile');
-    localStorage.removeItem('equipmentProfile');
-    localStorage.removeItem('nutritionProfile');
+    try {
+      // Nettoyer tous les profils
+      localStorage.removeItem('userProfile');
+      localStorage.removeItem('equipmentProfile');
+      localStorage.removeItem('nutritionProfile');
+      
+      // Nettoyer aussi les données spécifiques à l'utilisateur
+      localStorage.removeItem('personalizedSuggestions');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('nutrition_recipes');
+      localStorage.removeItem('nutrition_favorites');
+      localStorage.removeItem('nutrition_mass_gain_recipes');
+      localStorage.removeItem('nutrition_public_recipes');
+      localStorage.removeItem('hasSeenWelcome');
+      
+      console.log('🧹 Cache local complètement nettoyé');
+    } catch (error) {
+      console.error('Erreur lors du nettoyage du cache:', error);
+    }
   }
 };
 
 // Fonction de debug temporaire pour diagnostiquer les problèmes de profil
 export const debugProfile = async () => {
-  console.log('=== DEBUG PROFIL ===');
+  //console.log('=== DEBUG PROFIL ===');
   
   // Vérifier l'utilisateur connecté
   const user = auth.currentUser;
-  console.log('Utilisateur connecté:', user?.uid || 'Aucun');
+  //console.log('Utilisateur connecté:', user?.uid || 'Aucun');
   
   if (user) {
     // Vérifier Firestore
     try {
       const profile = await userService.getUserProfile(user.uid);
-      console.log('Profil Firestore:', profile);
+      //console.log('Profil Firestore:', profile);
     } catch (error) {
       console.error('Erreur Firestore:', error);
     }
@@ -209,9 +225,9 @@ export const debugProfile = async () => {
   
   // Vérifier localStorage
   const localProfile = localStorage.getItem('userProfile');
-  console.log('Profil localStorage:', localProfile ? JSON.parse(localProfile) : 'Aucun');
+  //console.log('Profil localStorage:', localProfile ? JSON.parse(localProfile) : 'Aucun');
   
-  console.log('=== FIN DEBUG ===');
+  //console.log('=== FIN DEBUG ===');
 };
 
 // Pour utiliser dans la console : debugProfile()

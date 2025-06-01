@@ -14,7 +14,6 @@ const AppBootstrap = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const hasInitialized = useRef(false);
-
   useEffect(() => {
     // Éviter la double initialisation
     if (hasInitialized.current) return;
@@ -41,7 +40,32 @@ const AppBootstrap = () => {
         const localProfile = localStorage.getItem('userProfile');
         userProfile = localProfile ? JSON.parse(localProfile) : {};
       }
-      
+        // Vérifier si le profil appartient bien à l'utilisateur actuel
+      if (user && userProfile.firebaseUid && userProfile.firebaseUid !== user.uid) {
+        console.warn('Profil ne correspond pas à l\'utilisateur actuel, nettoyage complet...');
+        
+        // Nettoyer complètement toutes les données de l'ancien utilisateur
+        const keysToRemove = [
+          'userProfile',
+          'equipmentProfile', 
+          'nutritionProfile',
+          'stats',
+          'personalizedSuggestions',
+          'user',
+          'userData',
+          'nutrition_recipes',
+          'nutrition_favorites',
+          'nutrition_mass_gain_recipes',
+          'hasSeenWelcome',
+          'authToken',
+          'refreshToken'
+        ];
+        
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        userProfile = {};
+      }
+
       const isProfileComplete = userProfile.height && userProfile.weight && userProfile.age && userProfile.goal;
       
       // Afficher popup de bienvenue pour nouveaux utilisateurs

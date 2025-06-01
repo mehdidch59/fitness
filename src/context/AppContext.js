@@ -181,7 +181,8 @@ function AppProvider({ children }) {
       console.error('Erreur lors de la sauvegarde des données:', error);
     }
   }, [state.userProfile, state.equipmentProfile, state.nutritionProfile, state.stats]);
-    // Actions pour mettre à jour les états
+    
+  // Actions pour mettre à jour les états
   const actions = {
     // Questionnaire
     setQuestionnaireStep: (step) => {
@@ -195,16 +196,66 @@ function AppProvider({ children }) {
     setSearchStatus: (status) => {
       dispatch({ type: ACTION_TYPES.SET_SEARCH_STATUS, payload: status });
     },
-      // Mise à jour des profils
-    updateUserProfile: async (updates) => {
+    
+    // ✅ SOLUTION OPTIMALE : Flag silent pour éviter la sauvegarde automatique
+    updateUserProfile: async (updates, options = {}) => {
+      const { silent = false } = options;
+      
+      // Toujours mettre à jour le contexte local
       dispatch({ type: ACTION_TYPES.UPDATE_USER_PROFILE, payload: updates });
       
-      // Synchroniser avec Firestore si l'utilisateur est connecté
-      try {
-        await profileSyncService.saveProfileToFirestore({ ...state.userProfile, ...updates });
-      } catch (error) {
-        console.warn('Impossible de synchroniser avec Firestore:', error.message);
+      // Log pour debugging
+      if (silent) {
+        console.log('📖 Mise à jour silencieuse du profil (pas de sauvegarde Firestore):', updates);
+      } else {
+        console.log('💾 Mise à jour du profil avec sauvegarde Firestore:', updates);
       }
+      
+      // Synchroniser avec Firestore SEULEMENT si pas en mode silencieux
+      if (!silent) {
+        try {
+          await profileSyncService.saveProfileToFirestore({ ...state.userProfile, ...updates });
+          console.log('✅ Profil synchronisé avec Firestore');
+        } catch (error) {
+          console.warn('⚠️ Impossible de synchroniser avec Firestore:', error.message);
+        }
+      }
+    },
+    
+    // Méthode pour nettoyer complètement les données utilisateur
+    clearAllData: () => {
+      // Nettoyer le state
+      dispatch({ type: ACTION_TYPES.UPDATE_USER_PROFILE, payload: initialState.userProfile });
+      dispatch({ type: ACTION_TYPES.UPDATE_EQUIPMENT_PROFILE, payload: initialState.equipmentProfile });
+      dispatch({ type: ACTION_TYPES.UPDATE_NUTRITION_PROFILE, payload: initialState.nutritionProfile });
+      dispatch({ type: ACTION_TYPES.UPDATE_STATS, payload: initialState.stats });
+      
+      // Nettoyer complètement le localStorage
+      const keysToRemove = [
+        'userProfile',
+        'equipmentProfile',
+        'nutritionProfile',
+        'stats',
+        'personalizedSuggestions',
+        'user',
+        'userData',
+        'nutrition_recipes',
+        'nutrition_favorites',
+        'nutrition_mass_gain_recipes',
+        'hasSeenWelcome',
+        'authToken',
+        'refreshToken'
+      ];
+      
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (error) {
+          console.error(`Erreur suppression ${key}:`, error);
+        }
+      });
+      
+      console.log('🧹 Nettoyage complet des données utilisateur effectué');
     },
     
     updateEquipmentProfile: (updates) => {
@@ -234,48 +285,48 @@ function AppProvider({ children }) {
       dispatch({ type: ACTION_TYPES.FIND_WORKOUTS_REQUEST });
       
       // Simulation d'une recherche de programmes
-      setTimeout(() => {
-        // Logique pour utiliser equipmentProfile.homeEquipment
-        const withEquipment = state.equipmentProfile.homeEquipment && 
-                              state.equipmentProfile.homeEquipment.length > 0;
+      // setTimeout(() => {
+      //   // Logique pour utiliser equipmentProfile.homeEquipment
+      //   const withEquipment = state.equipmentProfile.homeEquipment && 
+      //                         state.equipmentProfile.homeEquipment.length > 0;
         
-        const newPrograms = [
-          {
-            id: 'program1',
-            title: withEquipment ? 'Programme avec équipement' : 'Programme sans équipement',
-            level: 'Débutant',
-            duration: '4 semaines',
-            equipment: withEquipment ? state.equipmentProfile.homeEquipment.join(', ') : 'Aucun',
-            description: withEquipment 
-              ? 'Programme personnalisé utilisant votre équipement disponible à domicile.' 
-              : 'Programme d\'exercices au poids du corps, parfait pour s\'entraîner sans matériel.',
-            workouts: []
-          },
-          {
-            id: 'program2',
-            title: 'Programme intermédiaire',
-            level: 'Intermédiaire',
-            duration: '6 semaines',
-            equipment: withEquipment ? state.equipmentProfile.homeEquipment.join(', ') : 'Aucun',
-            description: 'Programme d\'intensité moyenne pour progresser.',
-            workouts: []
-          },
-          {
-            id: 'program3',
-            title: 'Programme avancé',
-            level: 'Avancé',
-            duration: '8 semaines',
-            equipment: withEquipment ? state.equipmentProfile.homeEquipment.join(', ') : 'Aucun',
-            description: 'Programme intensif pour sportifs expérimentés.',
-            workouts: []
-          }
-        ];
+      //   const newPrograms = [
+      //     {
+      //       id: 'program1',
+      //       title: withEquipment ? 'Programme avec équipement' : 'Programme sans équipement',
+      //       level: 'Débutant',
+      //       duration: '4 semaines',
+      //       equipment: withEquipment ? state.equipmentProfile.homeEquipment.join(', ') : 'Aucun',
+      //       description: withEquipment 
+      //         ? 'Programme personnalisé utilisant votre équipement disponible à domicile.' 
+      //         : 'Programme d\'exercices au poids du corps, parfait pour s\'entraîner sans matériel.',
+      //       workouts: []
+      //     },
+      //     {
+      //       id: 'program2',
+      //       title: 'Programme intermédiaire',
+      //       level: 'Intermédiaire',
+      //       duration: '6 semaines',
+      //       equipment: withEquipment ? state.equipmentProfile.homeEquipment.join(', ') : 'Aucun',
+      //       description: 'Programme d\'intensité moyenne pour progresser.',
+      //       workouts: []
+      //     },
+      //     {
+      //       id: 'program3',
+      //       title: 'Programme avancé',
+      //       level: 'Avancé',
+      //       duration: '8 semaines',
+      //       equipment: withEquipment ? state.equipmentProfile.homeEquipment.join(', ') : 'Aucun',
+      //       description: 'Programme intensif pour sportifs expérimentés.',
+      //       workouts: []
+      //     }
+      //   ];
         
-        dispatch({ 
-          type: ACTION_TYPES.FIND_WORKOUTS_SUCCESS, 
-          payload: newPrograms 
-        });
-      }, 2000);
+      //   dispatch({ 
+      //     type: ACTION_TYPES.FIND_WORKOUTS_SUCCESS, 
+      //     payload: newPrograms 
+      //   });
+      // }, 2000);
     }
   };
   
@@ -294,4 +345,4 @@ function AppProvider({ children }) {
   );
 }
 
-export default AppProvider; 
+export default AppProvider;

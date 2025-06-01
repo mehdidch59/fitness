@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { User, Mail, Eye, EyeOff, Settings, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { User, Mail, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
@@ -12,8 +12,7 @@ function AuthView() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  
-  const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
     email: '',
     password: '',
     firstName: '',
@@ -25,13 +24,6 @@ function AuthView() {
     goal: '',
     activityLevel: ''
   });
-  // Rediriger si l'utilisateur est connecté
-  useEffect(() => {
-    if (user && !loading) {
-      // L'utilisateur est connecté via Firebase
-      console.log('Utilisateur connecté:', user);
-    }
-  }, [user, loading]);
 
   // Gérer les changements de formulaire
   const handleInputChange = (field, value) => {
@@ -94,11 +86,12 @@ function AuthView() {
       console.error('Erreur d\'inscription:', error);
       actions.setSearchStatus('Erreur d\'inscription: ' + error.message);
     }
-  };
-
-  // Déconnexion avec Firebase
+  };  // Déconnexion avec Firebase
   const handleLogout = async () => {
     try {
+      // Nettoyer AVANT la déconnexion pour éviter les résidus
+      localStorage.clear(); // Nettoyage complet
+      
       await logout();
       
       // Nettoyer les données locales
@@ -119,109 +112,21 @@ function AuthView() {
         activityLevel: ''
       });
       
+      // Forcer le rechargement de la page pour s'assurer du nettoyage complet
+      setTimeout(() => {
+        window.location.href = '/';  // Forcer la navigation vers la page d'accueil
+      }, 100);
+      
       actions.setSearchStatus('Déconnexion réussie');
     } catch (error) {
       console.error('Erreur de déconnexion:', error);
       actions.setSearchStatus('Erreur de déconnexion: ' + error.message);
     }
-  };
-  // Afficher un état de chargement
+  };// Afficher un état de chargement
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Si l'utilisateur est connecté, afficher le profil
-  if (user) {
-    return (
-      <div className="pb-20 p-6 bg-gray-50 min-h-screen">
-        <h2 className="text-3xl font-bold mb-8 text-center">Mon Profil</h2>
-        
-        {/* Carte utilisateur */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <div className="bg-purple-100 p-4 rounded-full mr-4">
-                <User size={32} className="text-purple-600" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">
-                  {user.displayName || 'Utilisateur'}
-                </h3>
-                <p className="text-gray-600">{user.email}</p>
-              </div>
-            </div>
-            
-            <button 
-              onClick={() => navigate('/settings')}
-              className="bg-gray-100 p-3 rounded-full hover:bg-gray-200 transition-colors"
-            >
-              <Settings size={20} className="text-gray-700" />
-            </button>
-          </div>
-          
-          {/* Informations du profil */}
-          {userProfile.age && (
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-600 text-sm mb-1">Âge</p>
-                <p className="text-lg font-semibold">{userProfile.age} ans</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-600 text-sm mb-1">Genre</p>
-                <p className="text-lg font-semibold">
-                  {userProfile.gender === 'male' ? 'Homme' : 'Femme'}
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {userProfile.height && userProfile.weight && (
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-600 text-sm mb-1">Taille</p>
-                <p className="text-lg font-semibold">{userProfile.height} cm</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-600 text-sm mb-1">Poids</p>
-                <p className="text-lg font-semibold">{userProfile.weight} kg</p>
-              </div>
-            </div>
-          )}
-          
-          {userProfile.goal && (
-            <div className="bg-purple-50 p-4 rounded-xl mb-4">
-              <p className="text-gray-600 text-sm mb-1">Objectif</p>
-              <p className="text-lg font-semibold text-purple-900">
-                {userProfile.goal === 'lose_weight' ? 'Perdre du poids' : 
-                 userProfile.goal === 'gain_muscle' ? 'Prendre du muscle' : 
-                 'Maintenir ma forme'}
-              </p>
-            </div>
-          )}
-        </div>
-        
-        {/* Actions */}
-        <div className="space-y-4">
-          <button 
-            onClick={() => navigate('/settings')}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold flex items-center justify-center"
-          >
-            <Settings className="mr-2" size={20} />
-            Modifier mes informations
-          </button>
-          
-          <button 
-            onClick={handleLogout}
-            className="w-full bg-gray-200 text-gray-700 py-4 rounded-xl font-semibold flex items-center justify-center hover:bg-gray-300 transition-colors"
-          >
-            <LogOut className="mr-2" size={20} />
-            Se déconnecter
-          </button>
-        </div>
       </div>
     );
   }
