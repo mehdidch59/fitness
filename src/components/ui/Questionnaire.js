@@ -176,20 +176,18 @@ function Questionnaire() {
     
     handleNext();
   };
-
   // Gérer le passage à la question suivante
   const handleNext = () => {
     if (questionnaireStep < questions.length - 1) {
       actions.setQuestionnaireStep(questionnaireStep + 1);
-    } else {
-      // Terminer le questionnaire
+    } else {      // Terminer le questionnaire
       actions.setQuestionnaire(false);
       actions.setQuestionnaireStep(0);
       actions.setSearchStatus('Configuration terminée !');
       
-      // console.log('🎉 Questionnaire terminé !');
-      // console.log('📊 EquipmentProfile final:', equipmentProfile);
-      // console.log('🍽️ NutritionProfile final:', nutritionProfile);
+      console.log('🎉 Questionnaire terminé !');
+      console.log('📊 EquipmentProfile final:', equipmentProfile);
+      console.log('🍽️ NutritionProfile final:', nutritionProfile);
     }
   };
 

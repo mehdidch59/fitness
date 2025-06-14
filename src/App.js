@@ -18,6 +18,12 @@ import TrackingView from './components/views/TrackingView';
 import AdvancedFeaturesView from './components/views/AdvancedFeaturesView';
 import AdvancedFeaturesDemo from './components/AdvancedFeaturesDemo';
 
+// Importer l'indicateur de sauvegarde
+import SaveIndicator from './components/ui/SaveIndicator';
+
+// Importer le service de persistance
+import { persistenceService } from './services/persistenceService';
+
 // Composant wrapper pour gérer l'affichage conditionnel Auth/Profile
 const AuthProfileWrapper = () => {
   const { user, loading } = useAuth();
@@ -35,6 +41,7 @@ const AuthProfileWrapper = () => {
 
 const App = () => {
   const { user } = useAuth();
+  const lastSyncTime = persistenceService.load(persistenceService.keys.LAST_SYNC);
 
   return (
     <UserSessionProvider>
@@ -52,6 +59,12 @@ const App = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Navbar />
+        
+        {/* Indicateur de sauvegarde */}
+        <SaveIndicator 
+          lastSaved={lastSyncTime}
+          showDetails={false}
+        />
       </Router>
     </UserSessionProvider>
   );

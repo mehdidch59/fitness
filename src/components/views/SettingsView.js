@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Save, User, Target, Dumbbell, Apple } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Save, User, Target, Dumbbell, Apple, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
+import { useFormPersistence } from '../../hooks/useFormPersistence';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
+import { persistenceService } from '../../services/persistenceService';
 import Input from '../ui/Input';
+import DataManagement from '../debug/DataManagement';
 
 function SettingsView() {
   const { userProfile, equipmentProfile, nutritionProfile, actions } = useAppContext();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
+  const [showDataManagement, setShowDataManagement] = useState(false);
   const [formData, setFormData] = useState({
     // Profil utilisateur
     firstName: '',
@@ -28,29 +33,69 @@ function SettingsView() {
     allergies: [],
     favorites: []
   });
+  // Hook pour la persistance automatique du formulaire
+  const { loadSavedData, clearSavedData } = useFormPersistence('settings_form', formData, {
+    debounceMs: 500,
+    saveOnChange: true
+  });
+
+  // Détecter les changements non sauvegardés
+  const hasUnsavedChanges = useMemo(() => {
+    return (
+      formData.firstName !== (userProfile.firstName || '') ||
+      formData.lastName !== (userProfile.lastName || '') ||
+      formData.age !== (userProfile.age || '') ||
+      formData.gender !== (userProfile.gender || '') ||
+      formData.weight !== (userProfile.weight || '') ||
+      formData.height !== (userProfile.height || '') ||
+      formData.goal !== (userProfile.goal || '') ||
+      formData.activityLevel !== (userProfile.activityLevel || '') ||
+      formData.location !== (equipmentProfile.location || '') ||
+      JSON.stringify(formData.homeEquipment) !== JSON.stringify(equipmentProfile.homeEquipment || []) ||
+      formData.dietType !== (nutritionProfile.dietType || '') ||
+      formData.cookingTime !== (nutritionProfile.cookingTime || '')
+    );
+  }, [formData, userProfile, equipmentProfile, nutritionProfile]);
+
+  // Hook pour gérer les changements non sauvegardés
+  const { navigateWithConfirmation } = useUnsavedChanges(
+    hasUnsavedChanges,
+    'Vous avez des modifications non sauvegardées dans vos paramètres. Voulez-vous vraiment quitter ?'
+  );
 
   // Charger les données existantes
   useEffect(() => {
+    // D'abord essayer de charger les données sauvegardées du formulaire
+    const savedFormData = loadSavedData();
+    
+    // Puis charger les données des profils ou utiliser les données sauvegardées
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     
-    setFormData({
-      firstName: userData.firstName || userProfile.firstName || '',
-      lastName: userData.lastName || userProfile.lastName || '',
-      age: userProfile.age || '',
-      gender: userProfile.gender || '',
-      weight: userProfile.weight || '',
-      height: userProfile.height || '',
-      goal: userProfile.goal || '',
-      activityLevel: userProfile.activityLevel || '',
-      location: equipmentProfile.location || '',
-      homeEquipment: equipmentProfile.homeEquipment || [],
-      gymFrequency: equipmentProfile.gymFrequency || '',
-      dietType: nutritionProfile.dietType || '',
-      cookingTime: nutritionProfile.cookingTime || '',
-      allergies: nutritionProfile.allergies || [],
-      favorites: nutritionProfile.favorites || []
-    });
-  }, [userProfile, equipmentProfile, nutritionProfile]);
+    const initialData = {
+      firstName: savedFormData.firstName || userData.firstName || userProfile.firstName || '',
+      lastName: savedFormData.lastName || userData.lastName || userProfile.lastName || '',
+      age: savedFormData.age || userProfile.age || '',
+      gender: savedFormData.gender || userProfile.gender || '',
+      weight: savedFormData.weight || userProfile.weight || '',
+      height: savedFormData.height || userProfile.height || '',
+      goal: savedFormData.goal || userProfile.goal || '',
+      activityLevel: savedFormData.activityLevel || userProfile.activityLevel || '',
+      location: savedFormData.location || equipmentProfile.location || '',
+      homeEquipment: savedFormData.homeEquipment || equipmentProfile.homeEquipment || [],
+      gymFrequency: savedFormData.gymFrequency || equipmentProfile.gymFrequency || '',
+      dietType: savedFormData.dietType || nutritionProfile.dietType || '',
+      cookingTime: savedFormData.cookingTime || nutritionProfile.cookingTime || '',
+      allergies: savedFormData.allergies || nutritionProfile.allergies || [],
+      favorites: savedFormData.favorites || nutritionProfile.favorites || []
+    };
+    
+    setFormData(initialData);
+    
+    // Si on a des données sauvegardées, informer l'utilisateur
+    if (Object.keys(savedFormData).length > 0) {
+      console.log('🔄 Données de formulaire restaurées depuis la sauvegarde automatique');
+    }
+  }, [userProfile, equipmentProfile, nutritionProfile, loadSavedData]);
 
   // Gérer les changements
   const handleInputChange = (field, value) => {
@@ -66,7 +111,6 @@ function SettingsView() {
         : [...prev.homeEquipment, equipment]
     }));
   };
-
   // Sauvegarder les modifications
   const handleSave = () => {
     // Mettre à jour le profil utilisateur
@@ -105,6 +149,9 @@ function SettingsView() {
       lastName: formData.lastName
     }));
 
+    // Nettoyer les données temporaires du formulaire
+    clearSavedData();
+
     actions.setSearchStatus('Paramètres sauvegardés !');
     
     // Retourner au profil après 1 seconde
@@ -121,16 +168,20 @@ function SettingsView() {
   ];
 
   return (
-    <div className="pb-20 p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
+    <div className="pb-20 p-6 bg-gray-50 min-h-screen">      {/* Header */}
       <div className="flex items-center mb-6">
         <button 
-          onClick={() => navigate('/auth')}
+          onClick={() => navigateWithConfirmation('/auth')}
           className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
         >
           <ArrowLeft size={24} className="text-gray-700" />
         </button>
         <h2 className="text-2xl font-bold">Paramètres</h2>
+        {hasUnsavedChanges && (
+          <span className="ml-3 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+            Modifications non sauvegardées
+          </span>
+        )}
       </div>
 
       {/* Tabs */}
@@ -322,9 +373,7 @@ function SettingsView() {
             />
           </>
         )}
-      </div>
-
-      {/* Bouton de sauvegarde */}
+      </div>      {/* Bouton de sauvegarde */}
       <button
         onClick={handleSave}
         className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold mt-6 flex items-center justify-center"
@@ -332,6 +381,23 @@ function SettingsView() {
         <Save className="mr-2" size={20} />
         Sauvegarder les modifications
       </button>
+
+      {/* Bouton debug pour la gestion des données */}
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          onClick={() => setShowDataManagement(true)}
+          className="w-full bg-gray-500 text-white py-2 rounded-lg mt-4 flex items-center justify-center text-sm"
+        >
+          <Database className="mr-2" size={16} />
+          Gérer les données (Debug)
+        </button>
+      )}
+
+      {/* Composant de gestion des données */}
+      <DataManagement 
+        isOpen={showDataManagement}
+        onClose={() => setShowDataManagement(false)}
+      />
     </div>
   );
 }

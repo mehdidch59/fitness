@@ -1,5 +1,9 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useState, useEffect } from 'react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useAuth } from '../hooks/useAuth';
 import { PopupProvider } from './PopupContext';
+import { persistenceService } from '../services/persistenceService';
 import { profileSyncService } from '../services/profileSync';
 
 // Types d'actions
@@ -141,12 +145,41 @@ export function useAppContext() {
 
 // Composant Provider
 function AppProvider({ children }) {
+  const { user } = useAuth();
   const [state, dispatch] = useReducer(appReducer, initialState);
-  
   // Persister les données dans le localStorage
   useEffect(() => {
-    // Charger les données au démarrage
+    // Charger les données au démarrage avec le service central
     try {
+      const rehydratedData = persistenceService.rehydrateApp();
+      
+      if (Object.keys(rehydratedData.userProfile).length > 0 ||
+          Object.keys(rehydratedData.equipmentProfile).length > 0 ||
+          Object.keys(rehydratedData.nutritionProfile).length > 0) {
+        
+        console.log('🔄 Réhydratation des données depuis le service central');
+          dispatch({
+          type: ACTION_TYPES.HYDRATE_STATE,
+          payload: {
+            userProfile: rehydratedData.userProfile,
+            equipmentProfile: rehydratedData.equipmentProfile,
+            nutritionProfile: rehydratedData.nutritionProfile,
+            isQuestionnaire: rehydratedData.questionnaireState.isActive || false,
+            questionnaireStep: rehydratedData.questionnaireState.currentStep || 0
+          }
+        });
+      }
+      
+      // Vérifier si le questionnaire doit être relancé
+      if (persistenceService.shouldRestartQuestionnaire()) {
+        console.log('🔄 Relancement du questionnaire nécessaire');
+        dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: true });
+        dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE_STEP, payload: 0 });
+      }
+    } catch (error) {
+      console.error('Erreur lors de la réhydratation des données:', error);
+      
+      // Fallback vers l'ancien système
       const loadUserProfile = localStorage.getItem('userProfile');
       const loadEquipmentProfile = localStorage.getItem('equipmentProfile');
       const loadNutritionProfile = localStorage.getItem('nutritionProfile');
@@ -165,14 +198,22 @@ function AppProvider({ children }) {
           payload: hydrationData
         });
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
     }
   }, []);
-  
-  // Sauvegarder les changements
+  // Sauvegarder les changements automatiquement
   useEffect(() => {
     try {
+      // Utiliser le service central pour la sauvegarde automatique
+      persistenceService.autoSave(state);
+      
+      // Sauvegarder spécifiquement l'état du questionnaire
+      persistenceService.saveQuestionnaireState({
+        isActive: state.isQuestionnaire,
+        currentStep: state.questionnaireStep,
+        timestamp: Date.now()
+      });
+      
+      // Fallback vers l'ancien système pour compatibilité
       localStorage.setItem('userProfile', JSON.stringify(state.userProfile));
       localStorage.setItem('equipmentProfile', JSON.stringify(state.equipmentProfile));
       localStorage.setItem('nutritionProfile', JSON.stringify(state.nutritionProfile));
@@ -180,38 +221,169 @@ function AppProvider({ children }) {
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données:', error);
     }
-  }, [state.userProfile, state.equipmentProfile, state.nutritionProfile, state.stats]);
+  }, [state.userProfile, state.equipmentProfile, state.nutritionProfile, state.stats, state.isQuestionnaire, state.questionnaireStep]);
+      // Charger les profils depuis Firestore au démarrage
+  useEffect(() => {
+    const loadUserProfiles = async () => {
+      if (!user?.uid) return;
+      
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          
+          // Charger le profil utilisateur si disponible
+          if (userData.userProfile) {
+            dispatch({ type: ACTION_TYPES.UPDATE_USER_PROFILE, payload: userData.userProfile });
+          }
+          
+          // Charger le profil d'équipement si disponible
+          if (userData.equipmentProfile) {
+            dispatch({ type: ACTION_TYPES.UPDATE_EQUIPMENT_PROFILE, payload: userData.equipmentProfile });
+          }
+            // Charger le profil de nutrition si disponible
+          if (userData.nutritionProfile) {
+            dispatch({ type: ACTION_TYPES.UPDATE_NUTRITION_PROFILE, payload: userData.nutritionProfile });
+          }
+          
+          // Charger les statistiques si disponibles
+          if (userData.stats) {
+            dispatch({ type: ACTION_TYPES.UPDATE_STATS, payload: userData.stats });
+          }
+          
+          // Charger l'état du questionnaire
+          if (userData.questionnaireState) {
+            dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: userData.questionnaireState.isActive || false });
+            dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE_STEP, payload: userData.questionnaireState.currentStep || 0 });
+          } else if (userData.equipmentProfile || userData.nutritionProfile) {
+            // Si les profils existent mais pas d'état de questionnaire, le marquer comme terminé
+            dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: false });
+            dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE_STEP, payload: 0 });
+          }
+            console.log('✅ Profils et questionnaire chargés depuis Firestore');
+        } else {
+          console.log('📋 Aucune donnée Firestore trouvée, utilisation des données par défaut');
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement des profils:', error);
+      }
+    };
     
+    if (user?.uid) {
+      loadUserProfiles();
+    }
+  }, [user?.uid]);
   // Actions pour mettre à jour les états
   const actions = {
     // Questionnaire
-    setQuestionnaireStep: (step) => {
+    setQuestionnaireStep: async (step) => {
       dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE_STEP, payload: step });
+      
+      // Sauvegarder l'étape du questionnaire dans localStorage
+      persistenceService.saveQuestionnaireState({
+        isActive: state.isQuestionnaire,
+        currentStep: step,
+        timestamp: Date.now()
+      });
+      
+      // Sauvegarder dans Firestore si utilisateur connecté
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, {
+            questionnaireState: {
+              isActive: state.isQuestionnaire,
+              currentStep: step,
+              timestamp: Date.now()
+            }
+          }, { merge: true });
+          console.log('✅ Étape du questionnaire sauvegardée dans Firestore');
+        } catch (error) {
+          console.error('❌ Erreur sauvegarde Firestore:', error);
+        }
+      }
     },
     
-    setQuestionnaire: (isOpen) => {
-      dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: isOpen });
+    setQuestionnaire: async (isActive) => {
+      dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: isActive });
+      
+      // Vérifier si l'utilisateur a déjà des profils configurés
+      if (isActive && (state.equipmentProfile.location || state.nutritionProfile.dietType)) {
+        console.log('Profils déjà configurés, questionnaire non affiché');
+        return;
+      }
+      
+      // Sauvegarder dans localStorage
+      persistenceService.saveQuestionnaireState({
+        isActive,
+        currentStep: state.questionnaireStep,
+        timestamp: Date.now()
+      });
+      
+      // Sauvegarder dans Firestore si utilisateur connecté
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, {
+            questionnaireState: {
+              isActive,
+              currentStep: state.questionnaireStep,
+              timestamp: Date.now()
+            }
+          }, { merge: true });
+          console.log('✅ État du questionnaire sauvegardé dans Firestore');
+        } catch (error) {
+          console.error('❌ Erreur sauvegarde Firestore:', error);
+        }
+      }
     },
-    
     setSearchStatus: (status) => {
       dispatch({ type: ACTION_TYPES.SET_SEARCH_STATUS, payload: status });
     },
     
-    // ✅ SOLUTION OPTIMALE : Flag silent pour éviter la sauvegarde automatique
+    // Relancer le questionnaire si la configuration est incomplète
+    checkAndRestartQuestionnaire: () => {
+      if (persistenceService.shouldRestartQuestionnaire()) {
+        console.log('🔄 Redémarrage du questionnaire nécessaire');
+        dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: true });
+        dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE_STEP, payload: 0 });
+        persistenceService.saveQuestionnaireState({
+          isActive: true,
+          currentStep: 0,
+          timestamp: Date.now()
+        });
+        return true;
+      }
+      return false;
+    },
+      // ✅ SOLUTION OPTIMALE : Flag silent pour éviter la sauvegarde automatique
     updateUserProfile: async (updates, options = {}) => {
       const { silent = false } = options;
       
       // Toujours mettre à jour le contexte local
       dispatch({ type: ACTION_TYPES.UPDATE_USER_PROFILE, payload: updates });
     
+      // Sauvegarder dans Firestore si utilisateur connecté et pas en mode silencieux
+      if (!silent && user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, {
+            userProfile: { ...state.userProfile, ...updates }
+          }, { merge: true });
+          console.log('✅ Profil utilisateur sauvegardé dans Firestore');
+        } catch (error) {
+          console.error('❌ Erreur sauvegarde profil utilisateur Firestore:', error);
+        }
+      }
       
-      // Synchroniser avec Firestore SEULEMENT si pas en mode silencieux
+      // Synchroniser avec le service de profil SEULEMENT si pas en mode silencieux
       if (!silent) {
         try {
           await profileSyncService.saveProfileToFirestore({ ...state.userProfile, ...updates });
-          console.log('✅ Profil synchronisé avec Firestore');
+          console.log('✅ Profil synchronisé avec le service de profil');
         } catch (error) {
-          console.warn('⚠️ Impossible de synchroniser avec Firestore:', error.message);
+          console.warn('⚠️ Impossible de synchroniser avec le service de profil:', error.message);
         }
       }
     },
@@ -250,14 +422,44 @@ function AppProvider({ children }) {
       });
       
       console.log('🧹 Nettoyage complet des données utilisateur effectué');
-    },
-    
-    updateEquipmentProfile: (updates) => {
+    },    updateEquipmentProfile: async (updates) => {
       dispatch({ type: ACTION_TYPES.UPDATE_EQUIPMENT_PROFILE, payload: updates });
+      
+      // Sauvegarder immédiatement les changements d'équipement dans localStorage
+      persistenceService.saveEquipmentProfile({ ...state.equipmentProfile, ...updates });
+      
+      // Sauvegarder dans Firestore si utilisateur connecté
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, {
+            equipmentProfile: { ...state.equipmentProfile, ...updates }
+          }, { merge: true });
+          console.log('✅ Profil d\'équipement sauvegardé dans Firestore');
+        } catch (error) {
+          console.error('❌ Erreur sauvegarde équipement Firestore:', error);
+        }
+      }
     },
     
-    updateNutritionProfile: (updates) => {
+    updateNutritionProfile: async (updates) => {
       dispatch({ type: ACTION_TYPES.UPDATE_NUTRITION_PROFILE, payload: updates });
+      
+      // Sauvegarder immédiatement les changements de nutrition dans localStorage
+      persistenceService.saveNutritionProfile({ ...state.nutritionProfile, ...updates });
+      
+      // Sauvegarder dans Firestore si utilisateur connecté
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, {
+            nutritionProfile: { ...state.nutritionProfile, ...updates }
+          }, { merge: true });
+          console.log('✅ Profil nutritionnel sauvegardé dans Firestore');
+        } catch (error) {
+          console.error('❌ Erreur sauvegarde nutrition Firestore:', error);
+        }
+      }
     },
     
     // Programmes
@@ -268,10 +470,22 @@ function AppProvider({ children }) {
     addNutritionPlan: (plan) => {
       dispatch({ type: ACTION_TYPES.ADD_NUTRITION_PLAN, payload: plan });
     },
-    
-    // Statistiques
-    updateStats: (updates) => {
+      // Statistiques
+    updateStats: async (updates) => {
       dispatch({ type: ACTION_TYPES.UPDATE_STATS, payload: updates });
+      
+      // Sauvegarder dans Firestore si utilisateur connecté
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, {
+            stats: { ...state.stats, ...updates }
+          }, { merge: true });
+          console.log('✅ Statistiques sauvegardées dans Firestore');
+        } catch (error) {
+          console.error('❌ Erreur sauvegarde statistiques Firestore:', error);
+        }
+      }
     },
     
     // Recherche de programmes adaptés aux équipements disponibles
