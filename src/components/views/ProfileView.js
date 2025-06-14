@@ -26,7 +26,6 @@ function ProfileView() {
       
       if (userDoc.exists()) {
         const firestoreData = userDoc.data();
-        console.log('📖 Lecture Firestore (sans sauvegarde):', firestoreData);
         
         // Mapper les données Firestore vers le format attendu par le composant
         const mappedProfile = {
@@ -39,7 +38,6 @@ function ProfileView() {
           activityLevel: firestoreData.activityLevel || firestoreData.userProfile?.activityLevel || ''
         };
         
-        console.log('📋 Profil mappé (lecture seule):', mappedProfile);
         
         // ✅ UTILISATION DU FLAG SILENT pour éviter la sauvegarde Firestore
         // Lors de la lecture, on met à jour le contexte SANS déclencher la sauvegarde automatique
@@ -59,9 +57,7 @@ function ProfileView() {
 
   // useEffect pour récupérer les données au montage
   useEffect(() => {
-    console.log('useEffect déclenché avec user UID:', user?.uid);
     if (user?.uid) {
-      console.log('Récupération du profil pour l\'UID:', user.uid);
       fetchUserProfileFromFirestore();
     } else {
       setIsLoading(false);
@@ -125,7 +121,6 @@ function ProfileView() {
       };
       
       await updateDoc(userDocRef, firestoreUpdate);
-      console.log('✅ Profil sauvegardé dans Firestore:', firestoreUpdate);
       
     } catch (error) {
       console.error('❌ Erreur lors de la sauvegarde:', error);
@@ -181,12 +176,6 @@ function ProfileView() {
     };
     
     const isComplete = Object.values(checks).every(check => check === true);
-    
-    console.log('=== Vérification du profil complet ===');
-    console.log('userProfile actuel:', userProfile);
-    console.log('Vérifications détaillées:', checks);
-    console.log('Profil complet:', isComplete);
-    console.log('=====================================');
     
     return isComplete;
   };
@@ -340,102 +329,6 @@ function ProfileView() {
   return (
     <div className="pb-20 p-6 bg-gray-50 min-h-screen">
       <h2 className="text-3xl font-bold mb-8 text-center">Mon Profil</h2>
-
-      {/* Panneau de debug - Problème résolu */}
-      {/* <div className="bg-green-100 p-4 rounded-lg mb-4 text-sm">
-        <p className="font-bold mb-2">✅ Problème de reload résolu !</p>
-        <div className="grid grid-cols-1 gap-2 text-xs">
-          <div className="mt-2 p-2 bg-white rounded border">
-            <p className="font-semibold text-green-600">🎉 Solution appliquée avec succès</p>
-            <p className="mt-1">Modifications apportées:</p>
-            <p>• <strong>AppContext</strong> modifié avec flag <code>silent</code></p>
-            <p>• <strong>Lecture Firestore</strong> → <code>updateUserProfile(data, {"{"}silent: true{"}"})</code></p>
-            <p>• <strong>Modifications utilisateur</strong> → <code>silent: true</code> jusqu'au clic "Enregistrer"</p>
-            <p>• <strong>Sauvegarde Firestore</strong> → Uniquement sur clic bouton</p>
-          </div>
-          
-          <div className="mt-2 p-2 bg-blue-50 rounded border">
-            <p className="font-semibold text-blue-600">🔄 Nouveau comportement:</p>
-            <p>• Reload → Lecture Firestore sans mise à jour du timestamp</p>
-            <p>• Frappe dans les champs → Mise à jour locale uniquement</p>
-            <p>• Clic "Enregistrer" → Sauvegarde dans Firestore avec nouveau timestamp</p>
-          </div>
-          
-          <div className="mt-2 p-2 bg-orange-50 rounded border">
-            <p className="font-semibold text-orange-600">⚠️ Si le timestamp se met encore à jour :</p>
-            <p>Le problème pourrait venir du <strong>profileSyncService.saveProfileToFirestore()</strong></p>
-            <p>qui ajoute peut-être automatiquement un <code>updatedAt</code> timestamp.</p>
-            <p>Vérifiez le fichier <strong>profileSync.js</strong> pour voir s'il force un timestamp.</p>
-          </div>
-          
-          <button 
-            onClick={() => {
-              console.log('=== TEST DU FIX (UNIQUEMENT OPÉRATIONS SILENCIEUSES) ===');
-              console.log('1. Flag silent disponible:', typeof actions.updateUserProfile);
-              console.log('2. Test lecture silencieuse...');
-              actions.updateUserProfile({ testField: 'lecture_test' }, { silent: true });
-              console.log('3. Test modification silencieuse...');
-              actions.updateUserProfile({ testField: 'modification_test' }, { silent: true });
-              console.log('4. ✅ Aucune sauvegarde Firestore ne devrait être déclenchée');
-              console.log('5. Pour tester la sauvegarde, utilisez le bouton "Enregistrer"');
-            }}
-            className="bg-green-500 text-white px-3 py-1 rounded text-xs w-full"
-          >
-            🧪 Tester les opérations silencieuses
-          </button>
-        </div>
-      </div> */}
-
-      {/* Panneau de debug détaillé */}
-      {/* <div className="bg-yellow-100 p-4 rounded-lg mb-4 text-sm">
-        <p className="font-bold mb-2">🔍 Debug Info Détaillé:</p>
-        <div className="grid grid-cols-1 gap-2 text-xs">
-          <p><strong>UID:</strong> {user?.uid}</p>
-          <p><strong>Profil complet:</strong> {complete ? '✅ Oui' : '❌ Non'}</p>
-          <p><strong>État de chargement:</strong> {isLoading ? 'En cours...' : 'Terminé'}</p>
-          
-          <div className="mt-2 p-2 bg-white rounded border">
-            <p className="font-semibold">Données du contexte actuel:</p>
-            <p>• Nom: "{userProfile.name}" {userProfile.name ? '✅' : '❌'}</p>
-            <p>• Âge: "{userProfile.age}" {Number(userProfile.age) > 0 ? '✅' : '❌'}</p>
-            <p>• Poids: "{userProfile.weight}" {Number(userProfile.weight) > 0 ? '✅' : '❌'}</p>
-            <p>• Taille: "{userProfile.height}" {Number(userProfile.height) > 0 ? '✅' : '❌'}</p>
-            <p>• Genre: "{userProfile.gender}" {userProfile.gender ? '✅' : '❌'}</p>
-            <p>• Objectif: "{userProfile.goal}" {userProfile.goal ? '✅' : '❌'}</p>
-            <p>• Activité: "{userProfile.activityLevel}" {userProfile.activityLevel ? '✅' : '❌'}</p>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-2">
-            <button 
-              onClick={() => {
-                console.log('=== DEBUG FORCE RELOAD ===');
-                console.log('Current userProfile:', userProfile);
-                setIsLoading(true);
-                fetchUserProfileFromFirestore();
-              }}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-xs"
-            >
-              🔄 Recharger Firestore
-            </button>
-            
-            <button 
-              onClick={saveProfileToFirestore}
-              className="bg-green-500 text-white px-3 py-1 rounded text-xs"
-            >
-              💾 Forcer sauvegarde
-            </button>
-          </div>
-          
-          <div className="mt-2 p-2 bg-green-50 rounded border text-green-700">
-            <p className="font-semibold">✅ Optimisations appliquées et effectives:</p>
-            <p>• Suppression des boucles infinies de dépendances useCallback</p>
-            <p>• Sauvegarde Firestore uniquement sur clic bouton</p>
-            <p>• Stabilisation des useEffect pour éviter les re-renders</p>
-            <p>• <strong>🎯 FLAG SILENT:</strong> Lecture Firestore sans mise à jour timestamp</p>
-            <p><strong>➡️ Le problème de reload → mise à jour DB est maintenant résolu !</strong></p>
-          </div>
-        </div>
-      </div> */}
 
       {complete ? (
         <>

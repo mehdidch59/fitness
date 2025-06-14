@@ -203,13 +203,7 @@ function AppProvider({ children }) {
       
       // Toujours mettre à jour le contexte local
       dispatch({ type: ACTION_TYPES.UPDATE_USER_PROFILE, payload: updates });
-      
-      // Log pour debugging
-      if (silent) {
-        console.log('📖 Mise à jour silencieuse du profil (pas de sauvegarde Firestore):', updates);
-      } else {
-        console.log('💾 Mise à jour du profil avec sauvegarde Firestore:', updates);
-      }
+    
       
       // Synchroniser avec Firestore SEULEMENT si pas en mode silencieux
       if (!silent) {
