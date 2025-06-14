@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Calendar, Search, Settings, Play, Apple, RefreshCw } from 'lucide-react';
+import { Calendar, Search, Settings, Play, Apple, RefreshCw, Zap, Camera, Trophy } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useWorkouts } from '../../hooks/useWorkouts';
 import { useNutrition } from '../../hooks/useNutrition';
+import { Link } from 'react-router-dom';
 
 function HomeView() {
   const { 
@@ -76,7 +77,39 @@ function HomeView() {
             <Search className="mb-3 text-blue-500" size={28} />
             <p className="text-sm text-gray-600">Recherches IA</p>
             <p className="text-3xl font-bold">{nutritionPlans ? nutritionPlans.length : 0}</p>
+          </div>        </div>
+
+        {/* Nouvelles fonctionnalités avancées */}
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+          <div className="flex items-center mb-4">
+            <Zap className="mr-3" size={28} />
+            <h3 className="text-xl font-bold">Fonctionnalités IA Avancées</h3>
           </div>
+          <p className="mb-4 opacity-90">
+            Découvrez nos nouvelles fonctionnalités révolutionnaires !
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div className="bg-white bg-opacity-20 p-3 rounded-xl flex items-center">
+              <Camera className="mr-2" size={20} />
+              <span className="text-sm font-medium">Scanner Frigo</span>
+            </div>
+            <div className="bg-white bg-opacity-20 p-3 rounded-xl flex items-center">
+              <Calendar className="mr-2" size={20} />
+              <span className="text-sm font-medium">Meal Planning</span>
+            </div>
+            <div className="bg-white bg-opacity-20 p-3 rounded-xl flex items-center">
+              <Trophy className="mr-2" size={20} />
+              <span className="text-sm font-medium">Gamification</span>
+            </div>
+          </div>
+          
+          <Link
+            to="/advanced"
+            className="block w-full bg-white text-indigo-600 py-3 px-6 rounded-xl font-bold text-center hover:bg-gray-100 transition-colors"
+          >
+            Découvrir les Fonctionnalités IA+
+          </Link>
         </div>
 
         <div className="space-y-4">

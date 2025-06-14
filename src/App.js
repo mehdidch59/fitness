@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import FitnessApp from './components/FitnessApp';
 import AppBootstrap from './components/AppBootstrap';
 import { useAuth } from './hooks/useAuth';
 import './styles/main.css';
@@ -10,11 +9,14 @@ import { UserSessionProvider } from './components/UserSessionProvider';
 // Importer les vues pour les routes
 import HomeView from './components/views/HomeView';
 import AuthView from './components/views/AuthView';
+import Navbar from './components/ui/Navbar';
 import ProfileView from './components/views/ProfileView';
 import SettingsView from './components/views/SettingsView';
 import WorkoutView from './components/views/WorkoutView';
 import NutritionView from './components/views/NutritionView';
 import TrackingView from './components/views/TrackingView';
+import AdvancedFeaturesView from './components/views/AdvancedFeaturesView';
+import AdvancedFeaturesDemo from './components/AdvancedFeaturesDemo';
 
 // Composant wrapper pour gérer l'affichage conditionnel Auth/Profile
 const AuthProfileWrapper = () => {
@@ -32,19 +34,24 @@ const AuthProfileWrapper = () => {
 };
 
 const App = () => {
+  const { user } = useAuth();
+
   return (
     <UserSessionProvider>
       <Router>
         <AppBootstrap />
         <Routes>
-          <Route path="/" element={<FitnessApp><HomeView /></FitnessApp>} />
-          <Route path="/auth" element={<FitnessApp><AuthProfileWrapper /></FitnessApp>} />
-          <Route path="/settings" element={<FitnessApp><SettingsView /></FitnessApp>} />
-          <Route path="/workout" element={<FitnessApp><WorkoutView /></FitnessApp>} />
-          <Route path="/nutrition" element={<FitnessApp><NutritionView /></FitnessApp>} />
-          <Route path="/tracking" element={<FitnessApp><TrackingView /></FitnessApp>} />
+          <Route path="/" element={<HomeView />} />
+          <Route path="/auth" element={<AuthProfileWrapper />} />
+          <Route path="/settings" element={<SettingsView />} />
+          <Route path="/workout" element={<WorkoutView />} />
+          <Route path="/nutrition" element={<NutritionView />} />
+          <Route path="/tracking" element={<TrackingView />} />
+          <Route path="/advanced" element={<AdvancedFeaturesView />} />
+          <Route path="/advanced-demo" element={<AdvancedFeaturesDemo userId={user?.uid} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <Navbar />
       </Router>
     </UserSessionProvider>
   );

@@ -253,24 +253,39 @@ export class JSONParsingUtils {
     }
     return defaultValue;
   }
-
   /**
    * Normalise un array de manière sécurisée
    */
   static normalizeArray(value) {
     if (Array.isArray(value)) {
-      return value.map(item => String(item || '').trim()).filter(Boolean);
+      return value.map(item => {
+        // Si c'est un objet ingrédient, le conserver tel quel
+        if (typeof item === 'object' && item !== null) {
+          return item;
+        }
+        // Sinon, s'assurer que c'est une chaîne valide
+        const stringValue = String(item || '').trim();
+        return stringValue && stringValue !== 'Ingrédient' ? stringValue : null;
+      }).filter(Boolean);
     }
     if (typeof value === 'string' && value.trim()) {
       // Tenter de parser comme JSON array
       try {
         const parsed = JSON.parse(value);
         if (Array.isArray(parsed)) {
-          return parsed.map(item => String(item || '').trim()).filter(Boolean);
+          return parsed.map(item => {
+            if (typeof item === 'object' && item !== null) {
+              return item;
+            }
+            const stringValue = String(item || '').trim();
+            return stringValue && stringValue !== 'Ingrédient' ? stringValue : null;
+          }).filter(Boolean);
         }
       } catch (e) {
         // Si ce n'est pas du JSON, splitter par ligne ou virgule
-        return value.split(/[,\n]/).map(item => item.trim()).filter(Boolean);
+        return value.split(/[,\n]/)
+          .map(item => item.trim())
+          .filter(item => item && item !== 'Ingrédient');
       }
     }
     return [];

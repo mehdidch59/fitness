@@ -218,20 +218,20 @@ class NutritionFirestoreService {
       console.warn('⚠️ Erreur mise à jour cache local utilisateur');
     }
   }
-
   /**
    * SAUVEGARDE MULTIPLE DE RECETTES - SEULEMENT SUR DEMANDE EXPLICITE
    */
   async saveMultipleRecipes(recipes, userId = null, options = {}) {
     try {
-      console.log('💾 Sauvegarde multiple recettes...', recipes.length);
+      console.log('💾 Sauvegarde multiple recettes...', recipes?.length, 'pour userId:', userId);
       
       if (!recipes || recipes.length === 0) {
         throw new Error('Aucune recette à sauvegarder');
       }
 
       if (!userId) {
-        throw new Error('userId requis pour sauvegarder des recettes');
+        console.error('❌ userId manquant:', { userId, hasRecipes: !!recipes, recipesLength: recipes?.length });
+        throw new Error('userId requis pour sauvegarder des recettes - utilisateur non connecté');
       }
 
       // VÉRIFICATION : Pas de sauvegarde automatique
@@ -240,17 +240,20 @@ class NutritionFirestoreService {
         return [];
       }
       
+      console.log('✅ Validation OK - Démarrage sauvegarde pour:', userId);
       const savedRecipes = [];
       
       for (const recipe of recipes) {
         try {
           const dataToSave = {
             ...recipe,
-            userId: userId,
+            userId: userId, // S'assurer que userId est bien défini
           };
+          console.log('💾 Sauvegarde recette:', dataToSave.name, 'pour userId:', userId);
           const savedRecipe = await this.saveRecipe(dataToSave, userId, { explicitSave: true });
           if (savedRecipe) {
             savedRecipes.push(savedRecipe);
+            console.log('✅ Recette sauvegardée:', savedRecipe.name);
           }
         } catch (error) {
           console.error('❌ Erreur sauvegarde recette individuelle:', error);
@@ -258,7 +261,7 @@ class NutritionFirestoreService {
         }
       }
       
-      console.log('✅ Recettes sauvegardées:', savedRecipes.length);
+      console.log('✅ Toutes recettes sauvegardées:', savedRecipes.length, '/', recipes.length);
       return savedRecipes;
       
     } catch (error) {

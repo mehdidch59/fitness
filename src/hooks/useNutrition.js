@@ -12,7 +12,7 @@ import { mistralService } from '../services/mistralNutritionService';
 import { nutritionFirestoreService } from '../services/nutritionFirestoreService';
 
 // Hook d'authentification utilisant Firebase Auth directement
-function useAuth() {
+export function useAuth() {
   const [authState, setAuthState] = useState({
     user: null,
     uid: null,

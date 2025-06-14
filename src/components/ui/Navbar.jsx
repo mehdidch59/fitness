@@ -5,7 +5,8 @@ import {
   User, 
   Dumbbell, 
   Apple, 
-  Activity 
+  Activity,
+  Zap
 } from 'lucide-react';
 
 /**
@@ -16,7 +17,8 @@ function Navbar() {  const navItems = [
     { key: 'auth', icon: User, label: 'Profil', path: '/auth' },
     { key: 'workout', icon: Dumbbell, label: 'Training', path: '/workout' },
     { key: 'nutrition', icon: Apple, label: 'Nutrition', path: '/nutrition' },
-    { key: 'tracking', icon: Activity, label: 'Suivi', path: '/tracking' }
+    { key: 'tracking', icon: Activity, label: 'Suivi', path: '/tracking' },
+    { key: 'advanced', icon: Zap, label: 'IA+', path: '/advanced' }
   ];
 
   return (

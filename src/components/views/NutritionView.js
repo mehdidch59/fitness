@@ -21,64 +21,11 @@ import {
   useFavoriteMutations,
   useRecipeView,
   useIsRecipeFavorite,
-  useFavoriteRecipes
+  useFavoriteRecipes,
+  useAuth
 } from '../../hooks/useNutrition';
 import { mistralService } from '../../services/mistralNutritionService';
 import { nutritionFirestoreService } from '../../services/nutritionFirestoreService';
-
-// Hook d'authentification stable avec état et invalidation des queries
-const useAuth = () => {
-  // Utiliser useState pour suivre l'état d'authentification
-  const [authState, setAuthState] = useState(() => {
-    try {
-      console.log('🔍 NutritionView: Vérification données utilisateur localStorage...');
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        const user = JSON.parse(userData);
-        console.log('👤 NutritionView: Utilisateur trouvé:', user?.uid);
-        return { user, uid: user?.uid };
-      } else {
-        console.log('❌ NutritionView: Aucune donnée utilisateur dans localStorage');
-      }
-    } catch (error) {
-      console.log('⚠️ NutritionView: Erreur lecture données utilisateur:', error);
-    }
-    return { user: null, uid: null };
-  });
-
-  // Effect pour vérifier périodiquement le changement d'utilisateur
-  useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const userData = localStorage.getItem('user');
-        const currentUser = userData ? JSON.parse(userData) : null;
-        
-        // Vérifier si l'utilisateur a changé
-        const hasUserChanged = currentUser?.uid !== authState.user?.uid;
-        
-        if (hasUserChanged) {
-          if (currentUser?.uid) {
-            console.log('🔄 NutritionView: Nouvel utilisateur connecté:', currentUser.uid);
-            setAuthState({ user: currentUser, uid: currentUser.uid });
-          } else {
-            console.log('🔄 NutritionView: Utilisateur déconnecté');
-            setAuthState({ user: null, uid: null });
-          }
-        }
-      } catch (error) {
-        console.log('⚠️ NutritionView: Erreur vérification auth:', error);
-      }
-    };
-
-    // Vérifier immédiatement puis périodiquement
-    checkAuth();
-    const interval = setInterval(checkAuth, 1000); // Plus fréquent pour détecter rapidement les changements
-    
-    return () => clearInterval(interval);
-  }, [authState.user?.uid]);
-
-  return authState;
-};
 
 // Composant Error Boundary stable
 class ErrorBoundary extends React.Component {
@@ -365,21 +312,40 @@ const RecipeDetail = ({
                   </div>
                 </div>
               </div>
-            )}
-
-            <div className="mb-6">
+            )}            <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Ingrédients</h3>
               <div className="bg-gray-50 p-4 rounded-xl">
                 {recipe.ingredients && recipe.ingredients.length > 0 ? (
                   <ul className="space-y-2">
-                    {recipe.ingredients.map((ingredient, index) => (
-                      <li key={`ingredient-${index}-${ingredient.name || index}`} className="flex justify-between items-center">
-                        <span className="text-gray-700">{ingredient.name || 'Ingrédient'}</span>
-                        <span className="text-gray-600 font-medium">
-                          {ingredient.quantity || ''} {ingredient.unit || ''}
-                        </span>
-                      </li>
-                    ))}
+                    {recipe.ingredients.map((ingredient, index) => {
+                      // Gérer différents formats d'ingrédients
+                      let ingredientText = '';
+                      let quantityText = '';
+                      
+                      if (typeof ingredient === 'string') {
+                        // Si l'ingrédient est une chaîne simple
+                        ingredientText = ingredient;
+                      } else if (typeof ingredient === 'object' && ingredient !== null) {
+                        // Si l'ingrédient est un objet avec des propriétés
+                        ingredientText = ingredient.name || ingredient.ingredient || 'Ingrédient';
+                        quantityText = ingredient.quantity && ingredient.unit 
+                          ? `${ingredient.quantity} ${ingredient.unit}`
+                          : ingredient.quantity || '';
+                      } else {
+                        ingredientText = 'Ingrédient';
+                      }
+                      
+                      return (
+                        <li key={`ingredient-${index}-${ingredientText}`} className="flex justify-between items-center">
+                          <span className="text-gray-700">{ingredientText}</span>
+                          {quantityText && (
+                            <span className="text-gray-600 font-medium">
+                              {quantityText}
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="text-gray-600 italic">Ingrédients non spécifiés</p>
@@ -581,10 +547,18 @@ function NutritionView() {
     } else {
       console.log('❌ Aucun utilisateur connecté dans NutritionView');
     }
-  }, [user?.uid]);
-
-  const handleNutritionGeneration = useCallback(async () => {
+  }, [user?.uid]);  const handleNutritionGeneration = useCallback(async () => {
     try {
+      // Vérification préliminaire de l'authentification
+      if (!user?.uid) {
+        console.log('❌ Pas d\'utilisateur connecté - user?.uid:', user?.uid);
+        setError('Connectez-vous pour générer un plan nutritionnel');
+        setShowAuthPrompt(true);
+        return;
+      }
+
+      console.log('🚀 Démarrage génération nutrition pour utilisateur:', user.uid);
+      
       setIsGeneratingNutrition(true);
       setGenerationStage('Démarrage de la génération du plan nutritionnel...');
       setGenerationProgress(0);
@@ -593,24 +567,24 @@ function NutritionView() {
       // Update progress incrementally
       setGenerationProgress(20);
       setGenerationStage('Analyse des besoins nutritionnels...');
-      
-      // Récupérer le profil utilisateur depuis le localStorage ou définir des valeurs par défaut
+        // Récupérer le profil utilisateur depuis le localStorage ou définir des valeurs par défaut
       let userProfile = {};
       try {
         const userData = localStorage.getItem('user');
         if (userData) {
-          const user = JSON.parse(userData);
+          const parsedUser = JSON.parse(userData);
+          console.log('👤 Données utilisateur récupérées:', parsedUser?.uid);
           userProfile = {
             goal: 'prise de masse',
-            level: user.fitnessLevel || 'intermédiaire',
-            weight: user.weight || 75,
-            height: user.height || 175,
-            age: user.age || 25,
-            gender: user.gender || 'homme'
+            level: parsedUser.fitnessLevel || 'intermédiaire',
+            weight: parsedUser.weight || 75,
+            height: parsedUser.height || 175,
+            age: parsedUser.age || 25,
+            gender: parsedUser.gender || 'homme'
           };
         }
       } catch (error) {
-        console.log('Utilisation profil par défaut');
+        console.log('⚠️ Erreur parsing données utilisateur, utilisation profil par défaut:', error);
         userProfile = {
           goal: 'prise de masse',
           level: 'intermédiaire',
@@ -636,14 +610,19 @@ function NutritionView() {
         console.log('✅ Nouvelles recettes générées via Mistral:', newRecipes.length);
 
         setGenerationProgress(70);
-        setGenerationStage('Sauvegarde des recettes...');
-
-        // Sauvegarder les nouvelles recettes
+        setGenerationStage('Sauvegarde des recettes...');        // Sauvegarder les nouvelles recettes
         try {
-          await nutritionFirestoreService.saveMultipleRecipes(newRecipes, user?.uid);
+          const currentUserId = user?.uid;
+          if (!currentUserId) {
+            throw new Error('Utilisateur non connecté - impossible de sauvegarder');
+          }
+          
+          console.log('💾 Sauvegarde avec userId:', currentUserId);
+          await nutritionFirestoreService.saveMultipleRecipes(newRecipes, currentUserId, { explicitSave: true });
           console.log('✅ Recettes sauvegardées en base');
         } catch (saveError) {
           console.warn('⚠️ Erreur sauvegarde, recettes en cache local:', saveError);
+          // Ne pas faire échouer toute la génération pour un problème de sauvegarde
         }
 
         setGenerationProgress(90);

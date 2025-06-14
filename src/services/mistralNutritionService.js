@@ -11,8 +11,9 @@ class MistralNutritionService {
     this.apiKey = process.env.REACT_APP_MISTRAL_API_KEY;
     this.baseURL = 'https://api.mistral.ai/v1/chat/completions';
     this.model = 'mistral-large-latest';
-    this.maxRetries = 3;
-    this.timeout = 30000; // 30 secondes
+    this.maxRetries = 2; // Réduire les retries
+    this.timeout = 45000; // Réduire le timeout initial à 45s
+    this.requestQueue = new Map(); // Pour éviter les requêtes multiples
   }
 
   /**
@@ -105,10 +106,9 @@ FORMAT DE RÉPONSE OBLIGATOIRE (JSON valide uniquement):
     "fats": 18,
     "time": 15,
     "difficulty": "Facile|Moyen|Difficile",
-    "servings": 1,
-    "ingredients": [
-      "100g de ingredient 1",
-      "50g de ingredient 2"
+    "servings": 1,    "ingredients": [
+      {"name": "Nom précis ingrédient", "quantity": "100", "unit": "g"},
+      {"name": "Autre ingrédient", "quantity": "2", "unit": "cuillères"}
     ],
     "instructions": [
       "Étape 1 détaillée",
@@ -124,12 +124,36 @@ FORMAT DE RÉPONSE OBLIGATOIRE (JSON valide uniquement):
 \`\`\`
 
 IMPORTANT: Réponds UNIQUEMENT avec le JSON valide, aucun texte supplémentaire.`;
+  }  /**
+   * Wrapper pour fetch avec timeout amélioré
+   */
+  async fetchWithTimeout(url, options, timeoutMs) {
+    return new Promise((resolve, reject) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        reject(new Error(`Timeout après ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      fetch(url, { ...options, signal: controller.signal })
+        .then(response => {
+          clearTimeout(timeoutId);
+          resolve(response);
+        })
+        .catch(error => {
+          clearTimeout(timeoutId);
+          if (error.name === 'AbortError') {
+            reject(new Error(`Timeout de ${timeoutMs}ms dépassé`));
+          } else {
+            reject(error);
+          }
+        });
+    });
   }
 
   /**
-   * Appel API Mistral avec retry et timeout
-   */
-  async callMistralAPI(prompt, retryCount = 0) {
+   * Appel API Mistral avec retry et timeout amélioré
+   */  async callMistralAPI(prompt, retryCount = 0) {
     try {
       console.log(`🌐 Appel Mistral API (tentative ${retryCount + 1})...`);
 
@@ -138,10 +162,11 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON valide, aucun texte supplémentaire.
         throw new Error('Clé API Mistral non configurée - ajoutez REACT_APP_MISTRAL_API_KEY à votre .env');
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      // Timeout progressif
+      const timeoutDuration = Math.min(this.timeout * (retryCount + 1), 60000); // Max 60s
+      console.log(`⏱️ Timeout configuré: ${timeoutDuration}ms`);
 
-      const response = await fetch(this.baseURL, {
+      const response = await this.fetchWithTimeout(this.baseURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,15 +181,9 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON valide, aucun texte supplémentaire.
             }
           ],
           temperature: 0.7,
-          max_tokens: 4000,
-          response_format: { type: 'json_object' } // Forcer le JSON
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
+          max_tokens: 4000
+        })
+      }, timeoutDuration);if (!response.ok) {
         let errorText = 'Erreur inconnue';
         try {
           errorText = await response.text();
@@ -194,14 +213,25 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON valide, aucun texte supplémentaire.
         throw new Error('Contenu vide dans la réponse Mistral');
       }
 
-      return content;
-
-    } catch (error) {
+      return content;    } catch (error) {
       console.error(`❌ Erreur appel Mistral (tentative ${retryCount + 1}):`, error);
 
-      // Retry logic pour les erreurs réseau/temporaires uniquement
+      // Gestion spéciale des erreurs d'abort/timeout
+      if (error.name === 'AbortError' || error.message.includes('Timeout')) {
+        console.warn('🚫 Requête annulée (timeout)');
+        
+        // Retry avec timeout plus long seulement pour les timeouts
+        if (retryCount < this.maxRetries) {
+          console.log(`🔄 Retry avec timeout plus long dans 3 secondes...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          return this.callMistralAPI(prompt, retryCount + 1);
+        } else {
+          throw new Error('Timeout persistant - l\'API Mistral ne répond pas');
+        }
+      }
+
+      // Retry logic pour les autres erreurs réseau/temporaires
       if (retryCount < this.maxRetries && 
-          !error.name === 'AbortError' && 
           !error.message.includes('401') && // Pas de retry pour erreur auth
           !error.message.includes('403') && // Pas de retry pour erreur permission
           !error.message.includes('Clé API')) {  // Pas de retry pour erreur config

@@ -63,9 +63,9 @@ const isUserProfileComplete = () => {
   try {
     // Vérifier d'abord l'authentification
     const authToken = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
+    const userData = localStorage.getItem('user') || localStorage.getItem('userData') || localStorage.getItem('authUser');
     
-    if (!authToken || !userData) {
+    if (!userData) {
       showPopupOrConsole('profile', 'Connexion requise', 'Veuillez vous connecter pour accéder à cette fonctionnalité.');
       return false;
     }
@@ -73,8 +73,9 @@ const isUserProfileComplete = () => {
     // Vérifier ensuite le profil utilisateur
     const userProfile = localStorage.getItem('userProfile');
     if (!userProfile) {
-      showPopupOrConsole('profile', 'Profil incomplet', 'Veuillez compléter votre profil pour accéder à cette fonctionnalité.');
-      return false;
+      // Pour l'instant, considérer qu'avoir des données utilisateur suffit
+      console.log('⚠️ Profil utilisateur non trouvé mais utilisateur connecté - continuons');
+      return true; // Permettre l'accès même sans profil complet
     }
     
     const profile = JSON.parse(userProfile);
@@ -87,13 +88,16 @@ const isUserProfileComplete = () => {
            profile.activityLevel;
            
     if (!isComplete) {
-      showPopupOrConsole('profile', 'Profil incomplet', 'Veuillez compléter votre profil dans les paramètres pour accéder à cette fonctionnalité.');
+      console.log('⚠️ Profil incomplet mais utilisateur connecté - continuons');
+      return true; // Permettre l'accès même avec profil incomplet
     }
     
-    return isComplete;
+    return true;
   } catch (error) {
-    showPopupOrConsole('error', 'Erreur', 'Une erreur est survenue lors de la vérification du profil.');
-    return false;
+    console.log('⚠️ Erreur vérification profil:', error);
+    // En cas d'erreur, vérifier au moins si l'utilisateur est connecté
+    const userData = localStorage.getItem('user') || localStorage.getItem('userData') || localStorage.getItem('authUser');
+    return !!userData;
   }
 };
 
