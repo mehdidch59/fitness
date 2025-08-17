@@ -18,8 +18,8 @@ class SimpleMistralService {
 
   updateParsingStats(method) {
     this.parsingStats.totalGenerations++;
-    
-    switch(method) {
+
+    switch (method) {
       case 'direct':
         this.parsingStats.directSuccessRate++;
         break;
@@ -34,13 +34,13 @@ class SimpleMistralService {
   async generateWorkoutPrograms(userProfile, query = '') {
     // Simulation d'une génération de programmes d'entraînement
     console.log('🏋️ Génération programmes workout (mode démo):', userProfile.goal);
-    
+
     // Simuler un délai de traitement
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     // Mettre à jour les stats de parsing
     this.updateParsingStats('direct');
-    
+
     return this.generateMockWorkoutPrograms(userProfile);
   }
 
@@ -64,7 +64,7 @@ class SimpleMistralService {
             exercises: [
               {
                 name: 'Squats',
-                sets: '3',
+                sets: 3,
                 reps: '12-15',
                 rest: '60s',
                 type: 'compound',
@@ -73,7 +73,7 @@ class SimpleMistralService {
               },
               {
                 name: 'Pompes',
-                sets: '3',
+                sets: 3,
                 reps: '8-12',
                 rest: '60s',
                 type: 'compound',
@@ -82,7 +82,7 @@ class SimpleMistralService {
               },
               {
                 name: 'Planche',
-                sets: '3',
+                sets: 3,
                 reps: '30-60s',
                 rest: '60s',
                 type: 'core',
@@ -118,7 +118,7 @@ class SimpleMistralService {
             exercises: [
               {
                 name: 'Développé couché',
-                sets: '4',
+                sets: 4,
                 reps: '8-10',
                 rest: '90s',
                 type: 'compound',
@@ -134,7 +134,7 @@ class SimpleMistralService {
             exercises: [
               {
                 name: 'Squats avec poids',
-                sets: '4',
+                sets: 4,
                 reps: '10-12',
                 rest: '90s',
                 type: 'compound',
@@ -170,7 +170,7 @@ class SimpleMistralService {
             exercises: [
               {
                 name: 'Développé incliné',
-                sets: '4',
+                sets: 4,
                 reps: '6-8',
                 rest: '2-3 min',
                 type: 'compound',
@@ -196,18 +196,189 @@ class SimpleMistralService {
   async generateCustomContent(prompt) {
     // Simulation d'une réponse IA pour la démo
     console.log('🤖 Génération contenu IA (mode démo):', prompt.substring(0, 100) + '...');
-    
+
     // Simuler un délai de traitement
     await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // If prompt requests exactly one program metadata (schedule generation)
+    if (/Propose exactement 1 programme|TÂCHE: Propose exactement 1 programme|CONTRAINTES DE SORTIE.*schedule/i.test(prompt)) {
+      // detect requested type in prompt (fullbody|halfbody|split)
+      const typeMatch = prompt.match(/Propose exactement 1 programme de type\s*["'“]?(\w+)/i) ||
+        prompt.match(/de type\s*["'“]?(fullbody|halfbody|split)/i);
+      const requestedType = typeMatch ? String(typeMatch[1]).toLowerCase() : null;
+      // detect requested level (débutant/intermédiaire/avancé)
+      const levelMatch = prompt.match(/niveau\s*[:\-]?\s*(débutant|intermédiaire|intermediaire|avancé|avance)/i);
+      let requestedLevel = levelMatch ? String(levelMatch[1]).toLowerCase() : null;
+      if (requestedLevel === 'intermediaire') requestedLevel = 'intermédiaire';
+      if (requestedLevel === 'avance') requestedLevel = 'avancé';
+
+      // obtain prototypes and pick the one matching requestedType
+      const protos = this.generateMockWorkoutPrograms({ equipmentLocation: 'home' });
+      let proto = null;
+      if (requestedType) {
+        proto = protos.find(p => String(p.type).toLowerCase() === requestedType);
+      }
+      proto = proto || protos.find(p => String(p.type).toLowerCase() === 'fullbody') || protos[0];
+
+      const meta = {
+        // ensure id unique per type+level so downstream day-generation can seed variations
+        id: `program_${requestedType || proto.type || 'program'}_${(requestedLevel || proto.level || 'interm')}_${Date.now()}`,
+        type: requestedType || proto.type || 'fullbody',
+        title: proto.title ? `${proto.title} - ${requestedLevel || proto.level}` : `Programme Démo ${requestedLevel || proto.type}`,
+        description: proto.description || 'Programme démo généré localement.',
+        level: requestedLevel || proto.level || 'intermédiaire',
+        duration: proto.duration || '8 semaines',
+        frequency: proto.frequency || '3x/semaine',
+        sessionDuration: proto.sessionDuration || '60 min',
+        tips: Array.isArray(proto.tips) ? proto.tips : ['Échauffement 10 min', 'Hydrate-toi'],
+        schedule: Array.isArray(proto.schedule) && proto.schedule.length >= 3 ? proto.schedule : ['Lundi','Mercredi','Vendredi']
+      };
+      this.updateParsingStats('direct');
+      return meta;
+    }
     
+    // If prompt requests the workout for a specific day
+    if (/Génère le WORKOUT COMPLET pour le jour|TÂCHE: Génère le WORKOUT COMPLET pour le jour/i.test(prompt)) {
+      // Extract day
+      const dayMatch = prompt.match(/jour\s*["'“]?([A-Za-zÀ-ÿ\-]+)["'”]?/i);
+      const day = (dayMatch && dayMatch[1]) ? normalizeDayName(dayMatch[1]) : 'Lundi';
+
+      // Try to extract PROGRAMME_META JSON if present to know program type
+      let programMeta = null;
+      const metaMatch = prompt.match(/PROGRAMME_META:\s*(\{[\s\S]*\})/);
+      if (metaMatch) {
+        try { programMeta = JSON.parse(metaMatch[1]); } catch { programMeta = null; }
+      }
+      const pType = (programMeta && programMeta.type) ? String(programMeta.type).toLowerCase() : 'fullbody';
+      const pLevel = (programMeta && programMeta.level) ? String(programMeta.level).toLowerCase() : 'intermédiaire';
+
+      // compute seed from program id to vary selections deterministically
+      const seed = idSeed((programMeta && programMeta.id) ? String(programMeta.id) : String(Date.now()));
+      
+      // Small pools per program type to vary exercises by day
+      const fullbodyPools = [
+        [
+          { name: 'Squat', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Quadriceps', 'Fessiers'] },
+          { name: 'Développé couché', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Pectoraux', 'Triceps'] },
+          { name: 'Rowing barre', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Dos', 'Biceps'] },
+          { name: 'Planche', sets: 3, reps: '45-60s', rest: '60s', type: 'isolation', targetMuscles: ['Core'] }
+        ],
+        [
+          { name: 'Soulevé de terre', sets: 4, reps: '6-8', rest: '120s', type: 'compound', targetMuscles: ['Dos', 'Ischio'] },
+          { name: 'Développé militaire', sets: 3, reps: '8-10', rest: '90s', type: 'compound', targetMuscles: ['Épaules', 'Triceps'] },
+          { name: 'Fentes', sets: 3, reps: '10-12', rest: '90s', type: 'compound', targetMuscles: ['Jambes'] },
+          { name: 'Russian twist', sets: 3, reps: '20', rest: '60s', type: 'isolation', targetMuscles: ['Abdominaux'] }
+        ],
+        [
+          { name: 'Presse à cuisses', sets: 4, reps: '10-12', rest: '90s', type: 'compound', targetMuscles: ['Quadriceps'] },
+          { name: 'Tractions', sets: 4, reps: '6-10', rest: '120s', type: 'compound', targetMuscles: ['Dos', 'Biceps'] },
+          { name: 'Pompes déclinées', sets: 3, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Pectoraux'] },
+          { name: 'Gainage latéral', sets: 3, reps: '30-45s', rest: '60s', type: 'isolation', targetMuscles: ['Core'] }
+        ]
+      ];
+
+      const upperPool = [
+        { name: 'Développé couché', sets: 4, reps: '6-10', rest: '90s', type: 'compound', targetMuscles: ['Pectoraux'] },
+        { name: 'Rowing haltère', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Dos'] },
+        { name: 'Élévations latérales', sets: 3, reps: '12-15', rest: '60s', type: 'isolation', targetMuscles: ['Épaules'] },
+        { name: 'Curl biceps', sets: 3, reps: '10-12', rest: '60s', type: 'isolation', targetMuscles: ['Biceps'] }
+      ];
+      const lowerPool = [
+        { name: 'Squat', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Quadriceps'] },
+        { name: 'Soulevé de terre jambes tendues', sets: 3, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Ischio'] },
+        { name: 'Fentes', sets: 3, reps: '10-12', rest: '90s', type: 'compound', targetMuscles: ['Fessiers'] },
+        { name: 'Mollets debout', sets: 3, reps: '12-15', rest: '60s', type: 'isolation', targetMuscles: ['Mollets'] }
+      ];
+
+      const splitPools = [
+        [ // chest
+          { name: 'Développé incliné', sets: 4, reps: '6-8', rest: '120s', type: 'compound', targetMuscles: ['Pectoraux'] },
+          { name: 'Écarté couché', sets: 3, reps: '10-12', rest: '60s', type: 'isolation', targetMuscles: ['Pectoraux'] },
+          { name: 'Dips', sets: 3, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Pectoraux', 'Triceps'] },
+          { name: 'Pec deck', sets: 3, reps: '12', rest: '60s', type: 'isolation', targetMuscles: ['Pectoraux'] }
+        ],
+        [ // back
+          { name: 'Tractions', sets: 4, reps: '6-10', rest: '120s', type: 'compound', targetMuscles: ['Dos'] },
+          { name: 'Rowing barre', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Dos'] },
+          { name: 'Tirage horizontal', sets: 3, reps: '10-12', rest: '90s', type: 'compound', targetMuscles: ['Dos'] },
+          { name: 'Curl marteau', sets: 3, reps: '10-12', rest: '60s', type: 'isolation', targetMuscles: ['Biceps'] }
+        ],
+        [ // legs
+          { name: 'Squat', sets: 4, reps: '8-12', rest: '120s', type: 'compound', targetMuscles: ['Jambes'] },
+          { name: 'Presse', sets: 4, reps: '10-12', rest: '90s', type: 'compound', targetMuscles: ['Quadriceps'] },
+          { name: 'Fentes', sets: 3, reps: '10-12', rest: '90s', type: 'compound', targetMuscles: ['Fessiers'] },
+          { name: 'Leg curl', sets: 3, reps: '12', rest: '60s', type: 'isolation', targetMuscles: ['Ischio'] }
+        ],
+        [ // shoulders/arms
+          { name: 'Développé militaire', sets: 4, reps: '8-10', rest: '90s', type: 'compound', targetMuscles: ['Épaules'] },
+          { name: 'Élévations frontales', sets: 3, reps: '12', rest: '60s', type: 'isolation', targetMuscles: ['Épaules'] },
+          { name: 'Curl incliné', sets: 3, reps: '10-12', rest: '60s', type: 'isolation', targetMuscles: ['Biceps'] },
+          { name: 'Extension triceps poulie', sets: 3, reps: '10-12', rest: '60s', type: 'isolation', targetMuscles: ['Triceps'] }
+        ]
+      ];
+
+      // choose set based on program type/day and requested level (débutant/intermédiaire/avancé)
+      let exercises = [];
+      const dayIndex = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'].indexOf(day);
+
+      if (pType === 'halfbody') {
+        // alternate upper/lower based on parity of (dayIndex + seed) to vary between programs
+        const upperFirst = ((dayIndex + seed) % 2) === 0;
+        exercises = upperFirst ? upperPool : lowerPool;
+        // rotate to vary ordering per program
+        exercises = rotateArray(exercises, seed % exercises.length);
+      } else if (pType === 'split') {
+        // offset pool index by seed to pick different split focus per program
+        const poolIdx = (dayIndex + (seed % splitPools.length)) % splitPools.length;
+        exercises = rotateArray(splitPools[poolIdx], seed % splitPools[poolIdx].length);
+      } else { // fullbody
+        // offset pool index by seed so different fullbody metas won't always pick same pool
+        const poolIdx = (dayIndex + (seed % fullbodyPools.length)) % fullbodyPools.length;
+        exercises = rotateArray(fullbodyPools[poolIdx], seed % fullbodyPools[poolIdx].length);
+      }
+
+      // Desired count by level (débutant=4, intermédiaire=5, avancé=6) with minor seed variation
+      const baseCount = pLevel && pLevel.includes('début') ? 4 : (pLevel && pLevel.includes('avancé') ? 6 : 5);
+      const extra = (seed % 2); // 0 or 1 to slightly vary counts across programs
+      const desiredCount = Math.max(4, baseCount + (extra === 1 ? 0 : 0)); // keep deterministic but could be adjusted
+
+      // Expand or trim to desiredCount (clone items if needed) and ensure numeric sets
+      const expanded = [];
+      for (let i = 0; expanded.length < desiredCount; i++) {
+        const src = exercises[i % exercises.length];
+        const clone = { ...src };
+        // ensure sets are numbers
+        if (typeof clone.sets !== 'number') {
+          const n = parseInt(String(clone.sets).replace(/\D/g,'')) || (pLevel.includes('début') ? 3 : 4);
+          clone.sets = n;
+        }
+        // minor name variation if duplicated
+        if (i >= exercises.length) clone.name = `${clone.name} (var.)`;
+        expanded.push(clone);
+      }
+
+      const dayObj = {
+        day,
+        name: `${day} - Séance ${pType.toUpperCase()} (${pLevel || 'intermédiaire'})`,
+        duration: (programMeta && programMeta.sessionDuration) ? programMeta.sessionDuration : '60 min',
+        exercises: expanded.map(e => ({ ...e }))
+      };
+      this.updateParsingStats('direct');
+      return dayObj;
+    }
+
     if (prompt.includes('recettes')) {
+      this.updateParsingStats('direct');
       return this.generateMockRecipes();
     }
-    
+
     if (prompt.includes('plan de repas')) {
+      this.updateParsingStats('direct');
       return this.generateMockMealPlan();
     }
-    
+
+    // Default generic response (unchanged)
+    this.updateParsingStats('cleaned');
     return {
       response: 'Contenu généré par l\'IA (mode démo)',
       timestamp: new Date().toISOString()
@@ -341,6 +512,33 @@ class SimpleMistralService {
       ]
     };
   }
+}
+
+// Add small deterministic hash helper to vary pools/order per program id
+function idSeed(id) {
+	// simple deterministic hash: sum of char codes
+	if (!id) return 0;
+	let s = 0;
+	for (let i = 0; i < id.length; i++) s += id.charCodeAt(i);
+	return Math.abs(s);
+}
+
+function rotateArray(arr, by) {
+	if (!Array.isArray(arr) || arr.length === 0) return arr;
+	const n = arr.length;
+	const k = ((by % n) + n) % n;
+	return arr.slice(k).concat(arr.slice(0, k));
+}
+
+// Add local helper to normalize French day names (used by generateCustomContent)
+function normalizeDayName(d) {
+  if (!d) return d;
+  const map = {
+    'lundi': 'Lundi', 'mardi': 'Mardi', 'mercredi': 'Mercredi', 'jeudi': 'Jeudi',
+    'vendredi': 'Vendredi', 'samedi': 'Samedi', 'dimanche': 'Dimanche'
+  };
+  const key = String(d).trim().toLowerCase();
+  return map[key] || d;
 }
 
 export const mistralService = new SimpleMistralService();

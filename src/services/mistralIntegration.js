@@ -1,11 +1,10 @@
+// src/services/mistralIntegration.js
 import { mistralService } from './mistralService';
 
-/* ───────── Jours FR ───────── */
+/* ───────── Config usage IA ───────── */
+const USE_LOCAL_FALLBACK = false; // ↤ par défaut: on privilégie l'IA, pas de secours
+const MAX_RETRIES_JSON = 4;       // plus d'essais côté IA avant d'abandonner
 const DAY_ORDER = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-const EN2FR = {
-  Monday: 'Lundi', Tuesday: 'Mardi', Wednesday: 'Mercredi', Thursday: 'Jeudi',
-  Friday: 'Vendredi', Saturday: 'Samedi', Sunday: 'Dimanche'
-};
 
 /* ───────── Utils profil ───────── */
 function toNumOrStr(v) {
@@ -18,6 +17,7 @@ function getMergedProfile() {
   let userProfile = {};
   let equipmentProfile = {};
   let nutritionProfile = {};
+
   try { userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}'); } catch {}
   try { equipmentProfile = JSON.parse(localStorage.getItem('equipmentProfile') || '{}'); } catch {}
   try { nutritionProfile = JSON.parse(localStorage.getItem('nutritionProfile') || '{}'); } catch {}
@@ -50,133 +50,82 @@ function getMergedProfile() {
 /* ───────── Prompts ───────── */
 function buildSchedulePromptSingle(profile, type, query) {
   const typeLabel = type === 'fullbody' ? 'fullbody' : (type === 'halfbody' ? 'halfbody' : 'split');
-  return `Tu es un coach de musculation.
-PROFIL: ${JSON.stringify(profile)}
-TÂCHE: Propose exactement 1 programme de type "${typeLabel}" et renvoie UNIQUEMENT un objet JSON avec SES MÉTADONNÉES et SON SCHEDULE (pas de markdown, pas de texte).
 
-CONTRAINTES DE SORTIE (JSON strict, un seul objet) :
-{
-  "id": "program_${typeLabel}_<timestamp>",
-  "type": "${typeLabel}",
-  "title": "…",
-  "description": "…",
-  "level": "débutant|intermédiaire|avancé",
-  "duration": "4 à 12 semaines",
-  "frequency": "3x/semaine|4x/semaine|5x/semaine|6x/semaine",
-  "sessionDuration": "45-90 min",
-  "tips": ["…","…"],
-  "schedule": ["JOURS_FR"]
-}
-
-RÈGLES POUR "schedule":
-- 3 à 7 jours, tous distincts, choisis parmi: ${JSON.stringify(DAY_ORDER)}.
-- Respecte strictement les noms FR.
-- Ne renvoie AUCUN texte hors JSON.${query ? `\nCONTEXTE: ${query}` : ''}`;
-}
-
-function buildSchedulePromptSingleV2(profile, type, query) {
-  const typeLabel = type === 'fullbody' ? 'fullbody' : (type === 'halfbody' ? 'halfbody' : 'split');
-  // few-shot ultra-explicite
-  const example = {
-    id: `program_${typeLabel}_1234567890`,
-    type: typeLabel,
-    title: "Exemple Programme",
-    description: "Exemple strict",
-    level: "intermédiaire",
-    duration: "8 semaines",
-    frequency: "4x/semaine",
-    sessionDuration: "60 min",
-    tips: ["Respiration contrôlée","Échauffement systématique"],
-    schedule: ["Lundi","Mardi","Jeudi","Vendredi"]
-  };
-  return `Réponds UNIQUEMENT par un objet JSON strict, sans markdown et sans texte additionnel.
-Exemple de format (à ADAPTER, pas à répéter) :
-${JSON.stringify(example)}
-
-Contexte:
-PROFIL: ${JSON.stringify(profile)}
-TYPE: "${typeLabel}"
-JOURS AUTORISÉS: ${JSON.stringify(DAY_ORDER)}
-RÈGLES:
-- "schedule" contient 3 à 7 jours, uniques, choisis uniquement parmi les jours autorisés.
-- Utilise les noms français exactement.
-- AUCUN autre texte.
-
-${query ? `CONTEXTE LIBRE: ${query}` : ''}`;
+  return [
+    'Tu es un coach de musculation.',
+    `PROFIL: ${JSON.stringify(profile)}`,
+    `TÂCHE: Propose exactement 1 programme de type "${typeLabel}" et renvoie UNIQUEMENT ses MÉTADONNÉES et son SCHEDULE au format JSON strict.`,
+    '',
+    'CONTRAINTES DE SORTIE (objet JSON unique) :',
+    '{',
+    '  "id": "program_${typeLabel}_<id>",',
+    '  "type": "' + typeLabel + '",',
+    '  "title": "…",',
+    '  "description": "…",',
+    '  "level": "débutant|intermédiaire|avancé",',
+    '  "duration": "4-12 semaines",',
+    '  "frequency": "3x/semaine|4x/semaine|5x/semaine|6x/semaine",',
+    '  "sessionDuration": "45-90 min",',
+    '  "tips": ["…","…"],',
+    '  "schedule": ["JOURS_FR"]',
+    '}',
+    '',
+    'RÈGLES POUR "schedule":',
+    `- 3 à 7 jours, tous distincts, choisis parmi: ${JSON.stringify(DAY_ORDER)}.`,
+    '- Respecte strictement les noms en français (exactement comme dans la liste).',
+    '- Ne renvoie AUCUN texte hors JSON.',
+    query ? `CONTEXTE: ${query}` : ''
+  ].join('\n');
 }
 
 function buildDayPrompt(programMeta, day, profile) {
-  return `Tu es un coach de musculation.
-PROFIL: ${JSON.stringify(profile)}
-PROGRAMME_META: ${JSON.stringify({
-    id: programMeta.id,
-    type: programMeta.type,
-    level: programMeta.level,
-    duration: programMeta.duration,
-    frequency: programMeta.frequency,
-    sessionDuration: programMeta.sessionDuration
-  })}
-
-TÂCHE: Génère le WORKOUT COMPLET pour le jour "${day}".
-CONTRAINTES:
-Réponds UNIQUEMENT avec un JSON strict:
-{
-  "day": "${day}",
-  "name": "...",
-  "duration": "${programMeta.sessionDuration || '60 min'}",
-  "exercises": [
-    { "name":"...", "sets":4, "reps":"8-12", "rest":"90s", "type":"compound|isolation|warmup", "targetMuscles":["..."] },
-    { "name":"...", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["..."] },
-    { "name":"...", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["..."] },
-    { "name":"...", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["..."] }
-  ]
-}
-- Minimum 4 exercices pertinents.
-- AUCUN texte hors JSON.`;
-}
-
-/* ───────── Validation & parsing ───────── */
-function extractJSON(text) {
-  if (!text) return null;
-  const t = String(text).trim();
-  try { return JSON.parse(t); } catch {}
-  const m = t.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-  if (m) {
-    try { return JSON.parse(m[1]); } catch {}
-  }
-  return null;
+  return [
+    'Tu es un coach de musculation.',
+    `PROFIL: ${JSON.stringify(profile)}`,
+    'PROGRAMME_META: ' + JSON.stringify({
+      id: programMeta.id,
+      type: programMeta.type,
+      level: programMeta.level,
+      duration: programMeta.duration,
+      frequency: programMeta.frequency,
+      sessionDuration: programMeta.sessionDuration
+    }),
+    '',
+    `TÂCHE: Génère le WORKOUT COMPLET pour le jour "${day}".`,
+    'Réponds UNIQUEMENT avec un objet JSON strict de la forme:',
+    '{',
+    `  "day": "${day}",`,
+    '  "name": "…",',
+    `  "duration": "${programMeta.sessionDuration || '60 min'}",`,
+    '  "exercises": [',
+    '    { "name":"…", "sets":4, "reps":"8-12", "rest":"90s", "type":"compound|isolation|warmup", "targetMuscles":["…"] },',
+    '    { "name":"…", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["…"] },',
+    '    { "name":"…", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["…"] },',
+    '    { "name":"…", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["…"] }',
+    '  ]',
+    '}',
+    '- Minimum 4 exercices pertinents.',
+    '- AUCUN texte hors JSON.'
+  ].join('\n');
 }
 
-async function callJSONLoose(llmFn, prompt) {
-  const raw = await llmFn(prompt, { temperature: 0.2 });
-  const cleaned = String(raw || '').replace(/```json|```/g, '').trim();
-  const parsed = extractJSON(cleaned);
-  if (!parsed) throw new Error('invalid JSON');
-  return parsed;
-}
-
-function normalizeSchedule(input) {
-  // accepte array, string CSV, ou mélange anglais
-  let arr = [];
-  if (Array.isArray(input)) arr = input.slice();
-  else if (typeof input === 'string') {
-    arr = input.split(/[,\n;]+/).map(s => s.trim()).filter(Boolean);
-  }
-
-  arr = arr.map(d => EN2FR[d] || d);            // map EN -> FR si besoin
-  arr = arr.filter(d => DAY_ORDER.includes(d)); // garde FR valides uniquement
-
-  // dédoublonnage en conservant l'ordre
-  const seen = new Set();
-  arr = arr.filter(d => (seen.has(d) ? false : (seen.add(d), true)));
-  return arr;
+/* ───────── Validation & Normalisation ───────── */
+function normalizeDayName(d) {
+  if (!d) return d;
+  const map = {
+    'lundi':'Lundi','mardi':'Mardi','mercredi':'Mercredi','jeudi':'Jeudi',
+    'vendredi':'Vendredi','samedi':'Samedi','dimanche':'Dimanche'
+  };
+  const key = String(d).trim().toLowerCase();
+  return map[key] || d;
 }
 
 function validateScheduleProg(p) {
   const errs = [];
-  const s = normalizeSchedule(p && p.schedule);
+  const s = Array.isArray(p && p.schedule) ? p.schedule.map(normalizeDayName) : [];
 
   if (s.length < 3 || s.length > 7) errs.push('schedule length 3..7');
+  if (new Set(s).size !== s.length) errs.push('schedule unique days');
   if (s.some(d => !DAY_ORDER.includes(d))) errs.push('schedule must be FR names');
 
   ['id','type','title','description','level','duration','frequency','sessionDuration'].forEach(k=>{
@@ -191,115 +140,234 @@ function validateWorkoutDay(w, expectedDay) {
   if (!w || w.day !== expectedDay) errs.push(`day must be ${expectedDay}`);
   if (!Array.isArray(w && w.exercises) || w.exercises.length < 4) errs.push('exercises >= 4');
   for (const e of (w && w.exercises) || []) {
-    if (!e || !e.name || typeof e.sets !== 'number' || !e.reps) {
-      errs.push('exercise fields missing'); break;
-    }
+    if (!e || !e.name || typeof e.sets !== 'number' || !e.reps) { errs.push('exercise fields missing'); break; }
   }
   return { ok: errs.length === 0, errs };
 }
 
-/* ───────── Génération “staged” robuste ───────── */
-async function requestScheduleMetaStrict(profile, type, query, maxRetries = 3) {
+/* ───────── Parse JSON robuste ───────── */
+function extractJSON(text) {
+  if (!text) return null;
+  const t = String(text).trim();
+
+  // direct
+  try { return JSON.parse(t); } catch {}
+
+  // balises de code
+  const cleaned = t.replace(/```json|```/gi, '').trim();
+  try { return JSON.parse(cleaned); } catch {}
+
+  // premier objet/tableau
+  const m = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+  if (m) {
+    try { return JSON.parse(m[1]); } catch {}
+  }
+
+  // micro-réparations: quotes droites, trailing commas
+  const fixed = cleaned
+    .replace(/[“”]/g, '"')
+    .replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(fixed); } catch {}
+
+  return null;
+}
+
+// Replace callJSONStrict and callJSONBestEffort with tolerant implementations
+async function callJSONStrict(llmFn, prompt) {
+  // call LLM in "json" mode if supported, and accept object results or wrapped content
+  const raw = await llmFn(prompt, { temperature: 0.2, response_format: 'json', stop: [] });
+
+  // Helper to extract text/content from common wrapper shapes
+  function extractContentFromWrapper(r) {
+    if (r == null) return null;
+    if (Array.isArray(r)) return r;
+    if (typeof r === 'object') {
+      // Already a likely JSON object (e.g., the desired object)
+      const keys = Object.keys(r || {});
+      if (keys.includes('id') || keys.includes('schedule') || keys.includes('exercises')) return r;
+
+      // OpenAI-like: choices[0].message.content or choices[0].text
+      if (Array.isArray(r.choices) && r.choices[0]) {
+        const c = r.choices[0];
+        if (c.message && (typeof c.message.content === 'object' || typeof c.message.content === 'string')) return c.message.content;
+        if (typeof c.text !== 'undefined') return c.text;
+        if (c.content) return c.content;
+      }
+
+      // Some APIs: message/content at root
+      if (r.message && r.message.content) return r.message.content;
+      if (r.content) return r.content;
+
+      // Some APIs: data/output arrays
+      if (Array.isArray(r.data) && r.data[0] && (r.data[0].text || r.data[0].content)) {
+        return r.data[0].text || r.data[0].content;
+      }
+      if (Array.isArray(r.output) && r.output[0] && r.output[0].content) {
+        return r.output[0].content;
+      }
+
+      // Fallback: return the object itself (it might already be the parsed JSON)
+      return r;
+    }
+    // string or other
+    return r;
+  }
+
+  const candidate = extractContentFromWrapper(raw);
+
+  // If candidate is object/array -> accept it
+  if (candidate && (typeof candidate === 'object')) return candidate;
+
+  // Otherwise try to parse string content robustly
+  const text = String(candidate || '').trim();
+  const parsed = extractJSON(text);
+  if (!parsed) throw new Error('invalid JSON');
+  return parsed;
+}
+
+async function callJSONBestEffort(llmFn, prompt) {
+  // Try strict first, then fall back to a non-formatted call and tolerant parsing
+  try {
+    return await callJSONStrict(llmFn, prompt);
+  } catch (strictErr) {
+    // Best-effort: ask without forcing JSON format
+    const raw = await llmFn(prompt, { temperature: 0.2 });
+    // Reuse wrapper extraction logic
+    function extractContentFromWrapper(r) {
+      if (r == null) return null;
+      if (Array.isArray(r)) return r;
+      if (typeof r === 'object') {
+        if (r.id || r.schedule || r.exercises) return r;
+        if (Array.isArray(r.choices) && r.choices[0]) {
+          const c = r.choices[0];
+          if (c.message && (typeof c.message.content === 'object' || typeof c.message.content === 'string')) return c.message.content;
+          if (typeof c.text !== 'undefined') return c.text;
+          if (c.content) return c.content;
+        }
+        if (r.message && r.message.content) return r.message.content;
+        if (r.content) return r.content;
+        if (Array.isArray(r.data) && r.data[0] && (r.data[0].text || r.data[0].content)) {
+          return r.data[0].text || r.data[0].content;
+        }
+        if (Array.isArray(r.output) && r.output[0] && r.output[0].content) {
+          return r.output[0].content;
+        }
+        return r;
+      }
+      return r;
+    }
+
+    const candidate = extractContentFromWrapper(raw);
+
+    if (candidate && typeof candidate === 'object') return candidate;
+
+    const parsed = extractJSON(String(candidate || ''));
+    if (!parsed) throw new Error('invalid JSON');
+    return parsed;
+  }
+}
+
+/* ───────── IA d’abord : génération staged ───────── */
+async function requestScheduleMetaStrict(profile, type, query) {
   let lastErr = 'init';
-  // passe 1: prompt simple
-  for (let i = 1; i <= maxRetries; i++) {
+  for (let i = 1; i <= MAX_RETRIES_JSON; i++) {
     const prompt = i === 1
       ? buildSchedulePromptSingle(profile, type, query)
-      : buildSchedulePromptSingle(profile, type, `${query}\nCorrige: ${lastErr}`);
+      : buildSchedulePromptSingle(profile, type, `${query}\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`);
+
     try {
-      const obj = await callJSONLoose(mistralService.generateCustomContent, prompt);
-      const { ok, errs, schedule } = validateScheduleProg(obj);
-      if (!ok) throw new Error(errs.join(', '));
-      obj.schedule = schedule; // injecte la version normalisée
+      // pass bound method so "this" inside generateCustomContent is correct
+      const obj = await callJSONBestEffort(mistralService.generateCustomContent.bind(mistralService), prompt);
+      const v = validateScheduleProg(obj);
+      if (!v.ok) throw new Error(v.errs.join(', '));
+      // normalise les jours si l'IA a mis des minuscules
+      obj.schedule = v.schedule;
       return obj;
     } catch (e) {
-      lastErr = e.message || 'invalid JSON';
-      // eslint-disable-next-line no-console
+      lastErr = e?.message || 'invalid JSON';
       console.warn(`[LLM] schedule ${type} retry#${i} -> ${lastErr}`);
     }
   }
+  if (USE_LOCAL_FALLBACK) {
+    console.warn(`[LLM] schedule generation failed for ${type} , using local fallback`);
+    // petit secours formaté (facultatif)
+    const fallback = {
+      id: `program_${type}_${Math.floor(Math.random()*1e6).toString().padStart(6,'0')}`,
+      type,
+      title: type === 'fullbody' ? 'Fullbody 3 jours' : (type === 'halfbody' ? 'Halfbody 4 jours' : 'Split 5 jours'),
+      description: 'Programme généré en secours local.',
+      level: 'intermédiaire',
+      duration: '8 semaines',
+      frequency: type === 'fullbody' ? '3x/semaine' : (type === 'halfbody' ? '4x/semaine' : '5x/semaine'),
+      sessionDuration: '60 min',
+      tips: ['Hydrate-toi', 'Échauffement 10 min'],
+      schedule: type === 'fullbody'
+        ? ['Lundi','Mercredi','Vendredi']
+        : type === 'halfbody'
+          ? ['Lundi','Mardi','Jeudi','Vendredi']
+          : ['Lundi','Mardi','Jeudi','Vendredi','Samedi']
+    };
+    return fallback;
+  }
+  throw new Error(`Schedule generation failed for ${type}`);
+}
 
-  // passe 2: few-shot exemple strict
-  for (let i = 1; i <= maxRetries; i++) {
+async function requestWorkoutDayStrict(meta, day, profile) {
+  let lastErr = 'init';
+  for (let i = 1; i <= MAX_RETRIES_JSON; i++) {
     const prompt = i === 1
-      ? buildSchedulePromptSingleV2(profile, type, query)
-      : buildSchedulePromptSingleV2(profile, type, `${query}\nCorrige: ${lastErr}`);
+      ? buildDayPrompt(meta, day, profile)
+      : buildDayPrompt(meta, day, profile) + `\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`;
     try {
-      const obj = await callJSONLoose(mistralService.generateCustomContent, prompt);
-      const { ok, errs, schedule } = validateScheduleProg(obj);
-      if (!ok) throw new Error(errs.join(', '));
-      obj.schedule = schedule;
+      // pass bound method so "this" inside generateCustomContent is correct
+      const obj = await callJSONBestEffort(mistralService.generateCustomContent.bind(mistralService), prompt);
+      const v = validateWorkoutDay(obj, day);
+      if (!v.ok) throw new Error(v.errs.join(', '));
       return obj;
     } catch (e) {
-      lastErr = e.message || 'invalid JSON';
-      console.warn(`[LLM] schedule-v2 ${type} retry#${i} -> ${lastErr}`);
+      lastErr = e?.message || 'invalid JSON';
+      console.warn(`[LLM] day "${day}" retry#${i} -> ${lastErr}`);
+    }
+  }
+  if (USE_LOCAL_FALLBACK) {
+    console.warn(`[LLM] day generation failed for ${day}, using local fallback`);
+    return {
+      day,
+      name: `${meta.type.toUpperCase()} - ${day}`,
+      duration: meta.sessionDuration || '60 min',
+      exercises: [
+        { name: 'Squat', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Quadriceps','Fessiers'] },
+        { name: 'Développé couché', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Pectoraux','Triceps'] },
+        { name: 'Rowing barre', sets: 3, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Dos','Biceps'] },
+        { name: 'Plank', sets: 3, reps: '45-60s', rest: '60s', type: 'isolation', targetMuscles: ['Core'] },
+      ]
+    };
+  }
+  throw new Error(`Day generation failed for ${day}`);
+}
+
+async function generateWorkoutProgramsStaged(profile, query = '') {
+  // 1) Métadonnées IA pour chaque type x niveau
+  const types = ['fullbody','halfbody','split'];
+  const levels = ['débutant','intermédiaire','avancé'];
+  const metas = [];
+  // request one meta per (type, level) to produce multiple variations
+  for (const type of types) {
+    for (const level of levels) {
+      const levelQuery = `${query} niveau: ${level}`;
+      const meta = await requestScheduleMetaStrict(profile, type, levelQuery);
+      // ensure meta.level reflects requested level (some LLMs may ignore; we enforce)
+      meta.level = meta.level || level;
+      metas.push(meta);
     }
   }
 
-  // Si toutes les tentatives échouent, construire un fallback local et logging
-  console.warn(`[LLM] schedule generation failed for ${type}, using local fallback`);
-
-  // Heuristique de fallback : définir une fréquence par défaut suivant le type
-  const defaultSessionsByType = { fullbody: 3, halfbody: 4, split: 5 };
-  const sessions = defaultSessionsByType[type] || 3;
-
-  // Choisir des jours distribués sur la semaine
-  const interval = Math.floor(7 / sessions) || 1;
-  const schedule = [];
-  for (let i = 0; i < sessions; i++) {
-    schedule.push(DAY_ORDER[(i * interval) % 7]);
-  }
-
-  // Construire un objet meta minimal valide attendu par le reste du pipeline
-  const timestamp = Date.now();
-  const fallbackMeta = {
-    id: `program_${type}_${timestamp}`,
-    type,
-    title: `Programme ${type.charAt(0).toUpperCase() + type.slice(1)} (fallback)`,
-    description: `Programme généré en fallback après échec LLM pour le type ${type}`,
-    level: 'intermédiaire',
-    duration: `${4 + (type === 'split' ? 4 : 0)} semaines`,
-    frequency: `${sessions}x/semaine`,
-    sessionDuration: type === 'split' ? '75 min' : (type === 'halfbody' ? '60 min' : '45 min'),
-    tips: ['Échauffez-vous', 'Respectez les temps de repos'],
-    schedule: schedule
-  };
-
-  return fallbackMeta;
-}
-
-async function generateWorkoutProgramsStaged(profile, query = '', maxRetries = 3) {
-  // 1) Génère 1 meta par type
-  const types = ['fullbody','halfbody','split'];
-  const metas = [];
-  for (const type of types) {
-    const meta = await requestScheduleMetaStrict(profile, type, query, maxRetries);
-    metas.push(meta);
-  }
-
-  // 2) Génère les workouts jour par jour pour chaque meta
+  // 2) Jours IA pour chaque programme
   const programs = [];
   for (const meta of metas) {
     const workouts = [];
     for (const day of meta.schedule) {
-      let w = null;
-      let lastErr = 'init';
-      for (let i = 1; i <= maxRetries; i++) {
-        const prompt = i === 1
-          ? buildDayPrompt(meta, day, profile)
-          : buildDayPrompt(meta, day, profile) + `\nCorrige: ${lastErr}`;
-        try {
-          const obj = await callJSONLoose(mistralService.generateCustomContent, prompt);
-          const v = validateWorkoutDay(obj, day);
-          if (!v.ok) throw new Error(v.errs.join(', '));
-          w = obj;
-          break;
-        } catch (e) {
-          lastErr = e.message || 'invalid JSON';
-          console.warn(`[LLM] day "${day}" retry#${i} -> ${lastErr}`);
-        }
-      }
-      if (!w) throw new Error(`Day generation failed for ${day}`);
+      const w = await requestWorkoutDayStrict(meta, day, profile);
       workouts.push(w);
     }
     workouts.sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day));
@@ -356,7 +424,7 @@ function formatWorkoutsAsSearchResults(programs) {
 /* ───────── Service principal ───────── */
 export const mistralSearchService = {
   searchGoogle: async (query, userGoal = null) => {
-    console.log(`🤖 Génération Mistral pour: "${query}" (objectif: ${userGoal})`);
+    console.log(`🤖 Génération Mistral (IA first) pour: "${query}" (objectif: ${userGoal})`);
     try {
       const { profile } = getMergedProfile();
       const q = (query || '').toLowerCase();
@@ -378,7 +446,8 @@ export const mistralSearchService = {
       }
     } catch (error) {
       console.error('Erreur génération Mistral:', error);
-      return mistralSearchService.getFallbackSearchResults(query, userGoal);
+      // IA first: on NE bascule PAS sur des résultats simulés, on renvoie un message d’erreur clair
+      return { error: 'GENERATION_FAILED', reason: String(error?.message || error) };
     }
   },
 
@@ -388,7 +457,7 @@ export const mistralSearchService = {
       console.warn('Profil partiellement renseigné (mass gain), génération quand même. Champs manquants:', missing);
     }
     try {
-      console.log('🥗 Génération de recettes prise de masse avec Mistral');
+      console.log('🥗 Génération de recettes prise de masse (IA first)');
       const recipes = await mistralService.generateMassGainRecipes(profile);
       return recipes.map((recipe) => ({
         ...recipe,
@@ -398,7 +467,7 @@ export const mistralSearchService = {
       }));
     } catch (error) {
       console.error('Erreur génération recettes prise de masse:', error);
-      return { error: 'GENERATION_FAILED' };
+      return { error: 'GENERATION_FAILED', reason: String(error?.message || error) };
     }
   },
 
@@ -408,7 +477,7 @@ export const mistralSearchService = {
       console.warn('Profil partiellement renseigné (workouts), génération quand même. Champs manquants:', missing);
     }
     try {
-      console.log('💪 Génération de programmes d\'entraînement (staged)');
+      console.log('💪 Génération de programmes d\'entraînement (staged, IA first)');
       let queryTxt = '';
       const loc = criteria?.location || profile.equipmentLocation;
       if (loc === 'home') queryTxt += 'à domicile ';
@@ -434,8 +503,8 @@ export const mistralSearchService = {
         aiGenerated: true
       }));
     } catch (error) {
-      console.error('Erreur génération programmes (staged):', error);
-      return { error: 'GENERATION_FAILED' };
+      console.error('Erreur génération programmes (IA first):', error);
+      return { error: 'GENERATION_FAILED', reason: String(error?.message || error) };
     }
   },
 
@@ -445,8 +514,7 @@ export const mistralSearchService = {
       console.warn('Profil partiellement renseigné (nutrition), génération quand même. Champs manquants:', missing);
     }
     try {
-      console.log('🍽️ Génération de plans nutritionnels avec Mistral');
-
+      console.log('🍽️ Génération de plans nutritionnels (IA first)');
       let queryTxt = '';
       if (criteria?.dietType) queryTxt += `régime ${criteria.dietType} `;
       if (criteria?.cookingTime === 'quick') queryTxt += 'préparation rapide ';
@@ -475,14 +543,19 @@ export const mistralSearchService = {
       };
     } catch (error) {
       console.error('Erreur génération plans nutritionnels:', error);
-      return { error: 'GENERATION_FAILED' };
+      return { error: 'GENERATION_FAILED', reason: String(error?.message || error) };
     }
   },
 
+  // Helpers d’affichage
   formatNutritionAsSearchResults,
   formatWorkoutsAsSearchResults,
 
-  getFallbackSearchResults() {
+  // (facultatif) Fallback générique — non utilisé si USE_LOCAL_FALLBACK=false
+  getFallbackSearchResults(query, userGoal) {
+    if (!USE_LOCAL_FALLBACK) {
+      return [{ error: 'GENERATION_FAILED', reason: 'Fallback disabled (IA first)' }];
+    }
     console.log('🔄 Utilisation des résultats de fallback');
     return [{
       title: 'Programme personnalisé généré automatiquement',
@@ -509,10 +582,8 @@ export const enhancedMistralService = {
       'flexibility': 'programmes étirement yoga et nutrition anti-inflammatoire'
     };
     const prompt = goalPrompts[goal] || 'programmes fitness équilibrés';
-    const [programs, nutrition] = await Promise.all([
-      generateWorkoutProgramsStaged(base, prompt),
-      mistralService.generateNutritionPlans(base, prompt)
-    ]);
+    const programs = await generateWorkoutProgramsStaged(base, prompt);
+    const nutrition = await mistralService.generateNutritionPlans(base, prompt);
     return { programs, nutrition, goal, generatedAt: new Date().toISOString() };
   },
 
