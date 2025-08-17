@@ -159,8 +159,11 @@ export const PopupProvider = ({ children }) => {
         <MobilePopup
           key={popup.id}
           isVisible={true}
-          onClose={() => hidePopup(popup.id)}
           {...popup}
+          onClose={() => {
+            popup.onClose?.();
+            hidePopup(popup.id);
+          }}
         />
       ))}
     </PopupContext.Provider>

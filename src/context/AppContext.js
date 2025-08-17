@@ -309,7 +309,7 @@ function AppProvider({ children }) {
       dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: isActive });
       
       // Vérifier si l'utilisateur a déjà des profils configurés
-      if (isActive && (state.equipmentProfile.location || state.nutritionProfile.dietType)) {
+      if (isActive && state.equipmentProfile.location && state.nutritionProfile.dietType) {
         console.log('Profils déjà configurés, questionnaire non affiché');
         return;
       }
