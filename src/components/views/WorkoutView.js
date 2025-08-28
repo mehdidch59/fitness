@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { 
+import {
   Dumbbell, BarChart2, Clock, ArrowRight, Search,
   X, ChevronDown, ChevronUp, Trash2, CheckSquare, Square,
   AlertCircle, Calendar,
@@ -29,16 +29,21 @@ function UltraRobustWorkoutView() {
   const [error, setError] = useState(null);
   const [difficultyFilter, setDifficultyFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [modeAuto, setModeAuto] = useState(true);
+  const [manualType, setManualType] = useState('fullbody');
+  const [manualDays, setManualDays] = useState(3);
   const [selectedProgramIndex, setSelectedProgramIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
   const [expandedDayIndex, setExpandedDayIndex] = useState(0);
   const [detailsAnim, setDetailsAnim] = useState(false);
   const [lastGeneration, setLastGeneration] = useState(null);
   const [programStats, setProgramStats] = useState(null);
-  
+
   const [lastParsingMethod, setLastParsingMethod] = useState(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedProgramIds, setSelectedProgramIds] = useState(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
 
   // Vérifier si l'utilisateur a déjà configuré son lieu d'entraînement
   const isLocationConfigured = Boolean(equipmentProfile.location);
@@ -72,8 +77,8 @@ function UltraRobustWorkoutView() {
     };
 
     let isMounted = true;
-    let setIsLoadingPrograms = (v) => {};
-    setIsLoadingPrograms = (v) => { if (isMounted) {/* placeholder pour style existant */} };
+    let setIsLoadingPrograms = (v) => { };
+    setIsLoadingPrograms = (v) => { if (isMounted) {/* placeholder pour style existant */ } };
 
     loadSavedPrograms();
     return () => { isMounted = false; };
@@ -157,7 +162,12 @@ function UltraRobustWorkoutView() {
       // Génération STRICTE (staged) via mistralIntegration
       const criteria = {
         location: completeProfile?.equipmentLocation || 'home',
-        equipment: Array.isArray(completeProfile?.availableEquipment) ? completeProfile.availableEquipment : []
+        equipment: Array.isArray(completeProfile?.availableEquipment) ? completeProfile.availableEquipment : [],
+        ...(modeAuto ? {} : {
+          forceType: manualType,
+          forcePattern: manualType === 'halfbody' ? 'UL-' + manualDays : (manualType === 'split' ? 'PPL-' + manualDays : 'FB-' + manualDays),
+          forceFrequency: manualDays
+        })
       };
       const programs = await mistralSearchService.searchWorkoutPrograms(criteria);
       if (!Array.isArray(programs) || programs.length === 0 || programs.error) {
@@ -167,7 +177,7 @@ function UltraRobustWorkoutView() {
       programs.forEach((p, i) => {
         const s = Array.isArray(p.schedule) ? p.schedule.length : 0;
         const w = Array.isArray(p.workouts) ? p.workouts.length : 0;
-        console.log(`P${i} ${p.id} schedule=${s} workouts=${w}`, p.schedule, (p.workouts||[]).map(x=>x.day));
+        console.log(`P${i} ${p.id} schedule=${s} workouts=${w}`, p.schedule, (p.workouts || []).map(x => x.day));
         if (s !== w) throw new Error(`PROGRAM_${p.id}: schedule(${s}) != workouts(${w})`);
       });
       clearInterval(progressTimer);
@@ -205,7 +215,7 @@ function UltraRobustWorkoutView() {
         // Phase 5: Succès
         setGenerationProgress(100);
         setGenerationStage('🎉 Programmes générés !');
-        
+
         const programTypes = programs.map(p => p.type || 'programme').join(' + ');
         actions.setSearchStatus(
           `🎉 ${programs.length} programmes générés ! ` +
@@ -268,11 +278,10 @@ function UltraRobustWorkoutView() {
                 <button
                   key={level}
                   onClick={() => setDifficultyFilter(level)}
-                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                    difficultyFilter === level
+                  className={`px-3 py-1 rounded-full text-sm transition-colors ${difficultyFilter === level
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {level}
                 </button>
@@ -286,9 +295,8 @@ function UltraRobustWorkoutView() {
               <button
                 onClick={handleRealisticGeneration}
                 disabled={isGenerating || !user}
-                className={`px-3 py-2 rounded-xl text-white text-sm flex items-center ${
-                  isGenerating || !user ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
-                }`}
+                className={`px-3 py-2 rounded-xl text-white text-sm flex items-center ${isGenerating || !user ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+                  }`}
               >
                 {isGenerating ? (
                   <>
@@ -298,12 +306,56 @@ function UltraRobustWorkoutView() {
                 ) : (
                   <>
                     <Play size={16} className="mr-2" />
-                    Générer (IA stricte)
+                    Générer
                   </>
                 )}
               </button>
             </div>
           </div>
+        </div>
+        {/* Mode Auto / Manuel */}
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div>
+            <p className="text-sm text-gray-600 mb-2">Mode</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setModeAuto(true)}
+                className={`px-3 py-1 rounded-lg text-sm ${modeAuto ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+              >Auto</button>
+              <button
+                onClick={() => setModeAuto(false)}
+                className={`px-3 py-1 rounded-lg text-sm ${!modeAuto ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+              >Manuel</button>
+            </div>
+          </div>
+          {!modeAuto && (
+            <>
+              <div>
+                <p className="text-sm text-gray-600 mb-2">Type</p>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { key: 'fullbody', label: 'FullBody' },
+                    { key: 'halfbody', label: 'Upper/Lower' },
+                    { key: 'split', label: 'PPL' }
+                  ].map(t => (
+                    <button
+                      key={t.key}
+                      onClick={() => setManualType(t.key)}
+                      className={`px-3 py-1 rounded-full text-sm ${manualType === t.key ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                    >{t.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-2">Jours / semaine</p>
+                <div className="flex gap-2">
+                  {[3, 4, 5, 6].map(n => (
+                    <button key={n} onClick={() => setManualDays(n)} className={`px-3 py-1 rounded-full text-sm ${manualDays === n ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700'}`}>{n}</button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -353,20 +405,19 @@ function UltraRobustWorkoutView() {
       <button
         onClick={handleRealisticGeneration}
         disabled={isGenerating || !user}
-        className={`w-full py-4 rounded-2xl font-semibold text-white transition-all relative overflow-hidden ${
-          isGenerating || !user
-            ? 'bg-gray-400 cursor-not-allowed' 
+        className={`w-full py-4 rounded-2xl font-semibold text-white transition-all relative overflow-hidden ${isGenerating || !user
+            ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl'
-        }`}
+          }`}
       >
         {/* Barre de progression animée */}
         {isGenerating && (
-          <div 
+          <div
             className="absolute left-0 top-0 h-full bg-white bg-opacity-20 transition-all duration-500 ease-out"
             style={{ width: `${generationProgress}%` }}
           />
         )}
-        
+
         <div className="relative z-10 flex items-center justify-center">
           {isGenerating ? (
             <div className="flex flex-col items-center">
@@ -384,7 +435,7 @@ function UltraRobustWorkoutView() {
           ) : (
             <div className="flex items-center">
               <Play size={20} className="mr-2" />
-              <span>Générer 3 programmes réalistes (IA stricte)</span>
+              <span>Générer programme de musculation</span>
             </div>
           )}
         </div>
@@ -418,19 +469,34 @@ function UltraRobustWorkoutView() {
             </button>
             {selectionMode && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">{selectedProgramIds.size} sélectionné(s)</span>
                 <button
-                  onClick={async () => {
-                    try {
-                      const ids = Array.from(selectedProgramIds);
-                      if (!ids.length || !user?.uid) return;
-                      await workoutFirestoreService.deletePrograms(user.uid, ids);
-                      setGeneratedPrograms(prev => prev.filter(p => !selectedProgramIds.has(p.id)));
-                      setSelectedProgramIds(new Set());
-                      setSelectionMode(false);
-                    } catch (e) {
-                      console.error('Suppression programmes échouée:', e);
-                    }
+                  onClick={() => {
+                    // Sélectionner tous les programmes actuellement filtrés
+                    const filteredIds = generatedPrograms
+                      .filter(p => {
+                        const okLevel = difficultyFilter === 'all' || (p.level || '').toLowerCase() === difficultyFilter;
+                        const okSearch = !searchTerm || (p.title + ' ' + p.description).toLowerCase().includes(searchTerm.toLowerCase());
+                        return okLevel && okSearch;
+                      })
+                      .map(p => p.id)
+                      .filter(Boolean);
+                    setSelectedProgramIds(prev => {
+                      const next = new Set(prev);
+                      filteredIds.forEach(id => next.add(id));
+                      return next;
+                    });
+                  }}
+                  className="px-3 py-1 rounded-lg text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                >
+                  Tout sélectionner
+                </button>
+                <span className="text-sm text-gray-600 mr-2">{selectedProgramIds.size} sélectionné(s)</span>
+                <button
+                  onClick={() => {
+                    const ids = Array.from(selectedProgramIds);
+                    if (!ids.length) return;
+                    setPendingDeleteIds(ids);
+                    setShowDeleteConfirm(true);
                   }}
                   disabled={selectedProgramIds.size === 0}
                   className={`px-3 py-1 rounded-lg text-sm flex items-center ${selectedProgramIds.size === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700'}`}
@@ -447,7 +513,7 @@ function UltraRobustWorkoutView() {
               return okLevel && okSearch;
             })
             .map((program, idx) => (
-              <div key={program.id || idx} className="relative bg-white rounded-2xl shadow p-4">
+              <div key={program.id || idx} className={`relative bg-white rounded-2xl shadow p-4 ${selectionMode ? 'pl-10' : ''}`}>
                 {selectionMode && (
                   <button
                     onClick={() => {
@@ -457,7 +523,7 @@ function UltraRobustWorkoutView() {
                         return next;
                       });
                     }}
-                    className="absolute top-3 left-3 p-1 rounded-md hover:bg-gray-100"
+                    className="absolute top-4 left-4 p-1 rounded-md hover:bg-gray-100"
                     aria-label="Sélectionner le programme"
                   >
                     {selectedProgramIds.has(program.id) ? <CheckSquare size={18} className="text-purple-600" /> : <Square size={18} className="text-gray-400" />}
@@ -465,8 +531,11 @@ function UltraRobustWorkoutView() {
                 )}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold">{program.title || `Programme ${idx+1}`}</h3>
+                    <h3 className="text-lg font-semibold">{program.title || `Programme ${idx + 1}`}</h3>
                     <p className="text-sm text-gray-600">{program.description}</p>
+                    {program.pattern && (
+                      <div className="mt-1 text-xs text-purple-700 font-medium">Pattern: {program.pattern}</div>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-gray-500">
@@ -542,7 +611,7 @@ function UltraRobustWorkoutView() {
                     aria-expanded={isExpanded}
                   >
                     <div className="flex items-center gap-2 text-left">
-                      <span className="font-medium text-sm">{w.day || `Jour ${idx+1}`}</span>
+                      <span className="font-medium text-sm">{w.day || `Jour ${idx + 1}`}</span>
                       <span className="text-xs text-gray-500">
                         {exercises.length} exos • {w.duration || program.sessionDuration || '60 min'}
                       </span>
@@ -592,6 +661,45 @@ function UltraRobustWorkoutView() {
       )}
 
       {showDetails && renderProgramDetails()}
+
+      {/* Confirmation suppression */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5">
+            <h4 className="text-lg font-semibold mb-2">Confirmer la suppression</h4>
+            <p className="text-sm text-gray-600 mb-4">Supprimer définitivement {pendingDeleteIds.length} programme(s) ?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    if (!user?.uid || pendingDeleteIds.length === 0) return;
+                    await workoutFirestoreService.deletePrograms(user.uid, pendingDeleteIds);
+                    // Recharger depuis Firestore pour s'assurer que la MAJ est bien persistée
+                    const saved = await workoutFirestoreService.loadGeneratedPrograms(user.uid);
+                    setGeneratedPrograms(saved?.programs || []);
+                    setSelectedProgramIds(new Set());
+                    setSelectionMode(false);
+                  } catch (e) {
+                    console.error('Suppression programmes échouée:', e);
+                  } finally {
+                    setShowDeleteConfirm(false);
+                    setPendingDeleteIds([]);
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

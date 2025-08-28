@@ -6,7 +6,6 @@ import {
   where,
   deleteDoc,
   updateDoc,
-  doc,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -348,13 +347,19 @@ class WorkoutFirestoreService {
       const idsSet = new Set(programIds);
       const nextPrograms = current.filter((p) => !idsSet.has(p.id));
 
-      await updateDoc(doc(db, this.collectionName, latest.id), {
+      // Si aucun programme restant, supprimer le document pour éviter les docs vides
+      if (nextPrograms.length === 0) {
+        await deleteDoc(latest.ref);
+        return { updated: true, remaining: 0, deletedDoc: true };
+      }
+
+      await updateDoc(latest.ref, {
         programs: nextPrograms,
         totalPrograms: nextPrograms.length,
         updatedAt: Timestamp.now(),
       });
 
-      return { updated: true, remaining: nextPrograms.length };
+      return { updated: true, remaining: nextPrograms.length, deletedDoc: false };
     } catch (error) {
       console.error('❌ Erreur suppression programmes:', error);
       throw error;

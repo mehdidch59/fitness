@@ -3,11 +3,11 @@ import React from 'react';
 /**
  * Composant modal d'alerte réutilisable
  */
-const AlertModal = ({ 
-  title, 
-  message, 
-  buttonText = 'OK', 
-  type = 'warning', 
+const AlertModal = ({
+  title,
+  message,
+  buttonText = 'OK',
+  type = 'warning',
   onClose,
   secondaryButtonText = null,
   onSecondaryClick = null
@@ -47,11 +47,11 @@ const AlertModal = ({
         {title && (
           <h3 className={`text-xl font-bold mb-4 ${colors.title}`}>{title}</h3>
         )}
-        
+
         {message && (
           <p className="mb-6 text-gray-700">{message}</p>
         )}
-        
+
         <div className="flex flex-col space-y-3">
           <button
             onClick={onClose}
@@ -59,7 +59,7 @@ const AlertModal = ({
           >
             {buttonText}
           </button>
-          
+
           {secondaryButtonText && onSecondaryClick && (
             <button
               onClick={onSecondaryClick}

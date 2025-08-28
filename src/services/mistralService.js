@@ -201,7 +201,7 @@ class SimpleMistralService {
     console.log('🤖 Génération contenu IA (mode démo):', prompt.substring(0, 100) + '...');
 
     // Simuler un délai de traitement
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 600));
 
     // If prompt requests exactly one program metadata (schedule generation)
     if (/Propose exactement 1 programme|TÂCHE: Propose exactement 1 programme|CONTRAINTES DE SORTIE.*schedule/i.test(prompt)) {
@@ -409,8 +409,15 @@ class SimpleMistralService {
       if (hasKB) exercises = mixInAlternates(exercises, kbPool);
       if (hasBands) exercises = mixInAlternates(exercises, bandPool);
 
-      // Desired count by level (débutant=4, intermédiaire=5, avancé=6) with minor seed variation
-      const baseCount = pLevel && pLevel.includes('début') ? 4 : (pLevel && pLevel.includes('avancé') ? 6 : 5);
+      // Desired count by level (débutant=4, intermédiaire=5, avancé=6) modulated by goal/bodyType
+      const goal = (profileData.goal || '').toLowerCase();
+      const bodyType = (profileData.bodyType || '').toLowerCase();
+      let baseCount = pLevel && pLevel.includes('début') ? 4 : (pLevel && pLevel.includes('avancé') ? 6 : 5);
+      if (goal.includes('perte') || goal.includes('maigr') || goal.includes('weight') || bodyType === 'obese') {
+        baseCount = Math.max(4, baseCount - 1); // un peu moins de volume par séance
+      } else if (goal.includes('gain') || goal.includes('muscle') || goal.includes('hypert')) {
+        baseCount = Math.min(8, baseCount + 1); // un peu plus de volume pour hypertrophie
+      }
       const extra = (seed % 2); // 0 or 1 to slightly vary counts across programs
       const desiredCount = Math.max(4, baseCount + (extra === 1 ? 0 : 0)); // keep deterministic but could be adjusted
 
@@ -424,17 +431,16 @@ class SimpleMistralService {
           const n = parseInt(String(clone.sets).replace(/\D/g,'')) || (pLevel.includes('début') ? 3 : 4);
           clone.sets = n;
         }
-        // Ajuster reps/repos selon le niveau + légère variation de nom si dupliqué
-        if (pLevel.includes('début')) {
-          clone.reps = clone.reps || '12-15';
-          clone.rest = clone.rest || '60-90s';
-        } else if (pLevel.includes('avancé')) {
-          clone.reps = clone.reps || '5-8';
-          clone.rest = clone.rest || '120s';
-        } else {
-          clone.reps = clone.reps || '8-12';
-          clone.rest = clone.rest || '90s';
-        }
+        // Ajuster reps/repos selon le niveau puis affiner selon l'objectif
+        let reps = '8-12';
+        let rest = '90s';
+        if (pLevel.includes('début')) { reps = '12-15'; rest = '60-90s'; }
+        else if (pLevel.includes('avancé')) { reps = '5-8'; rest = '120s'; }
+        // Ajustement objectif
+        if (goal.includes('perte') || goal.includes('maigr') || goal.includes('weight')) { reps = '12-20'; rest = '30-60s'; }
+        if (goal.includes('force') || goal.includes('strength')) { reps = '3-6'; rest = '120-180s'; }
+        clone.reps = clone.reps || reps;
+        clone.rest = clone.rest || rest;
         // minor name variation if duplicated
         if (i >= exercises.length) clone.name = `${clone.name} (var.)`;
         expanded.push(clone);

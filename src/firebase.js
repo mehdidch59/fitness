@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 // Configuration Firebase (à remplacer par vos propres identifiants)
@@ -26,7 +26,26 @@ const firebaseConfig = {
 // Initialiser Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+// Firestore init with networking fallbacks to avoid CORS/stream issues (Safari/proxy)
+// Modes possibles :
+//   - auto  (par défaut) : laisse Firestore auto-détecter le long‑polling si nécessaire
+//   - force : force le long‑polling XHR (utile en WebView / proxy d'entreprise)
+//   - off   : n'active aucun fallback
+// .env: REACT_APP_FIRESTORE_LP_MODE=auto|force|off
+// compatibilité : si REACT_APP_FIRESTORE_FORCE_LP=true est présent, il a priorité pour "force"
+const LP_MODE = (process.env.REACT_APP_FIRESTORE_LP_MODE || 'auto').toLowerCase();
+const forceLPEnv = String(process.env.REACT_APP_FIRESTORE_FORCE_LP || '').toLowerCase();
+const shouldForce = forceLPEnv === 'true' || LP_MODE === 'force';
+const disableLP = LP_MODE === 'off';
+
+const db = initializeFirestore(app, {
+  // active la détection auto si on n’est pas en "force" ni "off"
+  experimentalAutoDetectLongPolling: !disableLP && !shouldForce,
+  // force explicitement le long‑polling si demandé
+  experimentalForceLongPolling: shouldForce,
+  // évite l’API Fetch streams qui pose souci sur certains environnements
+  useFetchStreams: false
+});
 const storage = getStorage(app);
 
 // Services d'authentification avec intégration Firestore
@@ -37,7 +56,7 @@ export const authService = {
       // console.log('Tentative de connexion pour:', email);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       // console.log('Connexion réussie:', userCredential.user.uid);
-      
+
       // Récupérer le profil utilisateur depuis Firestore
       const userProfile = await userService.getUserProfile(userCredential.user.uid);
       if (userProfile) {
@@ -45,24 +64,24 @@ export const authService = {
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
         // console.log('Profil utilisateur chargé depuis Firestore');
       }
-      
+
       return userCredential.user;
     } catch (error) {
       console.error('Erreur de connexion:', error);
       throw error;
     }
   },
-  
+
   // Inscription
   register: async (email, password, displayName) => {
     try {
       // console.log('Tentative d\'inscription pour:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // console.log('Utilisateur créé dans Firebase Auth:', userCredential.user.uid);
-      
+
       await updateProfile(userCredential.user, { displayName });
       // console.log('Profil mis à jour avec displayName:', displayName);
-      
+
       // Créer un document utilisateur basique dans Firestore
       const initialProfile = {
         email,
@@ -85,15 +104,15 @@ export const authService = {
           allergies: []
         }
       };
-      
+
       await setDoc(doc(db, 'users', userCredential.user.uid), initialProfile);
       // console.log('Document utilisateur créé dans Firestore avec profils par défaut');
-      
+
       // Stocker le profil initial dans localStorage
       localStorage.setItem('userProfile', JSON.stringify(initialProfile.userProfile));
       localStorage.setItem('equipmentProfile', JSON.stringify(initialProfile.equipmentProfile));
       localStorage.setItem('nutritionProfile', JSON.stringify(initialProfile.nutritionProfile));
-      
+
       return userCredential.user;
     } catch (error) {
       console.error('Erreur d\'inscription complète:', {
@@ -101,18 +120,18 @@ export const authService = {
         message: error.message,
         stack: error.stack
       });
-      
+
       // Gestion spécifique des erreurs réseau
       if (error.message.includes('ERR_BLOCKED_BY_CLIENT')) {
         throw new Error('Connexion bloquée. Veuillez désactiver temporairement votre bloqueur de publicités et réessayer.');
       } else if (error.code === 'auth/network-request-failed') {
         throw new Error('Problème de connexion réseau. Vérifiez votre connexion internet et réessayez.');
       }
-      
+
       throw error;
     }
   },
-  
+
   // Déconnexion
   logout: async () => {
     try {
@@ -122,7 +141,7 @@ export const authService = {
       throw error;
     }
   },
-  
+
   // Réinitialisation du mot de passe
   resetPassword: async (email) => {
     try {
@@ -132,7 +151,7 @@ export const authService = {
       throw error;
     }
   },
-  
+
   // Obtenir l'utilisateur courant
   getCurrentUser: () => {
     return auth.currentUser;
@@ -148,7 +167,7 @@ export const userService = {
       if (userDoc.exists()) {
         const data = userDoc.data();
         // console.log('Profil utilisateur récupéré:', data);
-        
+
         // Séparer les différents profils pour l'état global
         return {
           userProfile: data.userProfile || {},
@@ -166,17 +185,17 @@ export const userService = {
       throw error;
     }
   },
-  
+
   // Nouvelle méthode pour charger le profil complet avec retry logic
   getUserProfileWithRetry: async (uid, maxRetries = 3) => {
     let lastError;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         // console.log(`Tentative ${attempt}/${maxRetries} de chargement du profil pour:`, uid);
-        
+
         const userDoc = await getDoc(doc(db, 'users', uid));
-        
+
         if (userDoc.exists()) {
           const data = userDoc.data();
           // console.log('Profil chargé avec succès:', data);
@@ -188,14 +207,14 @@ export const userService = {
       } catch (error) {
         lastError = error;
         console.error(`Erreur tentative ${attempt}:`, error);
-        
+
         if (attempt < maxRetries) {
           // Attendre avant de réessayer
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       }
     }
-    
+
     throw lastError;
   },
 
@@ -206,10 +225,10 @@ export const userService = {
         ...profileData,
         updatedAt: serverTimestamp()
       };
-      
+
       await updateDoc(doc(db, 'users', userId), updateData);
       // console.log('Profil utilisateur mis à jour dans Firestore:', updateData);
-      
+
       // Mettre à jour localStorage
       if (profileData.userProfile) {
         localStorage.setItem('userProfile', JSON.stringify(profileData.userProfile));
@@ -220,13 +239,13 @@ export const userService = {
       if (profileData.nutritionProfile) {
         localStorage.setItem('nutritionProfile', JSON.stringify(profileData.nutritionProfile));
       }
-      
+
     } catch (error) {
       console.error('Erreur lors de la mise à jour du profil:', error);
       throw error;
     }
   },
-  
+
   // Créer ou mettre à jour le profil complet
   saveCompleteProfile: async (userId, profileData) => {
     try {
@@ -234,10 +253,10 @@ export const userService = {
         ...profileData,
         updatedAt: serverTimestamp()
       };
-      
+
       await setDoc(doc(db, 'users', userId), completeData, { merge: true });
       // console.log('Profil complet sauvegardé dans Firestore:', completeData);
-      
+
       // Synchroniser avec localStorage
       if (profileData.userProfile) {
         localStorage.setItem('userProfile', JSON.stringify(profileData.userProfile));
@@ -248,7 +267,7 @@ export const userService = {
       if (profileData.nutritionProfile) {
         localStorage.setItem('nutritionProfile', JSON.stringify(profileData.nutritionProfile));
       }
-      
+
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du profil complet:', error);
       throw error;
@@ -259,7 +278,7 @@ export const userService = {
   saveCompleteProfileWithValidation: async (uid, profileData) => {
     try {
       // console.log('Sauvegarde du profil complet pour:', uid, profileData);
-      
+
       // Validation des données
       const validatedData = {
         ...profileData,
@@ -267,11 +286,11 @@ export const userService = {
         updatedAt: serverTimestamp(),
         lastSync: serverTimestamp()
       };
-      
+
       // Créer ou mettre à jour le document
       const userRef = doc(db, 'users', uid);
       await setDoc(userRef, validatedData, { merge: true });
-      
+
       // console.log('Profil sauvegardé avec succès');
       return validatedData;
     } catch (error) {
@@ -285,12 +304,12 @@ export const userService = {
     try {
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (!userDoc.exists()) return false;
-      
+
       const data = userDoc.data();
       const userProfile = data.userProfile || {};
       const equipmentProfile = data.equipmentProfile || {};
       const nutritionProfile = data.nutritionProfile || {};
-      
+
       // Vérifier si les champs essentiels sont remplis
       return !!(
         userProfile.goal &&
@@ -328,24 +347,24 @@ export const workoutService = {
         collection(db, 'workouts'),
         where('userId', '==', userId)
       );
-      
+
       const querySnapshot = await getDocs(workoutsQuery);
       const workouts = [];
-      
+
       querySnapshot.forEach((doc) => {
         workouts.push({
           id: doc.id,
           ...doc.data()
         });
       });
-      
+
       return workouts;
     } catch (error) {
       console.error('Erreur lors de la récupération des programmes:', error);
       throw error;
     }
   },
-  
+
   // Ajouter un programme
   addWorkout: async (userId, workoutData) => {
     try {
@@ -355,7 +374,7 @@ export const workoutService = {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-      
+
       return {
         id: docRef.id,
         ...workoutData
@@ -365,7 +384,7 @@ export const workoutService = {
       throw error;
     }
   },
-  
+
   // Mettre à jour un programme
   updateWorkout: async (workoutId, workoutData) => {
     try {
@@ -373,7 +392,7 @@ export const workoutService = {
         ...workoutData,
         updatedAt: serverTimestamp()
       });
-      
+
       return {
         id: workoutId,
         ...workoutData
@@ -394,24 +413,24 @@ export const nutritionService = {
         collection(db, 'nutritionPlans'),
         where('userId', '==', userId)
       );
-      
+
       const querySnapshot = await getDocs(plansQuery);
       const plans = [];
-      
+
       querySnapshot.forEach((doc) => {
         plans.push({
           id: doc.id,
           ...doc.data()
         });
       });
-      
+
       return plans;
     } catch (error) {
       console.error('Erreur lors de la récupération des plans:', error);
       throw error;
     }
   },
-  
+
   // Ajouter un plan
   addNutritionPlan: async (userId, planData) => {
     try {
@@ -421,7 +440,7 @@ export const nutritionService = {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-      
+
       return {
         id: docRef.id,
         ...planData

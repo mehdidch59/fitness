@@ -705,6 +705,8 @@ function NutritionView() {
   // Sélection pour suppression
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedRecipeIds, setSelectedRecipeIds] = useState(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
 
   // Callbacks stables pour la sélection
   const handleRecipeSelect = useCallback((recipe) => {
@@ -860,24 +862,26 @@ function NutritionView() {
               </button>
               {selectionMode && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">{selectedRecipeIds.size} sélectionné(s)</span>
                   <button
-                    onClick={async () => {
-                      try {
-                        const ids = Array.from(selectedRecipeIds);
-                        if (!ids.length || !user?.uid) return;
-                        await nutritionFirestoreService.deleteRecipes(ids, user.uid);
-                        setSelectedRecipeIds(new Set());
-                        setSelectionMode(false);
-                        // Rafraîchir les vues
-                        if (viewMode === 'favorites') {
-                          refetchFavorites();
-                        }
-                        refetchRecipes();
-                      } catch (e) {
-                        console.error('Suppression recettes échouée:', e);
-                        setError('Erreur lors de la suppression');
-                      }
+                    onClick={() => {
+                      // Sélectionner toutes les recettes visibles
+                      setSelectedRecipeIds(prev => {
+                        const next = new Set(prev);
+                        (currentRecipes || []).forEach(r => { if (r.id) next.add(r.id); });
+                        return next;
+                      });
+                    }}
+                    className="px-3 py-1 rounded-lg text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  >
+                    Tout sélectionner
+                  </button>
+                  <span className="text-sm text-gray-600 mr-2">{selectedRecipeIds.size} sélectionné(s)</span>
+                  <button
+                    onClick={() => {
+                      const ids = Array.from(selectedRecipeIds);
+                      if (!ids.length) return;
+                      setPendingDeleteIds(ids);
+                      setShowDeleteConfirm(true);
                     }}
                     disabled={selectedRecipeIds.size === 0}
                     className={`px-3 py-1 rounded-lg text-sm flex items-center ${selectedRecipeIds.size === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700'}`}
@@ -890,7 +894,7 @@ function NutritionView() {
             {currentRecipes.map((recipe, index) => (
               <div
                 key={recipe.id || `recipe-${index}-${recipe.name?.substring(0, 10)}`}
-                className="relative bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                className={`relative bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02] ${selectionMode ? 'pl-10' : ''}`}
                 onClick={() => {
                   if (selectionMode) {
                     setSelectedRecipeIds(prev => {
@@ -913,7 +917,7 @@ function NutritionView() {
                         return next;
                       });
                     }}
-                    className="absolute top-3 left-3 p-1 rounded-md hover:bg-gray-100"
+                    className="absolute top-4 left-4 p-1 rounded-md hover:bg-gray-100"
                     aria-label="Sélectionner la recette"
                   >
                     {recipe.id && selectedRecipeIds.has(recipe.id) ? <CheckSquare size={18} className="text-purple-600" /> : <Square size={18} className="text-gray-400" />}
@@ -1075,7 +1079,45 @@ function NutritionView() {
           </div>
         ) : null}
       </div>
+      {showDeleteConfirm && (
+        <DeleteConfirmModal
+          count={pendingDeleteIds.length}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={async () => {
+            try {
+              if (!user?.uid || pendingDeleteIds.length === 0) return;
+              await nutritionFirestoreService.deleteRecipes(pendingDeleteIds, user.uid);
+              setSelectedRecipeIds(new Set());
+              setSelectionMode(false);
+              if (viewMode === 'favorites') await refetchFavorites();
+              await refetchRecipes();
+            } catch (e) {
+              console.error('Suppression recettes échouée:', e);
+              setError('Erreur lors de la suppression');
+            } finally {
+              setShowDeleteConfirm(false);
+              setPendingDeleteIds([]);
+            }
+          }}
+        />
+      )}
     </ErrorBoundary>
+  );
+}
+
+// Popup de confirmation suppression
+function DeleteConfirmModal({ count, onCancel, onConfirm }) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5">
+        <h4 className="text-lg font-semibold mb-2">Confirmer la suppression</h4>
+        <p className="text-sm text-gray-600 mb-4">Supprimer définitivement {count} élément(s) ?</p>
+        <div className="flex justify-end gap-2">
+          <button onClick={onCancel} className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Annuler</button>
+          <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Supprimer</button>
+        </div>
+      </div>
+    </div>
   );
 }
 

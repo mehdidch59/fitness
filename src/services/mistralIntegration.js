@@ -4,7 +4,7 @@ import { mistralService } from './mistralService';
 /* ───────── Config usage IA ───────── */
 const USE_LOCAL_FALLBACK = false; // ↤ par défaut: on privilégie l'IA, pas de secours
 const MAX_RETRIES_JSON = 4;       // plus d'essais côté IA avant d'abandonner
-const DAY_ORDER = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+const DAY_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
 /* ───────── Utils profil ───────── */
 function toNumOrStr(v) {
@@ -18,9 +18,9 @@ function getMergedProfile() {
   let equipmentProfile = {};
   let nutritionProfile = {};
 
-  try { userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}'); } catch {}
-  try { equipmentProfile = JSON.parse(localStorage.getItem('equipmentProfile') || '{}'); } catch {}
-  try { nutritionProfile = JSON.parse(localStorage.getItem('nutritionProfile') || '{}'); } catch {}
+  try { userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}'); } catch { }
+  try { equipmentProfile = JSON.parse(localStorage.getItem('equipmentProfile') || '{}'); } catch { }
+  try { nutritionProfile = JSON.parse(localStorage.getItem('nutritionProfile') || '{}'); } catch { }
 
   const profile = {
     ...userProfile,
@@ -29,12 +29,24 @@ function getMergedProfile() {
     homeEquipment: Array.isArray(equipmentProfile.homeEquipment) ? equipmentProfile.homeEquipment : [],
     height: toNumOrStr(userProfile.height),
     weight: toNumOrStr(userProfile.weight),
-    age:    toNumOrStr(userProfile.age),
-    goal:   userProfile.goal || userProfile.fitnessGoal || '',
+    age: toNumOrStr(userProfile.age),
+    goal: userProfile.goal || userProfile.fitnessGoal || '',
     activityLevel: userProfile.activityLevel || '',
     gender: userProfile.gender || '',
-    name:   userProfile.name || ''
+    name: userProfile.name || ''
   };
+
+  // Calculer IMC et morphologie simple (carrure) si possible
+  try {
+    const h = parseFloat(String(profile.height).replace(',', '.')); // cm
+    const w = parseFloat(String(profile.weight).replace(',', '.')); // kg
+    if (Number.isFinite(h) && h > 0 && Number.isFinite(w) && w > 0) {
+      const meters = h / 100;
+      const bmi = w / (meters * meters);
+      profile.bmi = Math.round(bmi * 10) / 10;
+      profile.bodyType = bmi < 18.5 ? 'lean' : (bmi < 25 ? 'normal' : (bmi < 30 ? 'overweight' : 'obese'));
+    }
+  } catch { }
 
   const missing = [];
   if (!profile.height) missing.push('height');
@@ -52,13 +64,13 @@ function buildSchedulePromptSingle(profile, type, query) {
   const typeLabel = type === 'fullbody' ? 'fullbody' : (type === 'halfbody' ? 'halfbody' : 'split');
 
   return [
-    'Tu es un coach de musculation.',
+    'Tu es un coach de musculation spécialisé en programmation personnalisée.',
     `PROFIL: ${JSON.stringify(profile)}`,
-    `TÂCHE: Propose exactement 1 programme de type "${typeLabel}" et renvoie UNIQUEMENT ses MÉTADONNÉES et son SCHEDULE au format JSON strict.`,
+    `TÂCHE: Propose exactement 1 programme de type "${typeLabel}" et renvoie UNIQUEMENT ses MÉTADONNÉES et son SCHEDULE au format JSON strict. Utilise l'objectif (goal), le niveau (activityLevel), l'IMC (bmi) et la carrure (bodyType), le sexe (gender) et le matériel (equipmentLocation, homeEquipment).`,
     '',
     'CONTRAINTES DE SORTIE (objet JSON unique) :',
     '{',
-    '  "id": "program_${typeLabel}_<id>",',
+    `  "id": "program_${typeLabel}_<id>",`,
     '  "type": "' + typeLabel + '",',
     '  "title": "…",',
     '  "description": "…",',
@@ -73,7 +85,16 @@ function buildSchedulePromptSingle(profile, type, query) {
     'RÈGLES POUR "schedule":',
     `- 3 à 7 jours, tous distincts, choisis parmi: ${JSON.stringify(DAY_ORDER)}.`,
     '- Respecte strictement les noms en français (exactement comme dans la liste).',
+    '- Varie le focus musculaire selon les jours (push/pull/legs/core selon type et pattern).',
     '- Ne renvoie AUCUN texte hors JSON.',
+    '',
+    'DIRECTIVES DE PERSONNALISATION:',
+    '- Si goal = gain de muscle: hypertrophie (8–12 reps), 60–90s de repos, 5–6 exercices/séance pour intermédiaire, 6–8 pour avancé.',
+    '- Si goal = perdre du poids: circuits métaboliques (12–20 reps), 30–60s de repos, 4–6 exercices/séance, priorité mouvements polyarticulaires.',
+    '- Si goal = force: 3–6 reps lourds sur polyarticulaires, 120–180s de repos, accessoires 8–12 reps.',
+    '- Adapte le volume avec l’IMC: bodyType = overweight/obese → volume modéré, plus de cardio/conditionning; lean/normal → volume standard ou progressif.',
+    '- Utilise en priorité le matériel réellement disponible (homeEquipment) et évite d’inclure du matériel absent.',
+    '- Évite les répétitions d’exercices exacts entre les jours: un même exercice ne doit pas apparaître 2 fois dans la semaine (sauf variations et core).',
     query ? `CONTEXTE: ${query}` : ''
   ].join('\n');
 }
@@ -85,6 +106,7 @@ function buildDayPrompt(programMeta, day, profile) {
     'PROGRAMME_META: ' + JSON.stringify({
       id: programMeta.id,
       type: programMeta.type,
+      pattern: programMeta.pattern || undefined,
       level: programMeta.level,
       duration: programMeta.duration,
       frequency: programMeta.frequency,
@@ -92,29 +114,117 @@ function buildDayPrompt(programMeta, day, profile) {
     }),
     '',
     `TÂCHE: Génère le WORKOUT COMPLET pour le jour "${day}".`,
-    'Réponds UNIQUEMENT avec un objet JSON strict de la forme:',
+    'Réponds UNIQUEMENT avec un objet JSON strict (pas d\'exemple d\'exercice pré-rempli) :',
     '{',
     `  "day": "${day}",`,
     '  "name": "…",',
     `  "duration": "${programMeta.sessionDuration || '60 min'}",`,
-    '  "exercises": [',
-    '    { "name":"…", "sets":4, "reps":"8-12", "rest":"90s", "type":"compound|isolation|warmup", "targetMuscles":["…"] },',
-    '    { "name":"…", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["…"] },',
-    '    { "name":"…", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["…"] },',
-    '    { "name":"…", "sets":3, "reps":"10-12", "rest":"60-120s", "type":"isolation", "targetMuscles":["…"] }',
-    '  ]',
+    '  "exercises": []',
     '}',
+    'RÈGLES POUR "exercises":',
+    '- Tableau d\'objets: { name (string), sets (number), reps (string), rest (string), type (string), targetMuscles (string[]) }',
     '- Minimum 4 exercices pertinents.',
+    '- Choisis le NOMBRE d’exercices selon le niveau (débutant: 4–5, intermédiaire: 5–6, avancé: 6–8).',
+    '- Ajuste les RANGES de reps/repos selon goal: hypertrophie (8–12, 60–90s) / force (3–6, 120–180s) / perte de poids (12–20, 30–60s).',
+    '- Varie les patterns (pousser/tirer/jambes/core) et évite de répéter un même exercice exact utilisé un autre jour de ce programme; propose des variations si besoin (incliné, prise différente, unilatéral).',
+    '- Utilise UNIQUEMENT le matériel disponible (homeEquipment).',
+    '- Fais preuve de créativité: ne te base pas sur des modèles d\'exercices donnés en exemple.',
     '- AUCUN texte hors JSON.'
   ].join('\n');
+}
+
+/* ───────── Recommandations type/pattern ───────── */
+function inferLevelFromProfile(profile) {
+  const lvl = String(profile.activityLevel || '').toLowerCase();
+  if (lvl.includes('début') || lvl.includes('begin')) return 'débutant';
+  if (lvl.includes('avanç') || lvl.includes('advance')) return 'avancé';
+  return 'intermédiaire';
+}
+
+function recommendProgramSpec(profile) {
+  const level = inferLevelFromProfile(profile);
+  const goal = String(profile.goal || '').toLowerCase();
+  const loc = (profile.equipmentLocation || 'home').toLowerCase();
+  const eq = Array.isArray(profile.homeEquipment) ? profile.homeEquipment : [];
+  const hasGym = loc === 'gym';
+  const hasMinHomeEq = eq.length > 0;
+  const bodyType = String(profile.bodyType || '').toLowerCase();
+
+  // Defaults
+  let type = 'fullbody';
+  let pattern = 'FB-3';
+  let frequency = 3;
+
+  // Goal-driven selection
+  const isFatLoss = goal.includes('perte') || goal.includes('maigr') || goal.includes('cut') || goal.includes('weight');
+  const isStrength = goal.includes('force') || goal.includes('strength');
+  const isHypertrophy = goal.includes('gain') || goal.includes('muscle') || goal.includes('hypert');
+
+  if (isStrength) {
+    if (hasGym || hasMinHomeEq) { type = 'halfbody'; pattern = 'UL-4'; frequency = 4; }
+    else { type = 'fullbody'; pattern = 'FB-3'; frequency = 3; }
+  } else if (isHypertrophy) {
+    if (hasGym && level === 'avancé') { type = 'split'; pattern = 'PPL-5'; frequency = 5; }
+    else if ((hasGym || hasMinHomeEq) && level !== 'débutant') { type = 'halfbody'; pattern = 'UL-4'; frequency = 4; }
+    else { type = 'fullbody'; pattern = 'FB-3'; frequency = 3; }
+  } else if (isFatLoss) {
+    type = 'fullbody'; pattern = 'FB-3'; frequency = 3;
+  } else {
+    // default by level
+    if (level === 'avancé' && hasGym) { type = 'split'; pattern = 'PPL-5'; frequency = 5; }
+    else if (level !== 'débutant' && (hasGym || hasMinHomeEq)) { type = 'halfbody'; pattern = 'UL-4'; frequency = 4; }
+  }
+
+  // Adjust for bodyType
+  if (bodyType === 'obese' || bodyType === 'overweight') {
+    type = 'fullbody'; pattern = 'FB-3'; frequency = 3;
+  }
+
+  return { type, pattern, frequency, level };
+}
+
+async function generateWorkoutProgramsAuto(profile, rec, query = '') {
+  // Build contextual query for the LLM
+  const patternHint = rec.pattern === 'UL-4'
+    ? 'pattern Upper/Lower 4 jours (Haut/Bas alternés)'
+    : rec.pattern === 'PPL-5'
+      ? 'pattern Push/Pull/Legs 5 jours'
+      : 'pattern FullBody 3 jours (séances globales)';
+
+  const enrichedQuery = `${query} ${patternHint}. Fréquence souhaitée: ${rec.frequency} jours/semaine. Niveau: ${rec.level}.`;
+
+  // 1) Métadonnées IA pour le type recommandé
+  const meta = await requestScheduleMetaStrict(profile, rec.type, enrichedQuery);
+  // Annotate with pattern for day prompts
+  meta.pattern = rec.pattern;
+
+  // 2) Générer les jours en parallèle pour accélérer la génération
+  const workouts = await Promise.all(
+    (meta.schedule || []).map((day) => requestWorkoutDayStrict(meta, day, profile))
+  );
+  workouts.sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day));
+
+  return [{
+    id: meta.id,
+    type: meta.type,
+    pattern: meta.pattern,
+    title: meta.title,
+    description: meta.description,
+    level: meta.level,
+    duration: meta.duration,
+    frequency: meta.frequency,
+    sessionDuration: meta.sessionDuration,
+    schedule: meta.schedule,
+    workouts
+  }];
 }
 
 /* ───────── Validation & Normalisation ───────── */
 function normalizeDayName(d) {
   if (!d) return d;
   const map = {
-    'lundi':'Lundi','mardi':'Mardi','mercredi':'Mercredi','jeudi':'Jeudi',
-    'vendredi':'Vendredi','samedi':'Samedi','dimanche':'Dimanche'
+    'lundi': 'Lundi', 'mardi': 'Mardi', 'mercredi': 'Mercredi', 'jeudi': 'Jeudi',
+    'vendredi': 'Vendredi', 'samedi': 'Samedi', 'dimanche': 'Dimanche'
   };
   const key = String(d).trim().toLowerCase();
   return map[key] || d;
@@ -128,7 +238,7 @@ function validateScheduleProg(p) {
   if (new Set(s).size !== s.length) errs.push('schedule unique days');
   if (s.some(d => !DAY_ORDER.includes(d))) errs.push('schedule must be FR names');
 
-  ['id','type','title','description','level','duration','frequency','sessionDuration'].forEach(k=>{
+  ['id', 'type', 'title', 'description', 'level', 'duration', 'frequency', 'sessionDuration'].forEach(k => {
     if (!p || !p[k]) errs.push(`missing ${k}`);
   });
 
@@ -151,23 +261,23 @@ function extractJSON(text) {
   const t = String(text).trim();
 
   // direct
-  try { return JSON.parse(t); } catch {}
+  try { return JSON.parse(t); } catch { }
 
   // balises de code
   const cleaned = t.replace(/```json|```/gi, '').trim();
-  try { return JSON.parse(cleaned); } catch {}
+  try { return JSON.parse(cleaned); } catch { }
 
   // premier objet/tableau
   const m = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
   if (m) {
-    try { return JSON.parse(m[1]); } catch {}
+    try { return JSON.parse(m[1]); } catch { }
   }
 
   // micro-réparations: quotes droites, trailing commas
   const fixed = cleaned
     .replace(/[“”]/g, '"')
     .replace(/,\s*([}\]])/g, '$1');
-  try { return JSON.parse(fixed); } catch {}
+  try { return JSON.parse(fixed); } catch { }
 
   return null;
 }
@@ -292,7 +402,7 @@ async function requestScheduleMetaStrict(profile, type, query) {
     console.warn(`[LLM] schedule generation failed for ${type} , using local fallback`);
     // petit secours formaté (facultatif)
     const fallback = {
-      id: `program_${type}_${Math.floor(Math.random()*1e6).toString().padStart(6,'0')}`,
+      id: `program_${type}_${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`,
       type,
       title: type === 'fullbody' ? 'Fullbody 3 jours' : (type === 'halfbody' ? 'Halfbody 4 jours' : 'Split 5 jours'),
       description: 'Programme généré en secours local.',
@@ -302,10 +412,10 @@ async function requestScheduleMetaStrict(profile, type, query) {
       sessionDuration: '60 min',
       tips: ['Hydrate-toi', 'Échauffement 10 min'],
       schedule: type === 'fullbody'
-        ? ['Lundi','Mercredi','Vendredi']
+        ? ['Lundi', 'Mercredi', 'Vendredi']
         : type === 'halfbody'
-          ? ['Lundi','Mardi','Jeudi','Vendredi']
-          : ['Lundi','Mardi','Jeudi','Vendredi','Samedi']
+          ? ['Lundi', 'Mardi', 'Jeudi', 'Vendredi']
+          : ['Lundi', 'Mardi', 'Jeudi', 'Vendredi', 'Samedi']
     };
     return fallback;
   }
@@ -336,9 +446,9 @@ async function requestWorkoutDayStrict(meta, day, profile) {
       name: `${meta.type.toUpperCase()} - ${day}`,
       duration: meta.sessionDuration || '60 min',
       exercises: [
-        { name: 'Squat', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Quadriceps','Fessiers'] },
-        { name: 'Développé couché', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Pectoraux','Triceps'] },
-        { name: 'Rowing barre', sets: 3, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Dos','Biceps'] },
+        { name: 'Squat', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Quadriceps', 'Fessiers'] },
+        { name: 'Développé couché', sets: 4, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Pectoraux', 'Triceps'] },
+        { name: 'Rowing barre', sets: 3, reps: '8-12', rest: '90s', type: 'compound', targetMuscles: ['Dos', 'Biceps'] },
         { name: 'Plank', sets: 3, reps: '45-60s', rest: '60s', type: 'isolation', targetMuscles: ['Core'] },
       ]
     };
@@ -348,8 +458,8 @@ async function requestWorkoutDayStrict(meta, day, profile) {
 
 async function generateWorkoutProgramsStaged(profile, query = '') {
   // 1) Métadonnées IA pour chaque type x niveau
-  const types = ['fullbody','halfbody','split'];
-  const levels = ['débutant','intermédiaire','avancé'];
+  const types = ['fullbody', 'halfbody', 'split'];
+  const levels = ['débutant', 'intermédiaire', 'avancé'];
   const metas = [];
   // request one meta per (type, level) to produce multiple variations
   for (const type of types) {
@@ -477,16 +587,29 @@ export const mistralSearchService = {
       console.warn('Profil partiellement renseigné (workouts), génération quand même. Champs manquants:', missing);
     }
     try {
-      console.log('💪 Génération de programmes d\'entraînement (staged, IA first)');
+      console.log('💪 Génération de programmes d\'entraînement (auto, IA first)');
       let queryTxt = '';
       const loc = criteria?.location || profile.equipmentLocation;
       if (loc === 'home') queryTxt += 'à domicile ';
-      if (loc === 'gym')  queryTxt += 'en salle ';
+      if (loc === 'gym') queryTxt += 'en salle ';
 
       const equip = (criteria?.equipment && criteria.equipment.length ? criteria.equipment : profile.homeEquipment) || [];
       if (equip.length > 0) queryTxt += `avec ${equip.join(' ')} `;
 
-      const programs = await generateWorkoutProgramsStaged(profile, queryTxt);
+      // Recommander automatiquement type/pattern/frequence, ou forcer depuis critères manuels
+      let rec = recommendProgramSpec(profile);
+      const forceType = criteria?.forceType;
+      if (forceType) {
+        const t = String(forceType).toLowerCase();
+        const defaultPattern = t === 'halfbody' ? 'UL-4' : (t === 'split' ? 'PPL-5' : 'FB-3');
+        rec = {
+          type: t,
+          pattern: criteria?.forcePattern || defaultPattern,
+          frequency: criteria?.forceFrequency || (t === 'split' ? 5 : (t === 'halfbody' ? 4 : 3)),
+          level: inferLevelFromProfile(profile)
+        };
+      }
+      const programs = await generateWorkoutProgramsAuto(profile, rec, queryTxt);
 
       return programs.map((program) => ({
         id: program.id,
@@ -499,6 +622,7 @@ export const mistralSearchService = {
         thumbnail: program.thumbnail || `https://source.unsplash.com/400x300/?fitness+${loc || 'workout'}`,
         workouts: program.workouts,
         schedule: program.schedule,
+        pattern: program.pattern,
         goal: profile.goal,
         aiGenerated: true
       }));

@@ -19,7 +19,7 @@ const DataManagement = ({ isOpen, onClose }) => {
 
   const loadDataInfo = () => {
     const stats = persistenceService.getStorageStats();
-    setStorageStats(stats);    const data = {
+    setStorageStats(stats); const data = {
       userProfile: persistenceService.loadUserProfile(),
       equipmentProfile: persistenceService.loadEquipmentProfile(),
       nutritionProfile: persistenceService.loadNutritionProfile(),
@@ -117,7 +117,7 @@ const DataManagement = ({ isOpen, onClose }) => {
             <Download size={16} />
             Exporter
           </button>
-          
+
           <label className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer">
             <Upload size={16} />
             Importer
@@ -128,7 +128,7 @@ const DataManagement = ({ isOpen, onClose }) => {
               className="hidden"
             />
           </label>
-          
+
           <button
             onClick={loadDataInfo}
             className="flex items-center gap-2 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
@@ -136,7 +136,7 @@ const DataManagement = ({ isOpen, onClose }) => {
             <RefreshCw size={16} />
             Actualiser
           </button>
-          
+
           <button
             onClick={handleClearData}
             className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
