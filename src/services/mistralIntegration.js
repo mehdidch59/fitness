@@ -129,6 +129,7 @@ function buildDayPrompt(programMeta, day, profile) {
     '- Varie les patterns (pousser/tirer/jambes/core) et évite de répéter un même exercice exact utilisé un autre jour de ce programme; propose des variations si besoin (incliné, prise différente, unilatéral).',
     '- Utilise UNIQUEMENT le matériel disponible (homeEquipment).',
     '- Fais preuve de créativité: ne te base pas sur des modèles d\'exercices donnés en exemple.',
+    '- Évite les répétitions d’exercices exacts entre les jours.',
     '- AUCUN texte hors JSON.'
   ].join('\n');
 }
