@@ -3,7 +3,8 @@ import { Calendar, Search, Settings, Play, Apple, RefreshCw, Zap, Camera, Trophy
 import { useAppContext } from '../../context/AppContext';
 import { useWorkouts } from '../../hooks/useWorkouts';
 import { useNutrition } from '../../hooks/useNutrition';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 function HomeView() {
   const { 
@@ -12,6 +13,8 @@ function HomeView() {
     nutritionProfile,
     actions 
   } = useAppContext();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
   // Utiliser les hooks personnalisés
   const { workoutPrograms, isLoading: isLoadingWorkouts, findSuitableWorkouts } = useWorkouts();
@@ -113,18 +116,24 @@ function HomeView() {
         </div>
 
         <div className="space-y-4">
-          {(!equipmentProfile.location || !nutritionProfile.dietType) && (
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-yellow-200">
-              <Settings className="mx-auto mb-3 text-yellow-500" size={32} />
-              <h3 className="font-semibold text-center mb-4">Configuration requise</h3>
-              <button
-                onClick={() => actions.setQuestionnaire(true)}
-                className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:from-yellow-600 hover:to-red-600 active:scale-95 transition-all duration-200"
-              >
-                Commencer la configuration
-              </button>
-            </div>
-          )}
+        {(!equipmentProfile.location || !nutritionProfile.dietType) && (
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-yellow-200">
+            <Settings className="mx-auto mb-3 text-yellow-500" size={32} />
+            <h3 className="font-semibold text-center mb-4">Configuration requise</h3>
+            <button
+              onClick={() => {
+                if (!isAuthenticated) {
+                  navigate('/auth');
+                  return;
+                }
+                actions.setQuestionnaire(true);
+              }}
+              className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:from-yellow-600 hover:to-red-600 active:scale-95 transition-all duration-200"
+            >
+              Commencer la configuration
+            </button>
+          </div>
+        )}
 
           <button
             onClick={handleGenerateWorkout}

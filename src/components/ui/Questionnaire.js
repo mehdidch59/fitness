@@ -4,10 +4,12 @@ import { useAuth } from '../../hooks/useAuth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 function Questionnaire() {
   const { questionnaireStep, equipmentProfile, nutritionProfile, actions } = useAppContext();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedEquipment, setSelectedEquipment] = useState([]);
   const [showEquipmentQuestion, setShowEquipmentQuestion] = useState(false);
 
@@ -202,6 +204,39 @@ function Questionnaire() {
     
     handleNext();
   };
+
+  // Si l'utilisateur n'est pas connecté, empêcher l'accès au QCM et proposer la connexion
+  if (!user) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl text-center">
+          <h3 className="text-2xl font-bold mb-2">Connexion requise</h3>
+          <p className="text-gray-600 mb-6">
+            Vous devez être connecté pour effectuer le questionnaire de configuration.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                actions.setQuestionnaire(false);
+              }}
+              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-2xl font-semibold hover:bg-gray-300 transition-colors"
+            >
+              Fermer
+            </button>
+            <button
+              onClick={() => {
+                actions.setQuestionnaire(false);
+                navigate('/auth');
+              }}
+              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-2xl font-semibold"
+            >
+              Se connecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

@@ -11,9 +11,11 @@ import {
   Heart,
   Eye,
   Bookmark,
-  Plus,
   LogIn,
-  Utensils
+  Utensils,
+  Trash2,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import {
@@ -466,7 +468,7 @@ function NutritionView() {
   }), [onSuccess, onError]);
   
   // Hooks principaux avec options stables
-  const {
+  const { 
     data: recipes,
     isLoading,
     isError,
@@ -700,6 +702,10 @@ function NutritionView() {
     [viewMode, isLoadingFavorites, isLoading]
   );
 
+  // Sélection pour suppression
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedRecipeIds, setSelectedRecipeIds] = useState(new Set());
+
   // Callbacks stables pour la sélection
   const handleRecipeSelect = useCallback((recipe) => {
     setSelectedRecipe(recipe);
@@ -841,12 +847,78 @@ function NutritionView() {
 
         {currentRecipes && currentRecipes.length > 0 ? (
           <div className="space-y-4">
+            {/* Toolbar sélection */}
+            <div className="flex items-center justify-between -mt-1">
+              <button
+                onClick={() => {
+                  if (selectionMode) setSelectedRecipeIds(new Set());
+                  setSelectionMode(!selectionMode);
+                }}
+                className={`px-3 py-1 rounded-lg text-sm ${selectionMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                {selectionMode ? 'Annuler sélection' : 'Sélectionner'}
+              </button>
+              {selectionMode && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">{selectedRecipeIds.size} sélectionné(s)</span>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const ids = Array.from(selectedRecipeIds);
+                        if (!ids.length || !user?.uid) return;
+                        await nutritionFirestoreService.deleteRecipes(ids, user.uid);
+                        setSelectedRecipeIds(new Set());
+                        setSelectionMode(false);
+                        // Rafraîchir les vues
+                        if (viewMode === 'favorites') {
+                          refetchFavorites();
+                        }
+                        refetchRecipes();
+                      } catch (e) {
+                        console.error('Suppression recettes échouée:', e);
+                        setError('Erreur lors de la suppression');
+                      }
+                    }}
+                    disabled={selectedRecipeIds.size === 0}
+                    className={`px-3 py-1 rounded-lg text-sm flex items-center ${selectedRecipeIds.size === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700'}`}
+                  >
+                    <Trash2 size={14} className="mr-1" /> Supprimer
+                  </button>
+                </div>
+              )}
+            </div>
             {currentRecipes.map((recipe, index) => (
               <div
                 key={recipe.id || `recipe-${index}-${recipe.name?.substring(0, 10)}`}
-                className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
-                onClick={() => handleRecipeSelect(recipe)}
+                className="relative bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                onClick={() => {
+                  if (selectionMode) {
+                    setSelectedRecipeIds(prev => {
+                      const next = new Set(prev);
+                      if (recipe.id && next.has(recipe.id)) next.delete(recipe.id); else if (recipe.id) next.add(recipe.id);
+                      return next;
+                    });
+                    return;
+                  }
+                  handleRecipeSelect(recipe);
+                }}
               >
+                {selectionMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRecipeIds(prev => {
+                        const next = new Set(prev);
+                        if (recipe.id && next.has(recipe.id)) next.delete(recipe.id); else if (recipe.id) next.add(recipe.id);
+                        return next;
+                      });
+                    }}
+                    className="absolute top-3 left-3 p-1 rounded-md hover:bg-gray-100"
+                    aria-label="Sélectionner la recette"
+                  >
+                    {recipe.id && selectedRecipeIds.has(recipe.id) ? <CheckSquare size={18} className="text-purple-600" /> : <Square size={18} className="text-gray-400" />}
+                  </button>
+                )}
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-bold text-lg flex-1">{recipe.name || 'Recette sans nom'}</h3>
                   <div className="flex items-center gap-2 ml-4">

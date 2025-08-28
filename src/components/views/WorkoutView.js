@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { 
-  Dumbbell, BarChart2, Clock, ArrowRight, Search, Filter, 
-  ArrowLeft, AlertCircle, Calendar,
+  Dumbbell, BarChart2, Clock, ArrowRight, Search,
+  X, ChevronDown, ChevronUp, Trash2, CheckSquare, Square,
+  AlertCircle, Calendar,
   Play, RotateCcw, Timer, Award, BookOpen
 } from 'lucide-react';
 import Questionnaire from '../ui/Questionnaire';
@@ -15,9 +16,7 @@ import { auth } from '../../firebase';
 function UltraRobustWorkoutView() {
   const {
     isQuestionnaire,
-    questionnaireStep,
     actions,
-    userProfile,
     equipmentProfile
   } = useAppContext();
 
@@ -32,10 +31,14 @@ function UltraRobustWorkoutView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProgramIndex, setSelectedProgramIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
+  const [expandedDayIndex, setExpandedDayIndex] = useState(0);
+  const [detailsAnim, setDetailsAnim] = useState(false);
   const [lastGeneration, setLastGeneration] = useState(null);
   const [programStats, setProgramStats] = useState(null);
-  const [parsingStats, setParsingStats] = useState(null);
+  
   const [lastParsingMethod, setLastParsingMethod] = useState(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedProgramIds, setSelectedProgramIds] = useState(new Set());
 
   // Vérifier si l'utilisateur a déjà configuré son lieu d'entraînement
   const isLocationConfigured = Boolean(equipmentProfile.location);
@@ -60,8 +63,7 @@ function UltraRobustWorkoutView() {
         const stats = await workoutFirestoreService.getUserProgramStats(user.uid);
         setProgramStats(stats);
 
-        // Charger les stats de parsing
-        setParsingStats(mistralService.getParsingStats());
+        // Charger les stats de parsing (optionnel)
       } catch (err) {
         console.error('❌ Erreur chargement programmes:', err);
       } finally {
@@ -79,11 +81,38 @@ function UltraRobustWorkoutView() {
 
   // Démarrer le questionnaire si nécessaire
   useEffect(() => {
-    if (!isLocationConfigured && !isQuestionnaire) {
+    // Ne démarrer le QCM automatiquement que si l'utilisateur est connecté
+    if (!isLocationConfigured && !isQuestionnaire && user) {
       actions.setQuestionnaire(true);
       actions.setQuestionnaireStep(0);
     }
-  }, [isLocationConfigured, isQuestionnaire, actions]);
+  }, [isLocationConfigured, isQuestionnaire, actions, user]);
+
+  // Lock scroll on body while sheet is open
+  useEffect(() => {
+    if (showDetails) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [showDetails]);
+
+  // Animate sheet on open
+  useEffect(() => {
+    if (showDetails) {
+      // next tick to allow transition from translate-y-full -> 0
+      const t = setTimeout(() => setDetailsAnim(true), 0);
+      return () => clearTimeout(t);
+    } else {
+      setDetailsAnim(false);
+    }
+  }, [showDetails]);
+
+  const closeDetails = () => {
+    setDetailsAnim(false);
+    // Allow slide-down animation before unmount
+    setTimeout(() => setShowDetails(false), 180);
+  };
 
   // GÉNÉRATION PROGRAMMES RÉALISTES
   const handleRealisticGeneration = async () => {
@@ -149,7 +178,6 @@ function UltraRobustWorkoutView() {
       actions.setSearchStatus('✅ Validation structure hebdomadaire...');
 
       const newParsingStats = mistralService.getParsingStats();
-      setParsingStats(newParsingStats);
 
       // Déterminer la méthode de parsing utilisée
       if (newParsingStats.directSuccessRate > 0) {
@@ -378,6 +406,40 @@ function UltraRobustWorkoutView() {
         </div>
       ) : (
         <div className="space-y-4">
+          <div className="flex items-center justify-between mb-1">
+            <button
+              onClick={() => {
+                if (selectionMode) setSelectedProgramIds(new Set());
+                setSelectionMode(!selectionMode);
+              }}
+              className={`px-3 py-1 rounded-lg text-sm ${selectionMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              {selectionMode ? 'Annuler sélection' : 'Sélectionner'}
+            </button>
+            {selectionMode && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">{selectedProgramIds.size} sélectionné(s)</span>
+                <button
+                  onClick={async () => {
+                    try {
+                      const ids = Array.from(selectedProgramIds);
+                      if (!ids.length || !user?.uid) return;
+                      await workoutFirestoreService.deletePrograms(user.uid, ids);
+                      setGeneratedPrograms(prev => prev.filter(p => !selectedProgramIds.has(p.id)));
+                      setSelectedProgramIds(new Set());
+                      setSelectionMode(false);
+                    } catch (e) {
+                      console.error('Suppression programmes échouée:', e);
+                    }
+                  }}
+                  disabled={selectedProgramIds.size === 0}
+                  className={`px-3 py-1 rounded-lg text-sm flex items-center ${selectedProgramIds.size === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700'}`}
+                >
+                  <Trash2 size={14} className="mr-1" /> Supprimer
+                </button>
+              </div>
+            )}
+          </div>
           {generatedPrograms
             .filter(p => {
               const okLevel = difficultyFilter === 'all' || (p.level || '').toLowerCase() === difficultyFilter;
@@ -385,7 +447,22 @@ function UltraRobustWorkoutView() {
               return okLevel && okSearch;
             })
             .map((program, idx) => (
-              <div key={program.id || idx} className="bg-white rounded-2xl shadow p-4">
+              <div key={program.id || idx} className="relative bg-white rounded-2xl shadow p-4">
+                {selectionMode && (
+                  <button
+                    onClick={() => {
+                      setSelectedProgramIds(prev => {
+                        const next = new Set(prev);
+                        if (next.has(program.id)) next.delete(program.id); else next.add(program.id);
+                        return next;
+                      });
+                    }}
+                    className="absolute top-3 left-3 p-1 rounded-md hover:bg-gray-100"
+                    aria-label="Sélectionner le programme"
+                  >
+                    {selectedProgramIds.has(program.id) ? <CheckSquare size={18} className="text-purple-600" /> : <Square size={18} className="text-gray-400" />}
+                  </button>
+                )}
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold">{program.title || `Programme ${idx+1}`}</h3>
@@ -397,7 +474,16 @@ function UltraRobustWorkoutView() {
                     </div>
                     <button
                       onClick={() => {
+                        if (selectionMode) {
+                          setSelectedProgramIds(prev => {
+                            const next = new Set(prev);
+                            if (next.has(program.id)) next.delete(program.id); else next.add(program.id);
+                            return next;
+                          });
+                          return;
+                        }
                         setSelectedProgramIndex(idx);
+                        setExpandedDayIndex(0);
                         setShowDetails(true);
                       }}
                       className="mt-2 inline-flex items-center text-sm text-purple-600 hover:text-purple-700"
@@ -425,35 +511,65 @@ function UltraRobustWorkoutView() {
     if (!program) return null;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center">
-        <div className="bg-white w-full sm:w-[700px] max-h-[90vh] rounded-t-2xl sm:rounded-2xl overflow-hidden">
-          <div className="flex items-center p-4 border-b">
-            <button onClick={() => setShowDetails(false)} className="mr-2 p-2 rounded-full hover:bg-gray-100">
-              <ArrowLeft size={20} />
-            </button>
-            <h3 className="font-semibold">{program.title}</h3>
+      <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center transition-opacity duration-300 ease-in-out ${detailsAnim ? 'bg-black/60 opacity-100' : 'bg-black/60 opacity-0'}`}>
+        <div className={`bg-white w-full sm:w-[640px] max-h-[85vh] rounded-t-2xl sm:rounded-2xl overflow-hidden transform transition-transform duration-300 ease-in-out ${detailsAnim ? 'translate-y-0' : 'translate-y-full sm:translate-y-0 sm:scale-95 sm:opacity-0'}`}>
+          {/* Drag handle */}
+          <div className="w-full flex justify-center pt-2 sm:hidden">
+            <div className="h-1.5 w-12 bg-gray-300 rounded-full" />
           </div>
-          <div className="p-4 overflow-y-auto max-h-[75vh]">
-            {(program.workouts || []).map((w) => (
-              <div key={w.day} className="mb-4 border rounded-xl p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{w.day}</span>
-                  <span className="text-sm text-gray-600">{w.duration || program.sessionDuration || '60 min'}</span>
-                </div>
-                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {(w.exercises || []).map((e, i) => (
-                    <div key={i} className="text-sm bg-gray-50 rounded p-2">
-                      <div className="font-medium">{e.name}</div>
-                      <div className="text-gray-600">
-                        {typeof e.sets === 'number' ? `${e.sets} séries • ` : ''}
-                        {e.reps ? `${e.reps}` : ''}
-                        {e.rest ? ` • repos ${e.rest}` : ''}
-                      </div>
+          {/* Header sticky */}
+          <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b">
+            <div className="flex items-center justify-between p-4">
+              <h3 className="font-semibold text-base truncate pr-3">{program.title}</h3>
+              <button
+                onClick={closeDetails}
+                className="p-2 rounded-full hover:bg-gray-100 active:scale-95"
+                aria-label="Fermer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+          <div className="p-4 overflow-y-auto max-h-[75vh] touch-pan-y">
+            {(program.workouts || []).map((w, idx) => {
+              const isExpanded = expandedDayIndex === idx;
+              const exercises = Array.isArray(w.exercises) ? w.exercises : [];
+              return (
+                <div key={w.day || idx} className="mb-3 border rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setExpandedDayIndex(isExpanded ? -1 : idx)}
+                    className="w-full flex items-center justify-between p-3 bg-gray-50"
+                    aria-expanded={isExpanded}
+                  >
+                    <div className="flex items-center gap-2 text-left">
+                      <span className="font-medium text-sm">{w.day || `Jour ${idx+1}`}</span>
+                      <span className="text-xs text-gray-500">
+                        {exercises.length} exos • {w.duration || program.sessionDuration || '60 min'}
+                      </span>
                     </div>
-                  ))}
+                    {isExpanded ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="p-3 space-y-2">
+                      {exercises.map((e, i) => (
+                        <div key={i} className="text-sm bg-gray-50 rounded-lg p-2">
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium pr-2 truncate">{e.name}</div>
+                            <div className="text-xs text-gray-600 whitespace-nowrap">
+                              {typeof e.sets === 'number' ? `${e.sets}x` : ''}{e.reps || ''}{e.rest ? ` • repos ${e.rest}` : ''}
+                            </div>
+                          </div>
+                          {e.notes && (
+                            <div className="text-xs text-gray-500 mt-1">{e.notes}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

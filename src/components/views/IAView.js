@@ -5,6 +5,7 @@ import {
   Play, BarChart3
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
+import { Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../firebase';
 import { personalAICoachService } from '../../services/personalAICoachService';
@@ -20,6 +21,7 @@ function IAView() {
   const [mood, setMood] = useState('énergique');
   const [budget, setBudget] = useState(50);
   const [duration, setDuration] = useState(7);
+  const isLoggedIn = Boolean(user?.uid);
 
   // Fonctionnalités IA disponibles
   const features = [
@@ -185,6 +187,10 @@ function IAView() {
 
   // Actions pour chaque fonctionnalité
   const handleFeatureAction = async (featureId) => {
+    if (!isLoggedIn) {
+      actions.setSearchStatus("Connectez-vous pour utiliser l'IA+");
+      return;
+    }
     switch (featureId) {
       case 'coach':
         await generateCoachAdvice();
@@ -230,6 +236,21 @@ function IAView() {
       </div>
 
       <div className="p-6 space-y-6">
+        {!isLoggedIn && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-2xl p-4">
+            <div className="flex items-center justify-between">
+              <p>
+                Connexion requise: connectez-vous pour utiliser les fonctionnalités IA+.
+              </p>
+              <Link
+                to="/auth"
+                className="ml-4 px-4 py-2 rounded-xl bg-yellow-600 text-white font-semibold hover:bg-yellow-700"
+              >
+                Se connecter
+              </Link>
+            </div>
+          </div>
+        )}
         {/* Navigation des fonctionnalités */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h2 className="text-xl font-bold mb-4 flex items-center">
@@ -290,10 +311,10 @@ function IAView() {
                   
                   <button
                     onClick={() => handleFeatureAction(feature.id)}
-                    disabled={isLoading}
+                    disabled={isLoading || !isLoggedIn}
                     className={`px-6 py-3 rounded-xl font-semibold flex items-center ${
-                      isLoading 
-                        ? 'bg-gray-400 cursor-not-allowed' 
+                      isLoading || !isLoggedIn
+                        ? 'bg-gray-400 cursor-not-allowed'
                         : `bg-gradient-to-r ${feature.color} text-white hover:shadow-lg`
                     }`}
                   >
@@ -305,7 +326,7 @@ function IAView() {
                     ) : (
                       <>
                         <Play size={16} className="mr-2" />
-                        Générer
+                        {isLoggedIn ? 'Générer' : 'Connexion requise'}
                       </>
                     )}
                   </button>

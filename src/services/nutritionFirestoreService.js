@@ -80,6 +80,68 @@ class NutritionFirestoreService {
   }
 
   /**
+   * SUPPRIMER UNE RECETTE (et nettoyer favoris + cache)
+   */
+  async deleteRecipe(recipeId, userId) {
+    try {
+      if (!recipeId) return false;
+
+      if (this.checkFirestoreAvailability()) {
+        const { doc, deleteDoc, query, collection, where, getDocs } = firestoreModule;
+        // Supprimer le document recette
+        await deleteDoc(doc(db, this.collectionName, recipeId));
+
+        // Supprimer les entrées favoris associées à cette recette pour cet utilisateur
+        if (userId) {
+          const q = query(
+            collection(db, this.favoritesCollectionName),
+            where('recipeId', '==', recipeId),
+            where('userId', '==', userId)
+          );
+          const snapshot = await getDocs(q);
+          for (const d of snapshot.docs) {
+            await deleteDoc(d.ref);
+          }
+        }
+      }
+
+      // Nettoyer le cache local utilisateur
+      if (userId) {
+        const recipes = this.getUserCache('recipes', userId) || [];
+        const updated = recipes.filter((r) => r.id !== recipeId);
+        this.setUserCache('recipes', updated, userId);
+
+        const favorites = this.getUserCache('favorites', userId) || [];
+        const favUpdated = favorites.filter((f) => f.recipeId !== recipeId);
+        this.setUserCache('favorites', favUpdated, userId);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur suppression recette:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * SUPPRESSION MULTIPLE DE RECETTES
+   */
+  async deleteRecipes(recipeIds = [], userId) {
+    try {
+      if (!Array.isArray(recipeIds) || recipeIds.length === 0) return { deleted: 0 };
+      let deleted = 0;
+      for (const id of recipeIds) {
+        const ok = await this.deleteRecipe(id, userId);
+        if (ok) deleted++;
+      }
+      return { deleted };
+    } catch (error) {
+      console.error('❌ Erreur suppression multiple recettes:', error);
+      throw error;
+    }
+  }
+
+  /**
    * NETTOYAGE DU CACHE LOCAL LORS DU CHANGEMENT D'UTILISATEUR
    */
   clearUserSpecificCache(userId) {

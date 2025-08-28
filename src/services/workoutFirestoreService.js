@@ -5,6 +5,8 @@ import {
   query,
   where,
   deleteDoc,
+  updateDoc,
+  doc,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -318,6 +320,45 @@ class WorkoutFirestoreService {
       maxPerDay: 999999,
       remainingGenerations: 999999,
     };
+  }
+
+  /**
+   * Supprimer un ou plusieurs programmes (par id) du dernier document de l'utilisateur
+   */
+  async deletePrograms(userId, programIds = []) {
+    if (!userId) throw new Error('deletePrograms: userId requis');
+    if (!Array.isArray(programIds) || programIds.length === 0) return { updated: false, remaining: 0 };
+    try {
+      const q = query(collection(db, this.collectionName), where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+
+      // Trouver le doc le plus récent
+      const docs = querySnapshot.docs
+        .map((d) => ({ id: d.id, ref: d.ref, ...d.data() }))
+        .sort(
+          (a, b) =>
+            (b.generatedAt?.toDate?.() ?? new Date(0)) -
+            (a.generatedAt?.toDate?.() ?? new Date(0))
+        );
+
+      if (docs.length === 0) return { updated: false, remaining: 0 };
+
+      const latest = docs[0];
+      const current = Array.isArray(latest.programs) ? latest.programs : [];
+      const idsSet = new Set(programIds);
+      const nextPrograms = current.filter((p) => !idsSet.has(p.id));
+
+      await updateDoc(doc(db, this.collectionName, latest.id), {
+        programs: nextPrograms,
+        totalPrograms: nextPrograms.length,
+        updatedAt: Timestamp.now(),
+      });
+
+      return { updated: true, remaining: nextPrograms.length };
+    } catch (error) {
+      console.error('❌ Erreur suppression programmes:', error);
+      throw error;
+    }
   }
 }
 

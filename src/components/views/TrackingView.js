@@ -2,9 +2,12 @@ import React from 'react';
 import { Activity, Search, Dumbbell, Apple } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAppContext } from '../../context/AppContext';
+import { useAuth } from '../../hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 function TrackingView() {
   const { stats } = useAppContext();
+  const { isAuthenticated } = useAuth();
 
   // Générer des données fictives pour le graphique
   const chartData = Array.from({ length: 7 }, (_, i) => ({
@@ -41,6 +44,23 @@ function TrackingView() {
   };
   
   const activityHistory = generateHistory();
+
+  if (!isAuthenticated) {
+    return (
+      <div className="pb-20 p-6 bg-gray-50 min-h-screen">
+        <h2 className="text-3xl font-bold mb-6 text-center">Statistiques</h2>
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-200 max-w-xl mx-auto text-center">
+          <p className="text-gray-700 mb-4">Connectez-vous pour accéder au suivi.</p>
+          <Link
+            to="/auth"
+            className="inline-block px-5 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700"
+          >
+            Se connecter
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-20 p-6 bg-gray-50 min-h-screen">
