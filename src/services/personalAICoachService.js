@@ -148,7 +148,7 @@ class PersonalAICoachService {
       if (currentContext.timeOfDay === 'afternoon' && currentContext.stress > 6) {
         results.likelyCravings.push({
           type: 'sugar',
-          likelihood: 0.8,
+          likelihood: predictions.sugarCraving,
           reason: 'Stress élevé en fin d\'après-midi',
           typicalChoice: 'Snacks sucrés, chocolat'
         });
@@ -163,7 +163,7 @@ class PersonalAICoachService {
       if (currentContext.timeOfDay === 'evening' && currentContext.boredom > 5) {
         results.likelyCravings.push({
           type: 'salty',
-          likelihood: 0.7,
+          likelihood: predictions.saltyCraving,
           reason: 'Ennui en soirée',
           typicalChoice: 'Chips, crackers'
         });

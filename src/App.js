@@ -15,8 +15,7 @@ import SettingsView from './components/views/SettingsView';
 import WorkoutView from './components/views/WorkoutView';
 import NutritionView from './components/views/NutritionView';
 import TrackingView from './components/views/TrackingView';
-import AdvancedFeaturesView from './components/views/AdvancedFeaturesView';
-import AdvancedFeaturesDemo from './components/AdvancedFeaturesDemo';
+import AdvancedFeaturesView from './components/views/IAView';
 
 // Importer l'indicateur de sauvegarde
 import SaveIndicator from './components/ui/SaveIndicator';
@@ -54,8 +53,7 @@ const App = () => {
           <Route path="/workout" element={<WorkoutView />} />
           <Route path="/nutrition" element={<NutritionView />} />
           <Route path="/tracking" element={<TrackingView />} />
-          <Route path="/advanced" element={<AdvancedFeaturesView />} />
-          <Route path="/advanced-demo" element={<AdvancedFeaturesDemo userId={user?.uid} />} />
+          <Route path="/advanced" element={<AdvancedFeaturesView userId={user?.uid} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Navbar />
