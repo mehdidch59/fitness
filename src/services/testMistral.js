@@ -5,7 +5,7 @@ const apiKey = "J4IkMEsTLcrNDhrr5IrVwZYBRGisAMGs";
 const client = new Mistral({apiKey: apiKey});
 
 const chatResponse = await client.chat.complete({
-  model: 'mistral-large-latest',
+  model: 'mistral-small',
   messages: [{role: 'user', content: 'What is the best French cheese?'}],
 });
 

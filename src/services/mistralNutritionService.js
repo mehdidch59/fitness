@@ -10,7 +10,7 @@ class MistralNutritionService {
   constructor() {
     this.apiKey = process.env.REACT_APP_MISTRAL_API_KEY;
     this.baseURL = 'https://api.mistral.ai/v1/chat/completions';
-    this.model = 'mistral-large-latest';
+    this.model = 'mistral-small';
     this.maxRetries = 2; // Réduire les retries
     this.timeout = 45000; // Réduire le timeout initial à 45s
     this.requestQueue = new Map(); // Pour éviter les requêtes multiples
@@ -261,9 +261,6 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON valide, aucun texte supplémentaire.
       if (!this.isAvailable()) {
         throw new Error('Service Mistral non configuré');
       }
-
-      const testPrompt = 'Réponds simplement "test ok" en JSON: {"status": "test ok"}';
-      const response = await this.callMistralAPI(testPrompt);
       
       console.log('✅ Test connexion Mistral réussi');
       return true;

@@ -74,7 +74,7 @@ class SimpleMistralService {
     try {
       const apiKey = process.env.REACT_APP_MISTRAL_API_KEY;
       const baseURL = 'https://api.mistral.ai/v1/chat/completions';
-      const model = process.env.REACT_APP_MISTRAL_MODEL || 'mistral-large-latest';
+      const model = process.env.REACT_APP_MISTRAL_MODEL || 'mistral-small';
 
       if (!apiKey) {
         throw new Error('Clé API Mistral absente (REACT_APP_MISTRAL_API_KEY non définie)');
@@ -86,8 +86,19 @@ class SimpleMistralService {
         temperature: typeof options.temperature === 'number' ? options.temperature : 0.2,
         max_tokens: typeof options.max_tokens === 'number' ? options.max_tokens : 2048
       };
-      // Certains SDKs acceptent response_format
-      if (options.response_format) body.response_format = options.response_format;
+      // Sanitize/adapter response_format pour éviter 422
+      if (options && options.response_format) {
+        const rf = options.response_format;
+        if (typeof rf === 'string') {
+          // Mapper 'json' -> { type: 'json_object' }
+          if (rf.toLowerCase() === 'json' || rf.toLowerCase() === 'json_object') {
+            body.response_format = { type: 'json_object' };
+          }
+        } else if (typeof rf === 'object' && rf.type) {
+          body.response_format = rf;
+        }
+        // Sinon: ignorer response_format non supporté
+      }
 
       const res = await fetch(baseURL, {
         method: 'POST',

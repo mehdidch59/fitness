@@ -4,10 +4,9 @@ import {
   Dumbbell, BarChart2, Clock, ArrowRight, Search,
   X, ChevronDown, ChevronUp, Trash2, CheckSquare, Square,
   AlertCircle, Calendar,
-  Play, RotateCcw, Timer, Award, BookOpen
+  Play, RotateCcw, Timer, BookOpen
 } from 'lucide-react';
 import Questionnaire from '../ui/Questionnaire';
-import { mistralService } from '../../services/mistralService';
 import { mistralSearchService } from '../../services/mistralIntegration';
 import { workoutFirestoreService } from '../../services/workoutFirestoreService';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -39,7 +38,6 @@ function UltraRobustWorkoutView() {
   const [lastGeneration, setLastGeneration] = useState(null);
   const [programStats, setProgramStats] = useState(null);
 
-  const [lastParsingMethod, setLastParsingMethod] = useState(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedProgramIds, setSelectedProgramIds] = useState(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -129,7 +127,6 @@ function UltraRobustWorkoutView() {
     setIsGenerating(true);
     setGenerationProgress(0);
     setGenerationStage('Initialisation...');
-    setLastParsingMethod(null);
 
     try {
       // Phase 1: Préparation
@@ -186,17 +183,6 @@ function UltraRobustWorkoutView() {
       setGenerationProgress(90);
       setGenerationStage('✅ Validation programmes...');
       actions.setSearchStatus('✅ Validation structure hebdomadaire...');
-
-      const newParsingStats = mistralService.getParsingStats();
-
-      // Déterminer la méthode de parsing utilisée
-      if (newParsingStats.directSuccessRate > 0) {
-        setLastParsingMethod('direct');
-      } else if (newParsingStats.cleanedSuccessRate > 0) {
-        setLastParsingMethod('cleaned');
-      } else {
-        setLastParsingMethod('template');
-      }
 
       // Phase 4: Sauvegarde
       setGenerationProgress(95);
@@ -387,13 +373,6 @@ function UltraRobustWorkoutView() {
                 ? new Date(programStats.lastGeneration).toLocaleDateString()
                 : '-'}
             </p>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-2xl shadow flex items-center">
-          <Award className="text-yellow-500 mr-3" />
-          <div>
-            <p className="text-sm text-gray-600">Méthode parsing</p>
-            <p className="text-2xl font-bold">{lastParsingMethod || '-'}</p>
           </div>
         </div>
       </div>

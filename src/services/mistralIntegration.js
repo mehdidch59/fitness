@@ -99,7 +99,7 @@ function buildSchedulePromptSingle(profile, type, query) {
   ].join('\n');
 }
 
-function buildDayPrompt(programMeta, day, profile) {
+function buildDayPrompt(programMeta, day, profile, extra = {}) {
   return [
     'Tu es un coach de musculation.',
     `PROFIL: ${JSON.stringify(profile)}`,
@@ -114,6 +114,13 @@ function buildDayPrompt(programMeta, day, profile) {
     }),
     '',
     `TÂCHE: Génère le WORKOUT COMPLET pour le jour "${day}".`,
+    (extra && extra.focus ? `FOCUS_JOUR: ${extra.focus}` : ''),
+    (extra && Array.isArray(extra.usedExercises) && extra.usedExercises.length > 0
+      ? `EXERCICES_DEJA_UTILISES: ${JSON.stringify(extra.usedExercises.slice(0, 30))}`
+      : ''),
+    (extra && Array.isArray(extra.availableEquipment) && extra.availableEquipment.length > 0
+      ? `MATERIEL_DISPONIBLE: ${JSON.stringify(extra.availableEquipment)}`
+      : ''),
     'Réponds UNIQUEMENT avec un objet JSON strict (pas d\'exemple d\'exercice pré-rempli) :',
     '{',
     `  "day": "${day}",`,
@@ -127,6 +134,8 @@ function buildDayPrompt(programMeta, day, profile) {
     '- Choisis le NOMBRE d’exercices selon le niveau (débutant: 4–5, intermédiaire: 5–6, avancé: 6–8).',
     '- Ajuste les RANGES de reps/repos selon goal: hypertrophie (8–12, 60–90s) / force (3–6, 120–180s) / perte de poids (12–20, 30–60s).',
     '- Varie les patterns (pousser/tirer/jambes/core) et évite de répéter un même exercice exact utilisé un autre jour de ce programme; propose des variations si besoin (incliné, prise différente, unilatéral).',
+    '- Si FOCUS_JOUR = Upper/Haut du corps: n\'inclure aucun exercice jambes. Si Lower/Bas du corps: n\'inclure aucun exercice du haut du corps (sauf core).',
+    '- Utilise le matériel disponible, et varie l\'outil entre les jours si possible (poids du corps, élastiques, kettlebell, haltères selon disponibilité).',
     '- Utilise UNIQUEMENT le matériel disponible (homeEquipment).',
     '- Fais preuve de créativité: ne te base pas sur des modèles d\'exercices donnés en exemple.',
     '- Évite les répétitions d’exercices exacts entre les jours.',
@@ -199,10 +208,31 @@ async function generateWorkoutProgramsAuto(profile, rec, query = '') {
   // Annotate with pattern for day prompts
   meta.pattern = rec.pattern;
 
-  // 2) Générer les jours en parallèle pour accélérer la génération
-  const workouts = await Promise.all(
-    (meta.schedule || []).map((day) => requestWorkoutDayStrict(meta, day, profile))
-  );
+  // 2) Générer les jours séquentiellement pour pouvoir bannir les doublons
+  const workouts = [];
+  const used = new Set();
+  // Déterminer un focus par jour en fonction du pattern
+  const schedule = Array.isArray(meta.schedule) ? meta.schedule : [];
+  const focuses = (rec.pattern || '').startsWith('UL')
+    ? schedule.map((_, idx) => (idx % 2 === 0 ? 'Upper' : 'Lower'))
+    : (rec.pattern || '').startsWith('PPL')
+      ? schedule.map((_, idx) => ['Push','Pull','Legs','Push','Pull','Legs'][idx % 6])
+      : schedule.map(() => 'FullBody');
+
+  for (let i = 0; i < schedule.length; i++) {
+    const day = schedule[i];
+    const extra = {
+      focus: focuses[i],
+      usedExercises: Array.from(used),
+      availableEquipment: profile.homeEquipment || []
+    };
+    const w = await requestWorkoutDayStrict(meta, day, profile, extra);
+    workouts.push(w);
+    // Mémoriser les exos utilisés pour éviter les doublons les jours suivants
+    (Array.isArray(w?.exercises) ? w.exercises : []).forEach(ex => {
+      if (ex && typeof ex.name === 'string') used.add(ex.name.trim());
+    });
+  }
   workouts.sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day));
 
   return [{
@@ -423,12 +453,12 @@ async function requestScheduleMetaStrict(profile, type, query) {
   throw new Error(`Schedule generation failed for ${type}`);
 }
 
-async function requestWorkoutDayStrict(meta, day, profile) {
+async function requestWorkoutDayStrict(meta, day, profile, extra = {}) {
   let lastErr = 'init';
   for (let i = 1; i <= MAX_RETRIES_JSON; i++) {
     const prompt = i === 1
-      ? buildDayPrompt(meta, day, profile)
-      : buildDayPrompt(meta, day, profile) + `\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`;
+      ? buildDayPrompt(meta, day, profile, extra)
+      : buildDayPrompt(meta, day, profile, extra) + `\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`;
     try {
       // pass bound method so "this" inside generateCustomContent is correct
       const obj = await callJSONBestEffort(mistralService.generateCustomContent.bind(mistralService), prompt);
