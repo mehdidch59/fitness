@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useState, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
@@ -221,7 +221,7 @@ function AppProvider({ children }) {
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données:', error);
     }
-  }, [state.userProfile, state.equipmentProfile, state.nutritionProfile, state.stats, state.isQuestionnaire, state.questionnaireStep]);
+  }, [state]);
       // Charger les profils depuis Firestore au démarrage
   useEffect(() => {
     const loadUserProfiles = async () => {

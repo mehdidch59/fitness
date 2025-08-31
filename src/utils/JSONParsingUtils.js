@@ -4,14 +4,28 @@
 
 export class JSONParsingUtils {
   /**
+   * Supprime les caractères de contrôle (0x00-0x1F et 0x7F-0x9F)
+   */
+  static removeControlChars(str) {
+    if (!str || typeof str !== 'string') return '';
+    let out = '';
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      // Exclure 0x00-0x1F et 0x7F-0x9F
+      if (code >= 0x20 && (code < 0x7f || code > 0x9f)) {
+        out += str[i];
+      }
+    }
+    return out;
+  }
+  /**
    * Nettoie le texte avant parsing JSON
    */
   static cleanJSONString(text) {
     if (!text || typeof text !== 'string') return '';
     
-    return text
+    return JSONParsingUtils.removeControlChars(text)
       // Supprimer les caractères de contrôle
-      .replace(/[\x00-\x1F\x7F]/g, '')
       // Supprimer les échappements invalides
       .replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, '')
       // Corriger les guillemets mal échappés
@@ -94,9 +108,7 @@ export class JSONParsingUtils {
       if (!repaired) return defaultValue;
 
       // Réparations communes étape par étape
-      repaired = repaired
-        // Nettoyer les caractères invisibles
-        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+      repaired = JSONParsingUtils.removeControlChars(repaired)
         // Corriger les guillemets droits/courbes
         .replace(/[""]/g, '"')
         .replace(/['']/g, "'")
@@ -112,11 +124,11 @@ export class JSONParsingUtils {
         // Corriger les retours à la ligne dans les strings
         .replace(/"\s*\n\s*"/g, '", "')
         // S'assurer que les strings sont bien fermées
-        .replace(/:\s*([^",\[\]{}]+)(?=\s*[,}])/g, ': "$1"')
+        .replace(/:\s*([^",[\]{}]+)(?=\s*[,}])/g, ': "$1"')
         .trim();
 
       // Vérifier que ça commence et finit correctement
-      if (!repaired.match(/^[\[{]/) || !repaired.match(/[\]}]$/)) {
+      if (!repaired.match(/^[[{]/) || !repaired.match(/[}\]]$/)) {
         console.warn('JSON ne commence/finit pas correctement');
         return defaultValue;
       }

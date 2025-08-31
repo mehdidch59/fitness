@@ -217,7 +217,7 @@ export const debugProfile = async () => {
     // Vérifier Firestore
     try {
       const profile = await userService.getUserProfile(user.uid);
-      //console.log('Profil Firestore:', profile);
+      console.log('Profil Firestore:', profile);
     } catch (error) {
       console.error('Erreur Firestore:', error);
     }
@@ -225,7 +225,7 @@ export const debugProfile = async () => {
   
   // Vérifier localStorage
   const localProfile = localStorage.getItem('userProfile');
-  //console.log('Profil localStorage:', localProfile ? JSON.parse(localProfile) : 'Aucun');
+  console.log('Profil localStorage:', localProfile ? JSON.parse(localProfile) : 'Aucun');
   
   //console.log('=== FIN DEBUG ===');
 };

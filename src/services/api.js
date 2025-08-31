@@ -62,7 +62,6 @@ const googleSearchEngineId = process.env.REACT_APP_GOOGLE_SEARCH_ENGINE_ID;
 const isUserProfileComplete = () => {
   try {
     // Vérifier d'abord l'authentification
-    const authToken = localStorage.getItem('authToken');
     const userData = localStorage.getItem('user') || localStorage.getItem('userData') || localStorage.getItem('authUser');
     
     if (!userData) {

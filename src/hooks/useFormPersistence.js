@@ -3,26 +3,24 @@
  * Évite la perte de données lors du refresh
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { persistenceService } from '../services/persistenceService';
 
 export const useFormPersistence = (formId, formData, options = {}) => {
   const { 
     debounceMs = 1000,
-    saveOnChange = true,
-    clearOnSubmit = true 
+    saveOnChange = true
   } = options;
 
   // Sauvegarder les données du formulaire avec debounce
-  const saveFormData = useCallback(
+  const debouncedSaveFormData = useMemo(() => 
     debounce((data) => {
       if (data && Object.keys(data).length > 0) {
         persistenceService.saveFormData(formId, data);
         console.log(`💾 Formulaire ${formId} sauvegardé automatiquement`);
       }
-    }, debounceMs),
-    [formId, debounceMs]
-  );
+    }, debounceMs)
+  , [formId, debounceMs]);
 
   // Charger les données sauvegardées
   const loadSavedData = useCallback(() => {
@@ -40,9 +38,9 @@ export const useFormPersistence = (formId, formData, options = {}) => {
   // Sauvegarder automatiquement quand les données changent
   useEffect(() => {
     if (saveOnChange && formData) {
-      saveFormData(formData);
+      debouncedSaveFormData(formData);
     }
-  }, [formData, saveOnChange, saveFormData]);
+  }, [formData, saveOnChange, debouncedSaveFormData]);
 
   // Nettoyer les données expirées au montage
   useEffect(() => {

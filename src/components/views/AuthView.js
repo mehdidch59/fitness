@@ -7,8 +7,8 @@ import { profileSyncService } from '../../services/profileSync';
 import Input from '../ui/Input';
 
 function AuthView() {
-  const { userProfile, actions } = useAppContext();
-  const { user, login, register, logout, loading, error } = useAuth(); // Utiliser Firebase
+  const { actions } = useAppContext();
+  const { login, register, loading, error } = useAuth(); // Utiliser Firebase
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -85,42 +85,6 @@ function AuthView() {
     } catch (error) {
       console.error('Erreur d\'inscription:', error);
       actions.setSearchStatus('Erreur d\'inscription: ' + error.message);
-    }
-  };  // Déconnexion avec Firebase
-  const handleLogout = async () => {
-    try {
-      // Nettoyer AVANT la déconnexion pour éviter les résidus
-      localStorage.clear(); // Nettoyage complet
-      
-      await logout();
-      
-      // Nettoyer les données locales
-      actions.updateUserProfile({});
-      actions.updateEquipmentProfile({});
-      actions.updateNutritionProfile({});
-      
-      setFormData({
-        email: '',
-        password: '',
-        firstName: '',
-        lastName: '',
-        age: '',
-        gender: '',
-        weight: '',
-        height: '',
-        goal: '',
-        activityLevel: ''
-      });
-      
-      // Forcer le rechargement de la page pour s'assurer du nettoyage complet
-      setTimeout(() => {
-        window.location.href = '/';  // Forcer la navigation vers la page d'accueil
-      }, 100);
-      
-      actions.setSearchStatus('Déconnexion réussie');
-    } catch (error) {
-      console.error('Erreur de déconnexion:', error);
-      actions.setSearchStatus('Erreur de déconnexion: ' + error.message);
     }
   };// Afficher un état de chargement
   if (loading) {

@@ -4,11 +4,10 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export const useUnsavedChanges = (hasUnsavedChanges, message = 'Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?') => {
   const navigate = useNavigate();
-  const location = useLocation();
   const hasUnsavedRef = useRef(hasUnsavedChanges);
 
   // Mettre à jour la référence

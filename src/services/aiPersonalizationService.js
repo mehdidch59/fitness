@@ -2,7 +2,6 @@
  * Service d'IA et Personnalisation Simplifié (version démo)
  */
 
-import { mistralService } from './mistralService';
 
 class SimpleAIPersonalizationService {
   constructor() {

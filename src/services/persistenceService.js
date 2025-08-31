@@ -44,9 +44,7 @@ class PersistenceService {
   save(key, data, options = {}) {
     try {
       const { 
-        expiry = null, 
-        encrypt = false,
-        compress = false 
+        expiry = null
       } = options;
       
       const storageKey = this.prefix + key;
@@ -412,7 +410,6 @@ class PersistenceService {
    * Vérifier si la configuration utilisateur est complète
    */
   isConfigurationComplete() {
-    const userProfile = this.loadUserProfile();
     const equipmentProfile = this.loadEquipmentProfile();
     const nutritionProfile = this.loadNutritionProfile();
     const questionnaireState = this.loadQuestionnaireState();
