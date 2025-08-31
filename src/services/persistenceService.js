@@ -62,7 +62,7 @@ class PersistenceService {
       localStorage.setItem(storageKey, JSON.stringify(valueToStore));
       
       // Log pour debug
-      console.log(`💾 Sauvegardé: ${key}`, data);
+      //console.log(`💾 Sauvegardé: ${key}`, data);
       
       return true;
     } catch (error) {

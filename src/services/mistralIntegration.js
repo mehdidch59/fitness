@@ -209,7 +209,17 @@ async function generateWorkoutProgramsAuto(profile, rec, query = '', focusMuscle
   const enrichedQuery = `${query} ${patternHint}. Fréquence souhaitée: ${rec.frequency} jours/semaine. Niveau: ${rec.level}.`;
 
   // 1) Métadonnées IA pour le type recommandé
-  const meta = await requestScheduleMetaStrict(profile, rec.type, enrichedQuery, { focusMuscleGroup });
+  let meta;
+  try {
+    // Essayer avec accent musculaire si demandé
+    meta = await requestScheduleMetaStrict(profile, rec.type, enrichedQuery, { focusMuscleGroup });
+  } catch (e) {
+    console.warn('[IA] Échec avec accent musculaire, nouvelle tentative sans accent:', e?.message || e);
+    // Fallback: réessayer sans accent musculaire pour maximiser les chances
+    meta = await requestScheduleMetaStrict(profile, rec.type, enrichedQuery);
+    // Ne pas propager l'accent aux jours si le meta a nécessité un fallback
+    focusMuscleGroup = '';
+  }
   // Annotate with pattern for day prompts
   meta.pattern = rec.pattern;
 
@@ -232,7 +242,14 @@ async function generateWorkoutProgramsAuto(profile, rec, query = '', focusMuscle
       availableEquipment: profile.homeEquipment || [],
       focusMuscleGroup
     };
-    const w = await requestWorkoutDayStrict(meta, day, profile, extra);
+    let w;
+    try {
+      w = await requestWorkoutDayStrict(meta, day, profile, extra);
+    } catch (e) {
+      console.warn(`[IA] Échec jour "${day}" avec accent, 2e tentative sans accent:`, e?.message || e);
+      const extraNoAccent = { ...extra, focusMuscleGroup: '' };
+      w = await requestWorkoutDayStrict(meta, day, profile, extraNoAccent);
+    }
     workouts.push(w);
     // Mémoriser les exos utilisés pour éviter les doublons les jours suivants
     (Array.isArray(w?.exercises) ? w.exercises : []).forEach(ex => {
