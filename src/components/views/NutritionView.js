@@ -187,8 +187,8 @@ const RecipeDetail = ({
 
   return (
     <ErrorBoundary>
-      <div className="pb-20 p-6 bg-gray-50 min-h-screen">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-5xl mx-auto">
           <button
             onClick={onBack}
             className="flex items-center text-purple-700 hover:text-purple-800 font-medium"
@@ -226,8 +226,8 @@ const RecipeDetail = ({
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="h-48 bg-gradient-to-r from-indigo-800 to-purple-900 flex items-center justify-center relative">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-4xl mx-auto">
+          <div className="h-48 sm:h-56 md:h-64 bg-gradient-to-r from-indigo-800 to-purple-900 flex items-center justify-center relative">
             <img
               src={getRecipeImage(recipe)}
               alt={recipe.name}
@@ -246,7 +246,7 @@ const RecipeDetail = ({
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{recipe.name}</h1>
             <p className="text-gray-600 mb-4">{recipe.description}</p>
 
@@ -265,7 +265,7 @@ const RecipeDetail = ({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               <div className="bg-yellow-50 p-4 rounded-xl">
                 <div className="text-yellow-700 font-semibold text-lg">{recipe.calories || 'N/A'}</div>
                 <div className="text-yellow-800 text-sm">Calories</div>
@@ -284,7 +284,7 @@ const RecipeDetail = ({
               </div>
             </div>
 
-            <div className="flex justify-between items-center mb-6 p-4 bg-gray-50 rounded-xl">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center">
                 <Clock size={18} className="text-gray-600 mr-2" />
                 <span className="text-gray-700">{recipe.time || 'N/A'} min</span>
@@ -597,7 +597,7 @@ function NutritionView() {
       }
 
       setGenerationProgress(40);
-      setGenerationStage('Génération de nouvelles recettes IA...');
+      setGenerationStage('Génération de nouvelles recettes...');
 
       // Générer de nouvelles recettes via Mistral uniquement
       try {
@@ -745,13 +745,13 @@ function NutritionView() {
   // Vue principale avec la liste des recettes
   return (
     <ErrorBoundary>
-      <div className="pb-20 p-6 bg-gray-50 min-h-screen">
+      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
         {showAuthPrompt && <AuthPrompt onClose={handleCloseAuthPrompt} />}
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-3xl font-bold">Nutrition IA</h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 max-w-5xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold">Nutrition</h2>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => toggleViewMode('discover')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${viewMode === 'discover'
@@ -848,7 +848,115 @@ function NutritionView() {
         )}
 
         {currentRecipes && currentRecipes.length > 0 ? (
-          <div className="space-y-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 -mt-1 mb-2">
+              <button
+                onClick={() => {
+                  if (selectionMode) setSelectedRecipeIds(new Set());
+                  setSelectionMode(!selectionMode);
+                }}
+                className={`px-3 py-1 rounded-lg text-sm ${selectionMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                {selectionMode ? 'Annuler sélection' : 'Sélectionner'}
+              </button>
+              {selectionMode && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      // Sélectionner toutes les recettes visibles
+                      setSelectedRecipeIds(prev => {
+                        const next = new Set(prev);
+                        (currentRecipes || []).forEach(r => { if (r.id) next.add(r.id); });
+                        return next;
+                      });
+                    }}
+                    className="px-3 py-1 rounded-lg text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  >
+                    Tout sélectionner
+                  </button>
+                  <span className="text-sm text-gray-600 mr-2">{selectedRecipeIds.size} sélectionné(s)</span>
+                  <button
+                    onClick={() => {
+                      const ids = Array.from(selectedRecipeIds);
+                      if (!ids.length) return;
+                      setPendingDeleteIds(ids);
+                      setShowDeleteConfirm(true);
+                    }}
+                    disabled={selectedRecipeIds.size === 0}
+                    className={`px-3 py-1 rounded-lg text-sm flex items-center ${selectedRecipeIds.size === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700'}`}
+                  >
+                    <Trash2 size={14} className="mr-1" /> Supprimer
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {currentRecipes.map((recipe, index) => (
+                <div
+                  key={recipe.id || `recipe-${index}-${recipe.name?.substring(0, 10)}`}
+                  className={`relative bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02] ${selectionMode ? 'pl-10' : ''}`}
+                  onClick={() => {
+                    if (selectionMode) {
+                      setSelectedRecipeIds(prev => {
+                        const next = new Set(prev);
+                        if (recipe.id && next.has(recipe.id)) next.delete(recipe.id); else if (recipe.id) next.add(recipe.id);
+                        return next;
+                      });
+                      return;
+                    }
+                    handleRecipeSelect(recipe);
+                  }}
+                >
+                  {selectionMode && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedRecipeIds(prev => {
+                          const next = new Set(prev);
+                          if (recipe.id && next.has(recipe.id)) next.delete(recipe.id); else if (recipe.id) next.add(recipe.id);
+                          return next;
+                        });
+                      }}
+                      className="absolute top-4 left-4 p-1 rounded-md hover:bg-gray-100"
+                      aria-label="Sélectionner la recette"
+                    >
+                      {recipe.id && selectedRecipeIds.has(recipe.id) ? <CheckSquare size={18} className="text-purple-600" /> : <Square size={18} className="text-gray-400" />}
+                    </button>
+                  )}
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-lg flex-1">{recipe.name || 'Recette sans nom'}</h3>
+                    <div className="flex items-center gap-2 ml-4">
+                      {recipe.favoriteCount > 0 && (
+                        <div className="flex items-center text-red-600 text-xs">
+                          <Heart size={12} className="mr-1" />
+                          <span>{recipe.favoriteCount}</span>
+                        </div>
+                      )}
+                      {recipe.viewCount > 0 && (
+                        <div className="flex items-center text-gray-500 text-xs">
+                          <Eye size={12} className="mr-1" />
+                          <span>{recipe.viewCount}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-600 mt-1 mb-2 line-clamp-3">{recipe.description || 'Aucune description'}</p>
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-2">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                      <span className="text-yellow-700 font-medium">{recipe.calories || 'N/A'} kcal</span>
+                      <span className="text-blue-700 font-medium">{recipe.protein || 'N/A'}g protéines</span>
+                      <div className="flex items-center">
+                        <Clock size={14} className="text-gray-600 mr-1" />
+                        <span className="text-gray-600">{recipe.time || 'N/A'} min</span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Cliquez pour voir détails</span>
+                  </div>
+                </div>
+              ))}
+            </div>
             {/* Toolbar sélection */}
             <div className="flex items-center justify-between -mt-1">
               <button
@@ -973,7 +1081,7 @@ function NutritionView() {
                   disabled={isGenerating}
                   className="bg-purple-100 text-purple-800 px-4 py-2 rounded-lg text-sm hover:bg-purple-200 disabled:opacity-50"
                 >
-                  🍽️ Nouvelles Recettes IA
+                  🍽️ Nouvelles Recettes
                 </button>
                 <button
                   onClick={() => refetchRecipes()}
@@ -987,7 +1095,7 @@ function NutritionView() {
             )}
           </div>
         ) : !currentLoading && !isError ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 max-w-md mx-auto">
             {viewMode === 'favorites' ? (
               <div>
                 <Bookmark className="mx-auto mb-4 text-gray-400" size={64} />

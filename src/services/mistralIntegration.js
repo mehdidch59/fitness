@@ -60,20 +60,22 @@ function getMergedProfile() {
 }
 
 /* ───────── Prompts ───────── */
-function buildSchedulePromptSingle(profile, type, query) {
+function buildSchedulePromptSingle(profile, type, query, options = {}) {
   const typeLabel = type === 'fullbody' ? 'fullbody' : (type === 'halfbody' ? 'halfbody' : 'split');
+  const focusMuscle = options.focusMuscleGroup ? String(options.focusMuscleGroup) : '';
 
   return [
-    'Tu es un coach de musculation spécialisé en programmation personnalisée.',
+    'Tu es un coach de musculation spécialisé en programmation personnalisée. Réponds STRICTEMENT en français.',
     `PROFIL: ${JSON.stringify(profile)}`,
     `TÂCHE: Propose exactement 1 programme de type "${typeLabel}" et renvoie UNIQUEMENT ses MÉTADONNÉES et son SCHEDULE au format JSON strict. Utilise l'objectif (goal), le niveau (activityLevel), l'IMC (bmi) et la carrure (bodyType), le sexe (gender) et le matériel (equipmentLocation, homeEquipment).`,
+    focusMuscle ? `ACCENT MUSCULAIRE SEMAINE: ${focusMuscle} (répartis intelligemment le volume sans négliger le reste).` : '',
     '',
     'CONTRAINTES DE SORTIE (objet JSON unique) :',
     '{',
     `  "id": "program_${typeLabel}_<id>",`,
     '  "type": "' + typeLabel + '",',
     '  "title": "…",',
-    '  "description": "…",',
+    '  "description": "Phrase très courte (<= 12 mots) résumant le type de programme.",',
     '  "level": "débutant|intermédiaire|avancé",',
     '  "duration": "4-12 semaines",',
     '  "frequency": "3x/semaine|4x/semaine|5x/semaine|6x/semaine",',
@@ -86,6 +88,7 @@ function buildSchedulePromptSingle(profile, type, query) {
     `- 3 à 7 jours, tous distincts, choisis parmi: ${JSON.stringify(DAY_ORDER)}.`,
     '- Respecte strictement les noms en français (exactement comme dans la liste).',
     '- Varie le focus musculaire selon les jours (push/pull/legs/core selon type et pattern).',
+    focusMuscle ? `- Ajoute un léger biais de volume (1-2 exercices/semaine en plus) sur: ${focusMuscle}.` : '',
     '- Ne renvoie AUCUN texte hors JSON.',
     '',
     'DIRECTIVES DE PERSONNALISATION:',
@@ -101,7 +104,7 @@ function buildSchedulePromptSingle(profile, type, query) {
 
 function buildDayPrompt(programMeta, day, profile, extra = {}) {
   return [
-    'Tu es un coach de musculation.',
+    'Tu es un coach de musculation. Réponds STRICTEMENT en français.',
     `PROFIL: ${JSON.stringify(profile)}`,
     'PROGRAMME_META: ' + JSON.stringify({
       id: programMeta.id,
@@ -115,6 +118,7 @@ function buildDayPrompt(programMeta, day, profile, extra = {}) {
     '',
     `TÂCHE: Génère le WORKOUT COMPLET pour le jour "${day}".`,
     (extra && extra.focus ? `FOCUS_JOUR: ${extra.focus}` : ''),
+    (extra && extra.focusMuscleGroup ? `ACCENT_MUSCULAIRE: ${extra.focusMuscleGroup}` : ''),
     (extra && Array.isArray(extra.usedExercises) && extra.usedExercises.length > 0
       ? `EXERCICES_DEJA_UTILISES: ${JSON.stringify(extra.usedExercises.slice(0, 30))}`
       : ''),
@@ -134,6 +138,7 @@ function buildDayPrompt(programMeta, day, profile, extra = {}) {
     '- Choisis le NOMBRE d’exercices selon le niveau (débutant: 4–5, intermédiaire: 5–6, avancé: 6–8).',
     '- Ajuste les RANGES de reps/repos selon goal: hypertrophie (8–12, 60–90s) / force (3–6, 120–180s) / perte de poids (12–20, 30–60s).',
     '- Varie les patterns (pousser/tirer/jambes/core) et évite de répéter un même exercice exact utilisé un autre jour de ce programme; propose des variations si besoin (incliné, prise différente, unilatéral).',
+    '- Si ACCENT_MUSCULAIRE est présent cette semaine, augmente légèrement le volume (ex: 1 exercice supplémentaire ou variation ciblée) sans déséquilibrer la séance.',
     '- Si FOCUS_JOUR = Upper/Haut du corps: n\'inclure aucun exercice jambes. Si Lower/Bas du corps: n\'inclure aucun exercice du haut du corps (sauf core).',
     '- Utilise le matériel disponible, et varie l\'outil entre les jours si possible (poids du corps, élastiques, kettlebell, haltères selon disponibilité).',
     '- Utilise UNIQUEMENT le matériel disponible (homeEquipment).',
@@ -193,7 +198,7 @@ function recommendProgramSpec(profile) {
   return { type, pattern, frequency, level };
 }
 
-async function generateWorkoutProgramsAuto(profile, rec, query = '') {
+async function generateWorkoutProgramsAuto(profile, rec, query = '', focusMuscleGroup = '') {
   // Build contextual query for the LLM
   const patternHint = rec.pattern === 'UL-4'
     ? 'pattern Upper/Lower 4 jours (Haut/Bas alternés)'
@@ -204,7 +209,7 @@ async function generateWorkoutProgramsAuto(profile, rec, query = '') {
   const enrichedQuery = `${query} ${patternHint}. Fréquence souhaitée: ${rec.frequency} jours/semaine. Niveau: ${rec.level}.`;
 
   // 1) Métadonnées IA pour le type recommandé
-  const meta = await requestScheduleMetaStrict(profile, rec.type, enrichedQuery);
+  const meta = await requestScheduleMetaStrict(profile, rec.type, enrichedQuery, { focusMuscleGroup });
   // Annotate with pattern for day prompts
   meta.pattern = rec.pattern;
 
@@ -224,7 +229,8 @@ async function generateWorkoutProgramsAuto(profile, rec, query = '') {
     const extra = {
       focus: focuses[i],
       usedExercises: Array.from(used),
-      availableEquipment: profile.homeEquipment || []
+      availableEquipment: profile.homeEquipment || [],
+      focusMuscleGroup
     };
     const w = await requestWorkoutDayStrict(meta, day, profile, extra);
     workouts.push(w);
@@ -409,12 +415,12 @@ async function callJSONBestEffort(llmFn, prompt) {
 }
 
 /* ───────── IA d’abord : génération staged ───────── */
-async function requestScheduleMetaStrict(profile, type, query) {
+async function requestScheduleMetaStrict(profile, type, query, options = {}) {
   let lastErr = 'init';
   for (let i = 1; i <= MAX_RETRIES_JSON; i++) {
     const prompt = i === 1
-      ? buildSchedulePromptSingle(profile, type, query)
-      : buildSchedulePromptSingle(profile, type, `${query}\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`);
+      ? buildSchedulePromptSingle(profile, type, query, options)
+      : buildSchedulePromptSingle(profile, type, `${query}\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`, options);
 
     try {
       // pass bound method so "this" inside generateCustomContent is correct
@@ -640,7 +646,9 @@ export const mistralSearchService = {
           level: inferLevelFromProfile(profile)
         };
       }
-      const programs = await generateWorkoutProgramsAuto(profile, rec, queryTxt);
+      const focusMuscleGroup = criteria?.focusMuscle || criteria?.focusMuscleGroup || '';
+      if (focusMuscleGroup) queryTxt += `accent sur ${focusMuscleGroup} `;
+      const programs = await generateWorkoutProgramsAuto(profile, rec, queryTxt, focusMuscleGroup);
 
       return programs.map((program) => ({
         id: program.id,
@@ -655,6 +663,7 @@ export const mistralSearchService = {
         schedule: program.schedule,
         pattern: program.pattern,
         goal: profile.goal,
+        focusMuscle: focusMuscleGroup || '',
         aiGenerated: true
       }));
     } catch (error) {

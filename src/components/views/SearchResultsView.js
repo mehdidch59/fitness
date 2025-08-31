@@ -67,11 +67,11 @@ const SearchResultsView = () => {
   };
   
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6 text-center">Recherche</h1>
+    <div className="p-4 sm:p-6">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Recherche</h1>
       
-      <div className="bg-white rounded-2xl shadow-lg p-4 mb-6">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 max-w-3xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
           <input
             type="text"
             placeholder="Rechercher des exercices, recettes..."
@@ -88,7 +88,7 @@ const SearchResultsView = () => {
           </button>
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
             className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-xl text-center font-semibold"
             onClick={findMassGainRecipes}
@@ -108,7 +108,7 @@ const SearchResultsView = () => {
         </div>
       </div>
       
-      <div className="text-center text-gray-600 text-sm">
+      <div className="text-center text-gray-600 text-sm max-w-3xl mx-auto">
         <p>Toutes les recherches sont personnalisées selon votre objectif: {state.userProfile.fitnessGoal || 'Non défini'}</p>
         <p className="mt-2">Les résultats s'afficheront dans un popup pour une meilleure expérience mobile.</p>
       </div>

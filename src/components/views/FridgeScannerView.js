@@ -125,7 +125,7 @@ const FridgeScannerView = () => {
 
   const renderResults = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900">Résultats du Scan</h2>
         <button
           onClick={() => {
@@ -195,13 +195,13 @@ const FridgeScannerView = () => {
 
           {/* Analyse d'expiration */}
           {scanResult.expirationAnalysis && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 flex items-center">
-                <Clock size={24} className="mr-2 text-orange-600" />
-                Analyse d'Expiration
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-semibold mb-4 flex items-center">
+              <Clock size={24} className="mr-2 text-orange-600" />
+              Analyse d'Expiration
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-red-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-red-900">Critique</h4>
                   <p className="text-2xl font-bold text-red-700">{scanResult.expirationAnalysis.critical.count}</p>

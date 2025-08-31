@@ -215,8 +215,8 @@ function IAView() {
   return (
     <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 min-h-screen">
       {/* Header */}
-      <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 text-white p-8 rounded-b-3xl shadow-lg">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-5xl mx-auto">
           <div>
             <h1 className="text-3xl font-bold flex items-center">
               <Brain className="mr-3" size={32} />
@@ -235,7 +235,7 @@ function IAView() {
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
         {!isLoggedIn && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-2xl p-4">
             <div className="flex items-center justify-between">

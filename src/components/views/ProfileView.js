@@ -169,13 +169,13 @@ function ProfileView() {
 
   // Mode affichage
   return (
-    <div className="pb-20 p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold mb-8 text-center">Mon Profil</h2>
+    <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+      <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">Mon Profil</h2>
 
       {complete ? (
         <>
           {/* Carte principale avec IMC */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center">
                 <div className="bg-purple-100 p-3 rounded-full mr-4">
@@ -253,7 +253,7 @@ function ProfileView() {
 
           <Link
             to="/settings"
-            className="w-full mt-3 inline-flex items-center justify-center bg-white border border-gray-300 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-50"
+            className="w-full max-w-4xl mx-auto mt-3 inline-flex items-center justify-center bg-white border border-gray-300 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-50"
           >
             <SettingsIcon className="mr-2" size={18} />
             Paramètres
@@ -268,7 +268,7 @@ function ProfileView() {
           </button>
         </>
       ) : (
-        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 text-center">
+        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 text-center max-w-4xl mx-auto">
           <div className="bg-yellow-100 p-3 rounded-full inline-flex mb-2">
             <User size={24} className="text-yellow-600" />
           </div>

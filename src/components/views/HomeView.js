@@ -64,12 +64,12 @@ function HomeView() {
 
   return (
     <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 min-h-screen">
-      <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white p-8 rounded-b-3xl shadow-lg">
+      <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
         <h1 className="text-3xl font-bold mb-2">Fitness IA 💪</h1>
         <p className="opacity-90 text-lg">Programmes personnalisés par recherche web</p>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg">
             <Calendar className="mb-3 text-purple-500" size={28} />

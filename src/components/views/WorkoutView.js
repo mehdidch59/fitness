@@ -30,6 +30,8 @@ function UltraRobustWorkoutView() {
   const [modeAuto, setModeAuto] = useState(true);
   const [manualType, setManualType] = useState('fullbody');
   const [manualDays, setManualDays] = useState(3);
+  const [focusMuscle, setFocusMuscle] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [selectedProgramIndex, setSelectedProgramIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
   const [expandedDayIndex, setExpandedDayIndex] = useState(0);
@@ -42,6 +44,27 @@ function UltraRobustWorkoutView() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
 
+  // Persist selected filters in localStorage
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('wf_filters') || '{}');
+      if (saved.focusMuscle) setFocusMuscle(saved.focusMuscle);
+      if (saved.typeFilter) setTypeFilter(saved.typeFilter);
+      if (saved.difficultyFilter) setDifficultyFilter(saved.difficultyFilter);
+      if (typeof saved.searchTerm === 'string') setSearchTerm(saved.searchTerm);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem('wf_filters', JSON.stringify({
+        focusMuscle,
+        typeFilter,
+        difficultyFilter,
+        searchTerm
+      }));
+    } catch {}
+  }, [focusMuscle, typeFilter, difficultyFilter, searchTerm]);
+
 
   // Charger les programmes sauvegardés depuis Firestore
   useEffect(() => {
@@ -50,7 +73,7 @@ function UltraRobustWorkoutView() {
 
       setIsLoadingPrograms(true);
       try {
-        console.log('📚 Chargement programmes réalistes...');
+        console.log('📚 Chargement programmes...');
 
         const savedData = await workoutFirestoreService.loadGeneratedPrograms(user.uid);
 
@@ -121,7 +144,7 @@ function UltraRobustWorkoutView() {
     try {
       // Phase 1: Préparation
       setGenerationProgress(10);
-      setGenerationStage('🏋️ Préparation programmes réalistes...');
+      setGenerationStage('🏋️ Préparation programmes...');
       actions.setSearchStatus('🏋️ Génération programmes FullBody, HalfBody, Split...');
 
       const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
@@ -144,12 +167,13 @@ function UltraRobustWorkoutView() {
         setGenerationProgress(prev => Math.min(prev + 5, 80));
       }, 500);
 
-      console.log('🚀 Génération programmes réalistes avec profil:', completeProfile);
+      console.log('🚀 Génération programmes avec profil:', completeProfile);
 
       // Génération STRICTE (staged) via mistralIntegration
       const criteria = {
         location: completeProfile?.equipmentLocation || 'home',
         equipment: Array.isArray(completeProfile?.availableEquipment) ? completeProfile.availableEquipment : [],
+        focusMuscle,
         ...(modeAuto ? {} : {
           forceType: manualType,
           forcePattern: manualType === 'halfbody' ? 'UL-' + manualDays : (manualType === 'split' ? 'PPL-' + manualDays : 'FB-' + manualDays),
@@ -215,7 +239,7 @@ function UltraRobustWorkoutView() {
   const renderHeader = () => (
     <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white p-8 rounded-b-3xl shadow-lg">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Programmes Réalistes 💪</h1>
+        <h1 className="text-3xl font-bold">Programmes 💪</h1>
         <BookOpen className="opacity-90" />
       </div>
       <p className="opacity-90 text-lg mt-2">
@@ -231,7 +255,7 @@ function UltraRobustWorkoutView() {
   );
 
   const renderFilters = () => (
-    <div className="p-4">
+    <div className="p-4 max-w-5xl mx-auto">
       <div className="bg-white shadow rounded-2xl p-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
@@ -286,6 +310,46 @@ function UltraRobustWorkoutView() {
                   </>
                 )}
               </button>
+              <button
+                onClick={async () => {
+                  if (!user?.uid) return;
+                  setIsGenerating(true);
+                  setGenerationStage('Chargement historique filtré...');
+                  try {
+                    const res = await workoutFirestoreService.loadProgramsFiltered(user.uid, {
+                      focusMuscle,
+                      type: typeFilter !== 'all' ? typeFilter : ''
+                    });
+                    if (res?.programs?.length) {
+                      setGeneratedPrograms(res.programs);
+                      setLastGeneration(res.generatedAt || new Date());
+                      actions.setSearchStatus('Historique chargé (filtres appliqués)');
+                    } else {
+                      actions.setSearchStatus('Aucun programme trouvé avec ces filtres');
+                    }
+                  } catch (e) {
+                    actions.setSearchStatus(`Erreur chargement historique: ${e.message}`);
+                  } finally {
+                    setIsGenerating(false);
+                    setGenerationStage('');
+                  }
+                }}
+                className="px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800 hover:bg-gray-200"
+              >
+                Charger historiques (filtres)
+              </button>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setDifficultyFilter('all');
+                  setTypeFilter('all');
+                  setFocusMuscle('');
+                  try { localStorage.removeItem('wf_filters'); } catch {}
+                }}
+                className="px-3 py-2 rounded-xl text-sm bg-white border border-gray-300 text-gray-800 hover:bg-gray-50"
+              >
+                Réinitialiser filtres
+              </button>
             </div>
           </div>
         </div>
@@ -332,13 +396,30 @@ function UltraRobustWorkoutView() {
               </div>
             </>
           )}
+          <div>
+            <p className="text-sm text-gray-600 mb-2">Accent musculaire (optionnel)</p>
+            <select
+              value={focusMuscle}
+              onChange={(e) => setFocusMuscle(e.target.value)}
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="">Aucun</option>
+              <option value="pectoraux">Pectoraux</option>
+              <option value="dos">Dos</option>
+              <option value="épaules">Épaules</option>
+              <option value="bras">Bras</option>
+              <option value="jambes">Jambes</option>
+              <option value="fessiers">Fessiers</option>
+              <option value="abdos">Abdos / Core</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
   );
 
   const renderStats = () => (
-    <div className="p-4">
+    <div className="p-4 max-w-5xl mx-auto">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl shadow flex items-center">
           <Calendar className="text-purple-500 mr-3" />
@@ -419,7 +500,7 @@ function UltraRobustWorkoutView() {
   );
 
   const renderProgramsList = () => (
-    <div className="p-4">
+    <div className="p-4 max-w-5xl mx-auto">
       {generatedPrograms.length === 0 ? (
         <div className="bg-white border rounded-2xl p-6 text-center text-gray-600">
           Aucun programme généré pour le moment.
@@ -445,7 +526,9 @@ function UltraRobustWorkoutView() {
                       .filter(p => {
                         const okLevel = difficultyFilter === 'all' || (p.level || '').toLowerCase() === difficultyFilter;
                         const okSearch = !searchTerm || (p.title + ' ' + p.description).toLowerCase().includes(searchTerm.toLowerCase());
-                        return okLevel && okSearch;
+                        const okAccent = !focusMuscle || ((p.focusMuscle || '').toLowerCase() === focusMuscle.toLowerCase());
+                        const okType = typeFilter === 'all' || (p.type || '').toLowerCase() === typeFilter;
+                        return okLevel && okSearch && okAccent && okType;
                       })
                       .map(p => p.id)
                       .filter(Boolean);
@@ -479,7 +562,8 @@ function UltraRobustWorkoutView() {
             .filter(p => {
               const okLevel = difficultyFilter === 'all' || (p.level || '').toLowerCase() === difficultyFilter;
               const okSearch = !searchTerm || (p.title + ' ' + p.description).toLowerCase().includes(searchTerm.toLowerCase());
-              return okLevel && okSearch;
+              const okAccent = !focusMuscle || ((p.focusMuscle || '').toLowerCase() === focusMuscle.toLowerCase());
+              return okLevel && okSearch && okAccent;
             })
             .map((program, idx) => (
               <div key={program.id || idx} className={`relative bg-white rounded-2xl shadow p-4 ${selectionMode ? 'pl-10' : ''}`}>
@@ -500,11 +584,29 @@ function UltraRobustWorkoutView() {
                 )}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold">{program.title || `Programme ${idx + 1}`}</h3>
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <span>{program.title || `Programme ${idx + 1}`}</span>
+                      {program.focusMuscle && (
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium whitespace-nowrap">
+                          Accent: {program.focusMuscle}
+                        </span>
+                      )}
+                    </h3>
                     <p className="text-sm text-gray-600">{program.description}</p>
-                    {program.pattern && (
-                      <div className="mt-1 text-xs text-purple-700 font-medium">Pattern: {program.pattern}</div>
-                    )}
+                    <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                      {program.type && (
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">Type: {program.type}</span>
+                      )}
+                      {program.pattern && (
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">Pattern: {program.pattern}</span>
+                      )}
+                      {program.frequency && (
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{program.frequency}</span>
+                      )}
+                      {program.sessionDuration && (
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{program.sessionDuration}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-gray-500">
@@ -558,7 +660,30 @@ function UltraRobustWorkoutView() {
           {/* Header sticky */}
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b">
             <div className="flex items-center justify-between p-4">
-              <h3 className="font-semibold text-base truncate pr-3">{program.title}</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-base truncate pr-3 flex items-center gap-2">
+                  <span className="truncate">{program.title}</span>
+                  {program.focusMuscle && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium whitespace-nowrap">
+                      Accent: {program.focusMuscle}
+                    </span>
+                  )}
+                </h3>
+                <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-700">
+                  {program.type && (
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100">Type: {program.type}</span>
+                  )}
+                  {program.pattern && (
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100">Pattern: {program.pattern}</span>
+                  )}
+                  {program.frequency && (
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100">{program.frequency}</span>
+                  )}
+                  {(program.sessionDuration || program.sessionDuration === 0) && (
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100">{program.sessionDuration}</span>
+                  )}
+                </div>
+              </div>
               <button
                 onClick={closeDetails}
                 className="p-2 rounded-full hover:bg-gray-100 active:scale-95"
@@ -618,7 +743,7 @@ function UltraRobustWorkoutView() {
     <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 min-h-screen">
       {renderHeader()}
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {renderStats()}
         {renderRealisticGenerationButton()}
         {renderFilters()}

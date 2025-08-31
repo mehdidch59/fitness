@@ -178,8 +178,9 @@ function SettingsView() {
   ];
 
   return (
-    <div className="pb-20 p-6 bg-gray-50 min-h-screen">      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 max-w-5xl mx-auto">
         <div className="flex items-center">
           <button
             onClick={() => navigateWithConfirmation('/auth')}
@@ -197,7 +198,7 @@ function SettingsView() {
       </div>
 
       {/* Tabs */}
-      <div className="flex overflow-x-auto mb-6 space-x-2">
+      <div className="flex overflow-x-auto mb-6 space-x-2 max-w-5xl mx-auto">
         {tabs.map(tab => {
           const Icon = tab.icon;
           return (
@@ -217,11 +218,11 @@ function SettingsView() {
       </div>
 
       {/* Contenu des tabs */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+      <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 max-w-5xl mx-auto">
         {activeTab === 'profile' && (
           <>
             <h3 className="text-xl font-bold mb-4">Informations personnelles</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Prénom"
                 value={formData.firstName}
@@ -236,7 +237,7 @@ function SettingsView() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Âge"
                 type="number"
@@ -256,7 +257,7 @@ function SettingsView() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Poids (kg)"
                 type="number"

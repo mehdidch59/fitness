@@ -111,12 +111,21 @@ class WorkoutFirestoreService {
       }
 
       const now = Timestamp.now();
+      // Index helpers for querying (accent/type)
+      const focusMuscles = Array.from(new Set(
+        cleanedPrograms.map(p => (p.focusMuscle || '').trim()).filter(Boolean)
+      ));
+      const programTypes = Array.from(new Set(
+        cleanedPrograms.map(p => (p.type || '').trim().toLowerCase()).filter(Boolean)
+      ));
       const docData = {
         userId,
         programs: cleanedPrograms,
         userProfile: userProfile || {},
         aiGenerated: true,
         totalPrograms: cleanedPrograms.length,
+        focusMuscles,
+        programTypes,
         createdAt: now,
         generatedAt: now,
         expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)), // +30 j
@@ -208,6 +217,67 @@ class WorkoutFirestoreService {
       return latest;
     } catch (error) {
       console.error('❌ Erreur chargement programmes Firestore:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Charger les programmes filtrés via les métadonnées (accent/type)
+   * - Utilise les tableaux focusMuscles / programTypes enregistrés au niveau du document
+   * - Si les deux filtres sont fournis, interroge d'abord par focusMuscle puis filtre côté client par type
+   */
+  async loadProgramsFiltered(userId, { focusMuscle = '', type = '' } = {}) {
+    if (!userId) throw new Error('loadProgramsFiltered: userId requis');
+    try {
+      const constraints = [where('userId', '==', userId)];
+
+      // Firestore n'autorise qu'un seul array-contains par requête
+      if (focusMuscle) {
+        constraints.push(where('focusMuscles', 'array-contains', String(focusMuscle).trim()));
+      } else if (type) {
+        constraints.push(where('programTypes', 'array-contains', String(type).toLowerCase().trim()));
+      }
+
+      const q = query(collection(db, this.collectionName), ...constraints);
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) return null;
+
+      const now = new Date();
+      const candidates = [];
+      querySnapshot.forEach((snap) => {
+        const data = snap.data();
+        const expiresAt = data?.expiresAt?.toDate?.() ?? new Date(0);
+        if (expiresAt <= now) return;
+        candidates.push({ id: snap.id, ...data });
+      });
+      if (!candidates.length) return null;
+
+      // Garder le plus récent
+      candidates.sort((a, b) => (b.generatedAt?.toDate?.() ?? 0) - (a.generatedAt?.toDate?.() ?? 0));
+      const latest = candidates[0];
+
+      // Nettoyer/valider les programmes et filtrer par type si nécessaire
+      const programs = (latest.programs || [])
+        .map((p) => sanitizeProgramForRead(p))
+        .filter((p) => validateProgramStrict(p).ok)
+        .filter((p) => (type ? (String(p.type || '').toLowerCase() === String(type).toLowerCase()) : true))
+        .filter((p) => (focusMuscle ? (String(p.focusMuscle || '').toLowerCase() === String(focusMuscle).toLowerCase()) : true));
+
+      if (!programs.length) return null;
+
+      return {
+        id: latest.id,
+        userId: latest.userId,
+        userProfile: latest.userProfile || {},
+        programs,
+        aiGenerated: !!latest.aiGenerated,
+        totalPrograms: programs.length,
+        createdAt: latest.createdAt?.toDate?.() ?? null,
+        generatedAt: latest.generatedAt?.toDate?.() ?? null,
+        expiresAt: latest.expiresAt?.toDate?.() ?? null
+      };
+    } catch (error) {
+      console.error('❌ Erreur chargement programmes filtrés:', error);
       throw error;
     }
   }

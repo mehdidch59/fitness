@@ -47,8 +47,8 @@ function TrackingView() {
 
   if (!isAuthenticated) {
     return (
-      <div className="pb-20 p-6 bg-gray-50 min-h-screen">
-        <h2 className="text-3xl font-bold mb-6 text-center">Statistiques</h2>
+      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Statistiques</h2>
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-200 max-w-xl mx-auto text-center">
           <p className="text-gray-700 mb-4">Connectez-vous pour accéder au suivi.</p>
           <Link
@@ -63,10 +63,10 @@ function TrackingView() {
   }
 
   return (
-    <div className="pb-20 p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-center">Statistiques</h2>
+    <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+      <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Statistiques</h2>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-6 max-w-5xl mx-auto">
         <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white p-6 rounded-2xl">
           <Activity className="mb-3" size={28} />
           <p className="text-sm opacity-90">Séances</p>
@@ -79,7 +79,7 @@ function TrackingView() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl p-6 shadow-lg mb-6">
+      <div className="bg-white rounded-2xl p-6 shadow-lg mb-6 max-w-5xl mx-auto">
         <h3 className="font-bold text-lg mb-4">Activité hebdomadaire</h3>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={chartData}>
@@ -97,7 +97,7 @@ function TrackingView() {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-2xl p-6 shadow-lg">
+      <div className="bg-white rounded-2xl p-6 shadow-lg max-w-5xl mx-auto">
         <h3 className="font-bold text-lg mb-4">Historique</h3>
         <div className="space-y-3">
           {activityHistory.map((log, index) => (

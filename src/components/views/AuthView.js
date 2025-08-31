@@ -113,7 +113,7 @@ function AuthView() {
 
   // Formulaire de connexion/inscription
   return (
-    <div className="pb-20 p-6 bg-gray-50 min-h-screen">
+    <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <div className="bg-purple-100 p-4 rounded-full inline-flex mb-4">
