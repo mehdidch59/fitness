@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile, sendEmailVerification, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { initializeFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile, sendEmailVerification, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider, deleteUser } from 'firebase/auth';
+import { initializeFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 // Configuration Firebase (à remplacer par vos propres identifiants)
@@ -196,6 +196,32 @@ export const authService = {
   // Obtenir l'utilisateur courant
   getCurrentUser: () => {
     return auth.currentUser;
+  },
+
+  // Supprimer le compte utilisateur (avec re-authentification et nettoyage basique)
+  deleteAccount: async (currentPassword) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Utilisateur non connecté');
+    if (!user.email) throw new Error('Email utilisateur introuvable');
+    if (!currentPassword) throw new Error('Veuillez saisir votre mot de passe');
+
+    // Re-authentifier avant action sensible
+    const cred = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, cred);
+
+    // Supprimer le document utilisateur principal
+    try {
+      await deleteDoc(doc(db, 'users', user.uid));
+    } catch (e) {
+      console.warn('Suppression doc utilisateur Firestore échouée ou inexistante:', e?.message);
+    }
+
+    // TODO: Optionnel — supprimer d'autres données liées (workouts, nutrition) si nécessaire
+    // Ici on reste minimal pour éviter des suppressions destructrices inattendues.
+
+    // Supprimer le compte Auth
+    await deleteUser(user);
+    return { deleted: true };
   }
 };
 

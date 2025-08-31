@@ -41,6 +41,7 @@ function SettingsView() {
   const [currentPasswordForPwd, setCurrentPasswordForPwd] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [accountLoading, setAccountLoading] = useState(false);
+  const [currentPasswordForDelete, setCurrentPasswordForDelete] = useState('');
   // Hook pour la persistance automatique du formulaire
   const { loadSavedData, clearSavedData } = useFormPersistence('settings_form', formData, {
     debounceMs: 500,
@@ -368,6 +369,35 @@ function SettingsView() {
                     disabled={accountLoading}
                   >
                     Changer le mot de passe
+                  </button>
+                </div>
+
+                <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                  <p className="text-sm font-semibold mb-2 text-red-800">Supprimer le compte</p>
+                  <p className="text-xs text-red-700 mb-3">Action irréversible. Votre profil et vos données principales seront supprimés.</p>
+                  <Input label="Mot de passe actuel" type="password" value={currentPasswordForDelete} onChange={setCurrentPasswordForDelete} placeholder="••••••••" />
+                  <button
+                    onClick={async () => {
+                      if (!currentPasswordForDelete) {
+                        actions.setSearchStatus('Veuillez saisir votre mot de passe pour confirmer');
+                        return;
+                      }
+                      if (!window.confirm('Confirmez-vous la suppression définitive de votre compte ?')) return;
+                      setAccountLoading(true);
+                      try {
+                        await authService.deleteAccount(currentPasswordForDelete);
+                        actions.setSearchStatus('Compte supprimé');
+                        navigate('/auth');
+                      } catch (e) {
+                        actions.setSearchStatus(`Erreur: ${e.message}`);
+                      } finally {
+                        setAccountLoading(false);
+                      }
+                    }}
+                    className="mt-2 px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 w-full"
+                    disabled={accountLoading}
+                  >
+                    Supprimer mon compte
                   </button>
                 </div>
               </div>
