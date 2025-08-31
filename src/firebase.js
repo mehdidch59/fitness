@@ -73,12 +73,13 @@ export const authService = {
   },
 
   // Inscription
-  register: async (email, password, displayName) => {
+  register: async (email, password, displayName, extra = {}) => {
     try {
       // console.log('Tentative d\'inscription pour:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // console.log('Utilisateur créé dans Firebase Auth:', userCredential.user.uid);
 
+      const { firstName = '', lastName = '' } = extra || {};
       await updateProfile(userCredential.user, { displayName });
       // console.log('Profil mis à jour avec displayName:', displayName);
 
@@ -86,10 +87,14 @@ export const authService = {
       const initialProfile = {
         email,
         displayName,
+        firstName,
+        lastName,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         // Profils par défaut
         userProfile: {
+          firstName,
+          lastName,
           goal: null,
           activityLevel: null,
           fitnessGoal: null

@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Input from '../ui/Input';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
-import { User, Edit, ChevronRight, Activity, Target, ArrowLeft, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { User, ChevronRight, Activity, Target, ArrowLeft, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-// import { profileSyncService } from '../../services/profileSync';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase'; // Assurez-vous d'importer votre config Firebase
+import { db } from '../../firebase';
 
 function ProfileView() {
   const { userProfile, actions } = useAppContext();
@@ -30,7 +29,9 @@ function ProfileView() {
         
         // Mapper les données Firestore vers le format attendu par le composant
         const mappedProfile = {
-          name: firestoreData.name || firestoreData.displayName || firestoreData.firstName || '',
+          name: firestoreData.name || firestoreData.displayName || `${firestoreData.firstName || ''} ${firestoreData.lastName || ''}`.trim(),
+          firstName: firestoreData.firstName || firestoreData.userProfile?.firstName || '',
+          lastName: firestoreData.lastName || firestoreData.userProfile?.lastName || '',
           age: firestoreData.age || firestoreData.userProfile?.age || '',
           weight: firestoreData.weight || firestoreData.userProfile?.weight || '',
           height: firestoreData.height || firestoreData.userProfile?.height || '',
@@ -38,7 +39,6 @@ function ProfileView() {
           goal: firestoreData.goal || firestoreData.userProfile?.goal || firestoreData.userProfile?.fitnessGoal || '',
           activityLevel: firestoreData.activityLevel || firestoreData.userProfile?.activityLevel || ''
         };
-        
         
         // ✅ UTILISATION DU FLAG SILENT pour éviter la sauvegarde Firestore
         // Lors de la lecture, on met à jour le contexte SANS déclencher la sauvegarde automatique
@@ -345,12 +345,6 @@ function ProfileView() {
                   <p className="text-gray-600">{userProfile.age} ans • {getGenderText(userProfile.gender)}</p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors"
-              >
-                <Edit size={20} className="text-gray-700" />
-              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-6 mb-6">
@@ -417,13 +411,6 @@ function ProfileView() {
               </div>
             </div>
           </div>
-
-          <button
-            onClick={() => setIsEditing(true)}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold mt-6"
-          >
-            Modifier mon profil
-          </button>
 
           <Link
             to="/settings"

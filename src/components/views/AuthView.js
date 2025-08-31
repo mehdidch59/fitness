@@ -46,7 +46,7 @@ function AuthView() {
   const handleRegister = async (e) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password || !formData.firstName) {
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
       actions.setSearchStatus('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -55,7 +55,13 @@ function AuthView() {
       const displayName = `${formData.firstName} ${formData.lastName}`.trim();
       
       // Créer l'utilisateur dans Firebase
-      const firebaseUser = await register(formData.email, formData.password, displayName);
+      const firebaseUser = await register(
+        formData.email,
+        formData.password,
+        displayName,
+        formData.firstName,
+        formData.lastName
+      );
       
       // Créer le profil complet dans Firestore
       const profileData = {
@@ -70,6 +76,16 @@ function AuthView() {
         goal: formData.goal || '',
         activityLevel: formData.activityLevel || '',
         firebaseUid: firebaseUser.uid,
+        userProfile: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          age: formData.age || null,
+          gender: formData.gender || '',
+          weight: formData.weight || null,
+          height: formData.height || null,
+          goal: formData.goal || '',
+          activityLevel: formData.activityLevel || ''
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -154,6 +170,7 @@ function AuthView() {
                     value={formData.lastName}
                     onChange={(value) => handleInputChange('lastName', value)}
                     placeholder="Doe"
+                    required
                   />
                 </div>
                 

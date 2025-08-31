@@ -232,6 +232,15 @@ function AppProvider({ children }) {
           if (userData.userProfile) {
             dispatch({ type: ACTION_TYPES.UPDATE_USER_PROFILE, payload: userData.userProfile });
           }
+          // Enrichir avec prénom/nom si présents à la racine
+          const extraName = {};
+          if (userData.firstName) extraName.firstName = userData.firstName;
+          if (userData.lastName) extraName.lastName = userData.lastName;
+          const derivedName = userData.name || userData.displayName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+          if (derivedName) extraName.name = derivedName;
+          if (Object.keys(extraName).length > 0) {
+            dispatch({ type: ACTION_TYPES.UPDATE_USER_PROFILE, payload: extraName });
+          }
           
           // Charger le profil d'équipement si disponible
           if (userData.equipmentProfile) {

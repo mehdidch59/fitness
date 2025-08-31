@@ -131,10 +131,10 @@ export function useAuth() {
   };
 
   // Inscription utilisateur
-  const register = async (email, password, displayName) => {
+  const register = async (email, password, displayName, firstName, lastName) => {
     setError(null);
     try {
-      const user = await authService.register(email, password, displayName);
+      const user = await authService.register(email, password, displayName, { firstName, lastName });
       return user;
     } catch (error) {
       setError(error.message);
