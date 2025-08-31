@@ -1,0 +1,68 @@
+{
+  "workout": {
+    "generate": "Generate",
+    "refresh": "Refresh",
+    "mode": "Mode",
+    "auto": "Auto",
+    "manual": "Manual",
+    "muscleAccent": "Muscle focus (optional)",
+    "type": "Type",
+    "daysPerWeek": "Days / week",
+    "select": "Select",
+    "selectAll": "Select all",
+    "delete": "Delete",
+    "details": "See details",
+    "lastGeneration": "Last generation",
+    "filteredHistory": "Load history (filters)"
+  },
+  "settings": {
+    "preferences": "App Preferences",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "language": "Language",
+    "languageFr": "Français",
+    "languageEn": "English"
+  },
+  "ia": {
+    "title": "Advanced IA+",
+    "subtitle": "Artificial intelligence for your well-being",
+    "active": "Active IA features",
+    "loginRequired": "Login required: sign in to use IA+ features.",
+    "loginRequiredShort": "Login required",
+    "features": {
+      "title": "Available Features",
+      "coach": {
+        "title": "Personal AI Coach",
+        "desc": "Personalized advice based on your habits"
+      },
+      "mood": {
+        "title": "Mood-based Recipes",
+        "desc": "Recipes adapted to your mood"
+      },
+      "fridge": {
+        "title": "Fridge Scanner",
+        "desc": "Generate recipes with your ingredients"
+      },
+      "budget": {
+        "title": "Budget Recipes",
+        "desc": "Plan meals according to your budget"
+      },
+      "insights": {
+        "title": "Analytics & Insights",
+        "desc": "Understand your eating habits"
+      }
+    },
+    "mood": {
+      "label": "Select your current mood:"
+    },
+    "featuresCta": "Available Features",
+    "ready": "Ready to use",
+    "help": "Click \"Generate\" to discover personalized AI recommendations."
+  },
+  "common": {
+    "login": "Login",
+    "generate": "Generate",
+    "generating": "Generating..."
+  }
+}

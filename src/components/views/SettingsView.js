@@ -7,6 +7,7 @@ import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import Input from '../ui/Input';
 import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../firebase';
+import { persistenceService } from '../../services/persistenceService';
 
 function SettingsView() {
   const { userProfile, equipmentProfile, nutritionProfile, actions } = useAppContext();
@@ -42,6 +43,13 @@ function SettingsView() {
   const [newPassword, setNewPassword] = useState('');
   const [accountLoading, setAccountLoading] = useState(false);
   const [currentPasswordForDelete, setCurrentPasswordForDelete] = useState('');
+  // Préférences app
+  const [appTheme, setAppTheme] = useState(() => {
+    try { return persistenceService.loadAppSettings()?.theme || 'light'; } catch { return 'light'; }
+  });
+  const [appLanguage, setAppLanguage] = useState(() => {
+    try { return persistenceService.loadAppSettings()?.language || 'fr'; } catch { return 'fr'; }
+  });
   // Hook pour la persistance automatique du formulaire
   const { loadSavedData, clearSavedData } = useFormPersistence('settings_form', formData, {
     debounceMs: 500,
@@ -100,12 +108,33 @@ function SettingsView() {
 
     setFormData(initialData);
     setAccountEmail(user?.email || '');
+    // Charger préférences app
+    try {
+      const settings = persistenceService.loadAppSettings();
+      if (settings?.theme) setAppTheme(settings.theme);
+      if (settings?.language) setAppLanguage(settings.language);
+    } catch {}
 
     // Si on a des données sauvegardées, informer l'utilisateur
     if (Object.keys(savedFormData).length > 0) {
       console.log('🔄 Données de formulaire restaurées depuis la sauvegarde automatique');
     }
   }, [userProfile, equipmentProfile, nutritionProfile, loadSavedData, user?.email]);
+
+  // Appliquer le thème/langue quand on change
+  useEffect(() => {
+    try {
+      const current = persistenceService.loadAppSettings() || {};
+      const next = { ...current, theme: appTheme, language: appLanguage };
+      persistenceService.saveAppSettings(next);
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.toggle('dark', appTheme === 'dark');
+        document.documentElement.setAttribute('lang', appLanguage || 'fr');
+      }
+      // Notifier l'application du changement
+      window.dispatchEvent(new CustomEvent('appSettingsChanged', { detail: next }));
+    } catch {}
+  }, [appTheme, appLanguage]);
 
   // Gérer les changements
   const handleInputChange = (field, value) => {
@@ -400,6 +429,36 @@ function SettingsView() {
                   >
                     Supprimer mon compte
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-xl font-bold mb-4">Préférences de l'application</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Thème</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setAppTheme('light')}
+                      className={`px-3 py-2 rounded-lg border ${appTheme === 'light' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-800 border-gray-300'}`}
+                    >Clair</button>
+                    <button
+                      onClick={() => setAppTheme('dark')}
+                      className={`px-3 py-2 rounded-lg border ${appTheme === 'dark' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-800 border-gray-300'}`}
+                    >Sombre</button>
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Langue</label>
+                  <select
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    value={appLanguage}
+                    onChange={(e) => setAppLanguage(e.target.value)}
+                  >
+                    <option value="fr">Français</option>
+                    <option value="en">English</option>
+                  </select>
                 </div>
               </div>
             </div>

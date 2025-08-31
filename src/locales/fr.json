@@ -1,0 +1,68 @@
+{
+  "workout": {
+    "generate": "Générer",
+    "refresh": "Rafraîchir",
+    "mode": "Mode",
+    "auto": "Auto",
+    "manual": "Manuel",
+    "muscleAccent": "Accent musculaire (optionnel)",
+    "type": "Type",
+    "daysPerWeek": "Jours / semaine",
+    "select": "Sélectionner",
+    "selectAll": "Tout sélectionner",
+    "delete": "Supprimer",
+    "details": "Voir détails",
+    "lastGeneration": "Dernière génération",
+    "filteredHistory": "Charger historiques (filtres)"
+  },
+  "settings": {
+    "preferences": "Préférences de l'application",
+    "theme": "Thème",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "language": "Langue",
+    "languageFr": "Français",
+    "languageEn": "English"
+  },
+  "ia": {
+    "title": "IA+ Avancée",
+    "subtitle": "Intelligence artificielle au service de votre bien-être",
+    "active": "Fonctionnalités IA actives",
+    "loginRequired": "Connexion requise: connectez-vous pour utiliser les fonctionnalités IA+.",
+    "loginRequiredShort": "Connexion requise",
+    "features": {
+      "title": "Fonctionnalités Disponibles",
+      "coach": {
+        "title": "Coach IA Personnel",
+        "desc": "Conseils personnalisés basés sur vos habitudes"
+      },
+      "mood": {
+        "title": "Recettes par Humeur",
+        "desc": "Des recettes adaptées à votre état d'esprit"
+      },
+      "fridge": {
+        "title": "Scanner Frigo",
+        "desc": "Générez des recettes avec vos ingrédients"
+      },
+      "budget": {
+        "title": "Recettes Économiques",
+        "desc": "Planifiez vos repas selon votre budget"
+      },
+      "insights": {
+        "title": "Analyses & Insights",
+        "desc": "Comprenez vos habitudes alimentaires"
+      }
+    },
+    "mood": {
+      "label": "Sélectionnez votre humeur actuelle :"
+    },
+    "featuresCta": "Fonctionnalités Disponibles",
+    "ready": "Prêt à utiliser",
+    "help": "Cliquez sur \"Générer\" pour découvrir les recommandations IA personnalisées."
+  },
+  "common": {
+    "login": "Se connecter",
+    "generate": "Générer",
+    "generating": "Génération..."
+  }
+}

@@ -4,9 +4,10 @@ import {
   Dumbbell, BarChart2, Clock, ArrowRight, Search,
   X, ChevronDown, ChevronUp, Trash2, CheckSquare, Square,
   AlertCircle, Calendar,
-  Play, RotateCcw, Timer, BookOpen
+  Play, RotateCcw, Timer, BookOpen, RefreshCw
 } from 'lucide-react';
 import Questionnaire from '../ui/Questionnaire';
+import { useI18n } from '../../utils/i18n';
 import { mistralSearchService } from '../../services/mistralIntegration';
 import { workoutFirestoreService } from '../../services/workoutFirestoreService';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -43,6 +44,7 @@ function UltraRobustWorkoutView() {
   const [selectedProgramIds, setSelectedProgramIds] = useState(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
+  const { t } = useI18n();
 
   // Persist selected filters in localStorage
   useEffect(() => {
@@ -52,7 +54,7 @@ function UltraRobustWorkoutView() {
       if (saved.typeFilter) setTypeFilter(saved.typeFilter);
       if (saved.difficultyFilter) setDifficultyFilter(saved.difficultyFilter);
       if (typeof saved.searchTerm === 'string') setSearchTerm(saved.searchTerm);
-    } catch {}
+    } catch { }
   }, []);
   useEffect(() => {
     try {
@@ -62,7 +64,7 @@ function UltraRobustWorkoutView() {
         difficultyFilter,
         searchTerm
       }));
-    } catch {}
+    } catch { }
   }, [focusMuscle, typeFilter, difficultyFilter, searchTerm]);
 
 
@@ -279,8 +281,8 @@ function UltraRobustWorkoutView() {
                   key={level}
                   onClick={() => setDifficultyFilter(level)}
                   className={`px-3 py-1 rounded-full text-sm transition-colors ${difficultyFilter === level
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
                   {level}
@@ -301,12 +303,12 @@ function UltraRobustWorkoutView() {
                 {isGenerating ? (
                   <>
                     <RotateCcw size={16} className="mr-2 animate-spin" />
-                    Génération...
+                    {t('workout.generate')}...
                   </>
                 ) : (
                   <>
                     <Play size={16} className="mr-2" />
-                    Générer
+                    {t('workout.generate')}
                   </>
                 )}
               </button>
@@ -344,7 +346,7 @@ function UltraRobustWorkoutView() {
                   setDifficultyFilter('all');
                   setTypeFilter('all');
                   setFocusMuscle('');
-                  try { localStorage.removeItem('wf_filters'); } catch {}
+                  try { localStorage.removeItem('wf_filters'); } catch { }
                 }}
                 className="px-3 py-2 rounded-xl text-sm bg-white border border-gray-300 text-gray-800 hover:bg-gray-50"
               >
@@ -356,22 +358,22 @@ function UltraRobustWorkoutView() {
         {/* Mode Auto / Manuel */}
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
           <div>
-            <p className="text-sm text-gray-600 mb-2">Mode</p>
+            <p className="text-sm text-gray-600 mb-2">{t('workout.mode')}</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setModeAuto(true)}
                 className={`px-3 py-1 rounded-lg text-sm ${modeAuto ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-              >Auto</button>
+              >{t('workout.auto')}</button>
               <button
                 onClick={() => setModeAuto(false)}
                 className={`px-3 py-1 rounded-lg text-sm ${!modeAuto ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-              >Manuel</button>
+              >{t('workout.manual')}</button>
             </div>
           </div>
           {!modeAuto && (
             <>
               <div>
-                <p className="text-sm text-gray-600 mb-2">Type</p>
+                <p className="text-sm text-gray-600 mb-2">{t('workout.type')}</p>
                 <div className="flex gap-2 flex-wrap">
                   {[
                     { key: 'fullbody', label: 'FullBody' },
@@ -387,7 +389,7 @@ function UltraRobustWorkoutView() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-2">Jours / semaine</p>
+                <p className="text-sm text-gray-600 mb-2">{t('workout.daysPerWeek')}</p>
                 <div className="flex gap-2">
                   {[3, 4, 5, 6].map(n => (
                     <button key={n} onClick={() => setManualDays(n)} className={`px-3 py-1 rounded-full text-sm ${manualDays === n ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700'}`}>{n}</button>
@@ -397,7 +399,7 @@ function UltraRobustWorkoutView() {
             </>
           )}
           <div>
-            <p className="text-sm text-gray-600 mb-2">Accent musculaire (optionnel)</p>
+            <p className="text-sm text-gray-600 mb-2">{t('workout.muscleAccent')}</p>
             <select
               value={focusMuscle}
               onChange={(e) => setFocusMuscle(e.target.value)}
@@ -456,8 +458,8 @@ function UltraRobustWorkoutView() {
         onClick={handleRealisticGeneration}
         disabled={isGenerating || !user}
         className={`w-full py-4 rounded-2xl font-semibold text-white transition-all relative overflow-hidden ${isGenerating || !user
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl'
+          ? 'bg-gray-400 cursor-not-allowed'
+          : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl'
           }`}
       >
         {/* Barre de progression animée */}
@@ -516,6 +518,27 @@ function UltraRobustWorkoutView() {
               className={`px-3 py-1 rounded-lg text-sm ${selectionMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
             >
               {selectionMode ? 'Annuler sélection' : 'Sélectionner'}
+            </button>
+            <button
+              onClick={async () => {
+                if (!user?.uid) return;
+                setIsGenerating(true);
+                setGenerationStage('Rafraîchissement des programmes...');
+                try {
+                  const saved = await workoutFirestoreService.loadGeneratedPrograms(user.uid);
+                  setGeneratedPrograms(saved?.programs || []);
+                  setLastGeneration(saved?.generatedAt || new Date());
+                  actions.setSearchStatus('Programmes rafraîchis');
+                } catch (e) {
+                  actions.setSearchStatus(`Erreur rafraîchissement: ${e.message}`);
+                } finally {
+                  setIsGenerating(false);
+                  setGenerationStage('');
+                }
+              }}
+              className="px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 flex items-center"
+            >
+              <RefreshCw size={16} className="mr-2" /> {t('workout.refresh')}
             </button>
             {selectionMode && (
               <div className="flex items-center gap-2">
@@ -628,7 +651,7 @@ function UltraRobustWorkoutView() {
                       }}
                       className="mt-2 inline-flex items-center text-sm text-purple-600 hover:text-purple-700"
                     >
-                      Voir détails <ArrowRight size={16} className="ml-1" />
+                      {t('workout.details')} <ArrowRight size={16} className="ml-1" />
                     </button>
                   </div>
                 </div>
@@ -740,7 +763,7 @@ function UltraRobustWorkoutView() {
   };
 
   return (
-    <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 min-h-screen">
+    <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       {renderHeader()}
 
       <div className="p-4 sm:p-6 space-y-6">

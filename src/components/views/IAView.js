@@ -11,10 +11,12 @@ import { auth } from '../../firebase';
 import { personalAICoachService } from '../../services/personalAICoachService';
 import { aiPersonalizationService } from '../../services/aiPersonalizationService';
 import { advancedAIService } from '../../services/advancedAIService';
+import { useI18n } from '../../utils/i18n';
 
 function IAView() {
   const { userProfile, actions } = useAppContext();
   const [user] = useAuthState(auth);
+  const { t } = useI18n();
   const [activeFeature, setActiveFeature] = useState('coach');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState({});
@@ -213,23 +215,23 @@ function IAView() {
   };
 
   return (
-    <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 min-h-screen">
+    <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       {/* Header */}
       <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-5xl mx-auto">
           <div>
             <h1 className="text-3xl font-bold flex items-center">
               <Brain className="mr-3" size={32} />
-              IA+ Avancée
+              {t('ia.title', 'IA+ Avancée')}
             </h1>
             <p className="opacity-90 text-lg mt-2">
-              Intelligence artificielle au service de votre bien-être
+              {t('ia.subtitle', 'Intelligence artificielle au service de votre bien-être')}
             </p>
           </div>
           <div className="text-right">
             <div className="flex items-center text-sm opacity-90">
               <Sparkles size={16} className="mr-2" />
-              Fonctionnalités IA actives
+              {t('ia.active', 'Fonctionnalités IA actives')}
             </div>
           </div>
         </div>
@@ -239,14 +241,12 @@ function IAView() {
         {!isLoggedIn && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-2xl p-4">
             <div className="flex items-center justify-between">
-              <p>
-                Connexion requise: connectez-vous pour utiliser les fonctionnalités IA+.
-              </p>
+              <p>{t('ia.loginRequired', 'Connexion requise: connectez-vous pour utiliser les fonctionnalités IA+.')}</p>
               <Link
                 to="/auth"
                 className="ml-4 px-4 py-2 rounded-xl bg-yellow-600 text-white font-semibold hover:bg-yellow-700"
               >
-                Se connecter
+                {t('common.login', 'Se connecter')}
               </Link>
             </div>
           </div>
@@ -255,7 +255,7 @@ function IAView() {
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h2 className="text-xl font-bold mb-4 flex items-center">
             <Zap className="mr-2 text-purple-600" />
-            Fonctionnalités Disponibles
+            {t('ia.features.title', 'Fonctionnalités Disponibles')}
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -321,12 +321,12 @@ function IAView() {
                     {isLoading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Génération...
+                        {t('common.generating', 'Génération...')}
                       </>
                     ) : (
                       <>
                         <Play size={16} className="mr-2" />
-                        {isLoggedIn ? 'Générer' : 'Connexion requise'}
+                        {isLoggedIn ? t('common.generate', 'Générer') : t('ia.loginRequiredShort', 'Connexion requise')}
                       </>
                     )}
                   </button>

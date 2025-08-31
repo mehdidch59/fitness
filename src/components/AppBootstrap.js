@@ -4,6 +4,7 @@ import { usePopup } from '../context/PopupContext';
 import { useAuth } from '../hooks/useAuth';
 import { profileSyncService } from '../services/profileSync';
 import { initApiWithPopups } from '../services/api';
+import { persistenceService } from '../services/persistenceService';
 
 /**
  * Composant d'initialisation de l'application
@@ -21,6 +22,18 @@ const AppBootstrap = () => {
 
     // Initialiser le service API avec le gestionnaire de popups
     initApiWithPopups(popupManager);
+
+    // Appliquer thème et langue dès le démarrage
+    try {
+      const appSettings = persistenceService.loadAppSettings();
+      const isDark = appSettings?.theme === 'dark';
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.toggle('dark', !!isDark);
+        if (appSettings?.language) {
+          document.documentElement.setAttribute('lang', appSettings.language);
+        }
+      }
+    } catch {}
 
     // Fonction pour vérifier le profil
     const checkProfile = async () => {

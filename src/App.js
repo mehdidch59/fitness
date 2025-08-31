@@ -5,6 +5,7 @@ import './styles/main.css';
 
 // Importer les providers
 import { UserSessionProvider } from './components/UserSessionProvider';
+import { I18nProvider } from './context/I18nContext';
 
 // Importer les vues pour les routes
 import HomeView from './components/views/HomeView';
@@ -43,8 +44,9 @@ const App = () => {
   const lastSyncTime = persistenceService.load(persistenceService.keys.LAST_SYNC);
 
   return (
-    <UserSessionProvider>
-      <Router>
+    <I18nProvider>
+      <UserSessionProvider>
+        <Router>
         <AppBootstrap />
         <Routes>
           <Route path="/" element={<HomeView />} />
@@ -63,8 +65,9 @@ const App = () => {
           lastSaved={lastSyncTime}
           showDetails={false}
         />
-      </Router>
-    </UserSessionProvider>
+        </Router>
+      </UserSessionProvider>
+    </I18nProvider>
   );
 };
 

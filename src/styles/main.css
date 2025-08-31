@@ -13,6 +13,43 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Mode sombre (class-based) */
+.dark body {
+  @apply bg-gray-900 text-gray-100;
+}
+.dark .text-gray-900,
+.dark .text-gray-800 {
+  @apply text-gray-100 !important;
+}
+.dark .bg-white {
+  @apply bg-gray-800 !important;
+}
+.dark .bg-gray-50 {
+  @apply bg-gray-800 !important;
+}
+.dark .bg-gray-100 {
+  @apply bg-gray-700 !important;
+}
+.dark .text-gray-700,
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  @apply text-gray-300 !important;
+}
+.dark .border-gray-200 {
+  @apply border-gray-700 !important;
+}
+.dark .border-gray-300 {
+  @apply border-gray-600 !important;
+}
+.dark input,
+.dark select,
+.dark textarea {
+  @apply bg-gray-900 text-gray-100 border-gray-600;
+}
+.dark .bg-white\/90 {
+  @apply bg-gray-800 !important;
+}
+
 input, select {
   -webkit-appearance: none;
 }
