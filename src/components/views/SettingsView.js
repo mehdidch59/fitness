@@ -5,10 +5,13 @@ import { useAppContext } from '../../context/AppContext';
 import { useFormPersistence } from '../../hooks/useFormPersistence';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import Input from '../ui/Input';
+import { useAuth } from '../../hooks/useAuth';
+import { authService } from '../../firebase';
 import DataManagement from '../debug/DataManagement';
 
 function SettingsView() {
   const { userProfile, equipmentProfile, nutritionProfile, actions } = useAppContext();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [showDataManagement, setShowDataManagement] = useState(false);
@@ -32,6 +35,14 @@ function SettingsView() {
     allergies: [],
     favorites: []
   });
+
+  // Compte (email / mot de passe)
+  const [accountEmail, setAccountEmail] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
+  const [currentPasswordForPwd, setCurrentPasswordForPwd] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [accountLoading, setAccountLoading] = useState(false);
   // Hook pour la persistance automatique du formulaire
   const { loadSavedData, clearSavedData } = useFormPersistence('settings_form', formData, {
     debounceMs: 500,
@@ -89,12 +100,13 @@ function SettingsView() {
     };
     
     setFormData(initialData);
+    setAccountEmail(user?.email || '');
     
     // Si on a des données sauvegardées, informer l'utilisateur
     if (Object.keys(savedFormData).length > 0) {
       console.log('🔄 Données de formulaire restaurées depuis la sauvegarde automatique');
     }
-  }, [userProfile, equipmentProfile, nutritionProfile, loadSavedData]);
+  }, [userProfile, equipmentProfile, nutritionProfile, loadSavedData, user?.email]);
 
   // Gérer les changements
   const handleInputChange = (field, value) => {
@@ -261,6 +273,107 @@ function SettingsView() {
                 onChange={(value) => handleInputChange('height', value)}
                 placeholder="175"
               />
+            </div>
+
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-xl font-bold mb-4">Compte</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Input
+                    label="Email actuel"
+                    value={accountEmail}
+                    onChange={setAccountEmail}
+                    placeholder="email@exemple.com"
+                    disabled
+                  />
+                  {!user?.emailVerified && (
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-sm text-orange-700 bg-orange-100 px-2 py-1 rounded">Email non vérifié</span>
+                      <button
+                        onClick={async () => {
+                          setAccountLoading(true);
+                          try {
+                            await authService.sendVerificationEmail();
+                            actions.setSearchStatus('Email de vérification envoyé');
+                          } catch (e) {
+                            actions.setSearchStatus(`Erreur: ${e.message}`);
+                          } finally {
+                            setAccountLoading(false);
+                          }
+                        }}
+                        className="text-sm px-3 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+                        disabled={accountLoading}
+                      >
+                        Vérifier mon email
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm font-medium mb-2">Changer l'email</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Input label="Nouvel email" value={newEmail} onChange={setNewEmail} placeholder="nouvel.email@exemple.com" />
+                    <Input label="Mot de passe actuel" type="password" value={currentPasswordForEmail} onChange={setCurrentPasswordForEmail} placeholder="••••••••" />
+                    <button
+                      onClick={async () => {
+                        if (!newEmail || !currentPasswordForEmail) {
+                          actions.setSearchStatus('Veuillez saisir un nouvel email et votre mot de passe actuel');
+                          return;
+                        }
+                        setAccountLoading(true);
+                        try {
+                          await authService.changeEmail(newEmail, currentPasswordForEmail);
+                          actions.setSearchStatus('Email mis à jour');
+                          setAccountEmail(newEmail);
+                          setNewEmail('');
+                          setCurrentPasswordForEmail('');
+                        } catch (e) {
+                          actions.setSearchStatus(`Erreur: ${e.message}`);
+                        } finally {
+                          setAccountLoading(false);
+                        }
+                      }}
+                      className="mt-2 px-3 py-2 rounded bg-gray-800 text-white hover:bg-black disabled:opacity-50"
+                      disabled={accountLoading}
+                    >
+                      Changer l'email
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm font-medium mb-2">Changer le mot de passe</p>
+                  <Input label="Mot de passe actuel" type="password" value={currentPasswordForPwd} onChange={setCurrentPasswordForPwd} placeholder="••••••••" />
+                  <Input label="Nouveau mot de passe" type="password" value={newPassword} onChange={setNewPassword} placeholder="••••••••" />
+                  <button
+                    onClick={async () => {
+                      if (!currentPasswordForPwd || !newPassword) {
+                        actions.setSearchStatus('Veuillez saisir votre mot de passe actuel et le nouveau');
+                        return;
+                      }
+                      setAccountLoading(true);
+                      try {
+                        await authService.changePassword(currentPasswordForPwd, newPassword);
+                        actions.setSearchStatus('Mot de passe mis à jour');
+                        setCurrentPasswordForPwd('');
+                        setNewPassword('');
+                      } catch (e) {
+                        actions.setSearchStatus(`Erreur: ${e.message}`);
+                      } finally {
+                        setAccountLoading(false);
+                      }
+                    }}
+                    className="mt-2 px-3 py-2 rounded bg-gray-800 text-white hover:bg-black disabled:opacity-50"
+                    disabled={accountLoading}
+                  >
+                    Changer le mot de passe
+                  </button>
+                </div>
+              </div>
             </div>
           </>
         )}

@@ -1,16 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import Input from '../ui/Input';
+// Overview only — editing moves to Settings
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
-import { User, ChevronRight, Activity, Target, ArrowLeft, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { User, ChevronRight, Activity, Target, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 function ProfileView() {
   const { userProfile, actions } = useAppContext();
   const { user, logout } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fonction pour récupérer le profil depuis Firestore (mémorisée avec useCallback)
@@ -65,68 +64,7 @@ function ProfileView() {
     }
   }, [user?.uid, fetchUserProfileFromFirestore]);
 
-  // Gérer les mises à jour de profil (uniquement contexte et localStorage)
-  const handleInputChange = useCallback((field, value) => {
-    // Mettre à jour le contexte local SANS sauvegarde Firestore automatique
-    // (la sauvegarde se fera uniquement quand l'utilisateur clique sur "Enregistrer")
-    actions.updateUserProfile({ [field]: value }, { silent: true });
-    
-    // Sauvegarder dans localStorage pour ne pas perdre les données
-    setTimeout(() => {
-      const currentProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-      const updatedProfile = { ...currentProfile, [field]: value };
-      localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
-    }, 0);
-  }, [actions]);
-
-  // Sauvegarder dans Firestore (appelée uniquement par les boutons)
-  const saveProfileToFirestore = useCallback(async () => {
-    if (!user?.uid) {
-      console.error('Aucun utilisateur connecté pour sauvegarder');
-      return;
-    }
-
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      
-      // Récupérer le profil actuel depuis le contexte au moment de l'exécution
-      const currentProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-      
-      // Créer un objet avec la structure Firestore complète
-      const firestoreUpdate = {
-        // Niveau racine (pour compatibilité)
-        name: currentProfile.name || '',
-        age: currentProfile.age || '',
-        weight: currentProfile.weight || '',
-        height: currentProfile.height || '',
-        gender: currentProfile.gender || '',
-        goal: currentProfile.goal || '',
-        activityLevel: currentProfile.activityLevel || '',
-        
-        // Sous-objet userProfile (structure actuelle)
-        userProfile: {
-          age: currentProfile.age || '',
-          weight: currentProfile.weight || '',
-          height: currentProfile.height || '',
-          gender: currentProfile.gender || '',
-          goal: currentProfile.goal || '',
-          fitnessGoal: currentProfile.goal || '',
-          activityLevel: currentProfile.activityLevel || ''
-        },
-        
-        // Métadonnées
-        updatedAt: new Date().toISOString(),
-        displayName: currentProfile.name || '',
-        firstName: currentProfile.name?.split(' ')[0] || '',
-        lastName: currentProfile.name?.split(' ')[1] || ''
-      };
-      
-      await updateDoc(userDocRef, firestoreUpdate);
-      
-    } catch (error) {
-      console.error('❌ Erreur lors de la sauvegarde:', error);
-    }
-  }, [user?.uid]);
+  // Édition supprimée ici — utilisons Paramètres pour modifier les données
 
   // Gérer la déconnexion
   const handleLogout = useCallback(async () => {
@@ -227,104 +165,7 @@ function ProfileView() {
   const bmiCategory = getBMICategory(bmi);
   const complete = isProfileComplete();
 
-  // Mode édition
-  if (isEditing) {
-    return (
-      <div className="pb-20 p-6 bg-gray-50 min-h-screen">
-        <div className="flex items-center mb-6">
-          <button onClick={() => setIsEditing(false)} className="mr-4">
-            <ArrowLeft size={24} className="text-gray-700" />
-          </button>
-          <h2 className="text-2xl font-bold">Modifier mon profil</h2>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
-          <Input
-            label="Nom"
-            value={userProfile.name || ''}
-            onChange={(value) => handleInputChange('name', value)}
-            placeholder="Votre nom"
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Âge"
-              type="number"
-              value={userProfile.age || ''}
-              onChange={(value) => handleInputChange('age', value)}
-              placeholder="25"
-            />
-            <Input
-              label="Genre"
-              type="select"
-              value={userProfile.gender || ''}
-              onChange={(value) => handleInputChange('gender', value)}
-              options={[
-                { value: '', label: 'Sélectionner...' },
-                { value: 'male', label: 'Homme' },
-                { value: 'female', label: 'Femme' }
-              ]}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Poids (kg)"
-              type="number"
-              value={userProfile.weight || ''}
-              onChange={(value) => handleInputChange('weight', value)}
-              placeholder="70"
-            />
-            <Input
-              label="Taille (cm)"
-              type="number"
-              value={userProfile.height || ''}
-              onChange={(value) => handleInputChange('height', value)}
-              placeholder="175"
-            />
-          </div>
-
-          <Input
-            label="Objectif"
-            type="select"
-            value={userProfile.goal || ''}
-            onChange={(value) => handleInputChange('goal', value)}
-            options={[
-              { value: '', label: 'Sélectionner...' },
-              { value: 'lose_weight', label: 'Perdre du poids' },
-              { value: 'gain_muscle', label: 'Prendre du muscle' },
-              { value: 'maintain', label: 'Maintenir ma forme' }
-            ]}
-          />
-
-          <Input
-            label="Niveau d'activité"
-            type="select"
-            value={userProfile.activityLevel || ''}
-            onChange={(value) => handleInputChange('activityLevel', value)}
-            options={[
-              { value: '', label: 'Sélectionner...' },
-              { value: 'sedentary', label: 'Sédentaire' },
-              { value: 'light', label: 'Léger (1-3 fois/sem)' },
-              { value: 'moderate', label: 'Modéré (3-5 fois/sem)' },
-              { value: 'active', label: 'Actif (6-7 fois/sem)' },
-              { value: 'very_active', label: 'Très actif' }
-            ]}
-          />
-
-          <button
-            onClick={async () => {
-              await saveProfileToFirestore();
-              setIsEditing(false);
-            }}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold mt-4"
-          >
-            Enregistrer
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Plus de mode édition — rediriger vers Paramètres pour modifier
 
   // Mode affichage
   return (
@@ -429,95 +270,19 @@ function ProfileView() {
           </button>
         </>
       ) : (
-        // Profil incomplet - afficher le formulaire
-        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
-          <div className="text-center mb-4">
-            <div className="bg-yellow-100 p-3 rounded-full inline-flex mb-2">
-              <User size={24} className="text-yellow-600" />
-            </div>
-            <h3 className="text-lg font-semibold">Complétez votre profil</h3>
-            <p className="text-gray-600 text-sm">Pour calculer votre IMC et personnaliser votre expérience</p>
+        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 text-center">
+          <div className="bg-yellow-100 p-3 rounded-full inline-flex mb-2">
+            <User size={24} className="text-yellow-600" />
           </div>
-
-          <Input
-            label="Nom"
-            value={userProfile.name || ''}
-            onChange={(value) => handleInputChange('name', value)}
-            placeholder="Votre nom"
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Âge"
-              type="number"
-              value={userProfile.age || ''}
-              onChange={(value) => handleInputChange('age', value)}
-              placeholder="25"
-            />
-            <Input
-              label="Genre"
-              type="select"
-              value={userProfile.gender || ''}
-              onChange={(value) => handleInputChange('gender', value)}
-              options={[
-                { value: '', label: 'Sélectionner...' },
-                { value: 'male', label: 'Homme' },
-                { value: 'female', label: 'Femme' }
-              ]}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Poids (kg)"
-              type="number"
-              value={userProfile.weight || ''}
-              onChange={(value) => handleInputChange('weight', value)}
-              placeholder="70"
-            />
-            <Input
-              label="Taille (cm)"
-              type="number"
-              value={userProfile.height || ''}
-              onChange={(value) => handleInputChange('height', value)}
-              placeholder="175"
-            />
-          </div>
-
-          <Input
-            label="Objectif"
-            type="select"
-            value={userProfile.goal || ''}
-            onChange={(value) => handleInputChange('goal', value)}
-            options={[
-              { value: '', label: 'Sélectionner...' },
-              { value: 'lose_weight', label: 'Perdre du poids' },
-              { value: 'gain_muscle', label: 'Prendre du muscle' },
-              { value: 'maintain', label: 'Maintenir ma forme' }
-            ]}
-          />
-
-          <Input
-            label="Niveau d'activité"
-            type="select"
-            value={userProfile.activityLevel || ''}
-            onChange={(value) => handleInputChange('activityLevel', value)}
-            options={[
-              { value: '', label: 'Sélectionner...' },
-              { value: 'sedentary', label: 'Sédentaire' },
-              { value: 'light', label: 'Léger (1-3 fois/sem)' },
-              { value: 'moderate', label: 'Modéré (3-5 fois/sem)' },
-              { value: 'active', label: 'Actif (6-7 fois/sem)' },
-              { value: 'very_active', label: 'Très actif' }
-            ]}
-          />
-
-          <button
-            onClick={saveProfileToFirestore}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold mt-6"
+          <h3 className="text-lg font-semibold">Complétez votre profil</h3>
+          <p className="text-gray-600 text-sm">Pour calculer votre IMC et personnaliser votre expérience</p>
+          <Link
+            to="/settings"
+            className="w-full inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold mt-2"
           >
-            Enregistrer mon profil
-          </button>
+            <SettingsIcon className="mr-2" size={18} />
+            Ouvrir les paramètres
+          </Link>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile, sendEmailVerification, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { initializeFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -155,6 +155,42 @@ export const authService = {
       console.error('Erreur de réinitialisation du mot de passe:', error);
       throw error;
     }
+  },
+
+  // Envoyer un email de vérification
+  sendVerificationEmail: async () => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Utilisateur non connecté');
+    if (user.emailVerified) return { alreadyVerified: true };
+    await sendEmailVerification(user);
+    return { sent: true };
+  },
+
+  // Changer l'email (nécessite re-authentification)
+  changeEmail: async (newEmail, currentPassword) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Utilisateur non connecté');
+    if (!newEmail || !currentPassword) throw new Error('Veuillez renseigner email et mot de passe courant');
+
+    const cred = EmailAuthProvider.credential(user.email || '', currentPassword);
+    await reauthenticateWithCredential(user, cred);
+    await updateEmail(user, newEmail);
+
+    // MàJ Firestore (optionnelle mais utile)
+    await updateDoc(doc(db, 'users', user.uid), { email: newEmail, updatedAt: serverTimestamp() });
+    return { updated: true };
+  },
+
+  // Changer le mot de passe (nécessite re-authentification)
+  changePassword: async (currentPassword, newPassword) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Utilisateur non connecté');
+    if (!currentPassword || !newPassword) throw new Error('Veuillez renseigner les deux mots de passe');
+
+    const cred = EmailAuthProvider.credential(user.email || '', currentPassword);
+    await reauthenticateWithCredential(user, cred);
+    await updatePassword(user, newPassword);
+    return { updated: true };
   },
 
   // Obtenir l'utilisateur courant
