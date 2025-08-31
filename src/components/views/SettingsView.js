@@ -168,19 +168,21 @@ function SettingsView() {
 
   return (
     <div className="pb-20 p-6 bg-gray-50 min-h-screen">      {/* Header */}
-      <div className="flex items-center mb-6">
-        <button 
-          onClick={() => navigateWithConfirmation('/auth')}
-          className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
-        >
-          <ArrowLeft size={24} className="text-gray-700" />
-        </button>
-        <h2 className="text-2xl font-bold">Paramètres</h2>
-        {hasUnsavedChanges && (
-          <span className="ml-3 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-            Modifications non sauvegardées
-          </span>
-        )}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <button 
+            onClick={() => navigateWithConfirmation('/auth')}
+            className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
+          >
+            <ArrowLeft size={24} className="text-gray-700" />
+          </button>
+          <h2 className="text-2xl font-bold">Paramètres</h2>
+          {hasUnsavedChanges && (
+            <span className="ml-3 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+              Modifications non sauvegardées
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}

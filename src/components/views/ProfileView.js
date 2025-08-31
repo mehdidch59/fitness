@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Input from '../ui/Input';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
-import { User, Edit, ChevronRight, Activity, Target, ArrowLeft, LogOut } from 'lucide-react';
+import { User, Edit, ChevronRight, Activity, Target, ArrowLeft, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 // import { profileSyncService } from '../../services/profileSync';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase'; // Assurez-vous d'importer votre config Firebase
@@ -423,6 +424,14 @@ function ProfileView() {
           >
             Modifier mon profil
           </button>
+
+          <Link
+            to="/settings"
+            className="w-full mt-3 inline-flex items-center justify-center bg-white border border-gray-300 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-50"
+          >
+            <SettingsIcon className="mr-2" size={18} />
+            Paramètres
+          </Link>
 
           <button
             onClick={handleLogout}

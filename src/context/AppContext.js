@@ -170,12 +170,7 @@ function AppProvider({ children }) {
         });
       }
       
-      // Vérifier si le questionnaire doit être relancé
-      if (persistenceService.shouldRestartQuestionnaire()) {
-        console.log('🔄 Relancement du questionnaire nécessaire');
-        dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: true });
-        dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE_STEP, payload: 0 });
-      }
+      // Ne pas relancer automatiquement le questionnaire au refresh
     } catch (error) {
       console.error('Erreur lors de la réhydratation des données:', error);
       
@@ -273,7 +268,7 @@ function AppProvider({ children }) {
     if (user?.uid) {
       loadUserProfiles();
     }
-  }, [user?.uid]);
+    }, [user?.uid]);
   // Actions pour mettre à jour les états
   const actions = {
     // Questionnaire
@@ -308,12 +303,6 @@ function AppProvider({ children }) {
     setQuestionnaire: async (isActive) => {
       dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: isActive });
       
-      // Vérifier si l'utilisateur a déjà des profils configurés
-      if (isActive && state.equipmentProfile.location && state.nutritionProfile.dietType) {
-        console.log('Profils déjà configurés, questionnaire non affiché');
-        return;
-      }
-      
       // Sauvegarder dans localStorage
       persistenceService.saveQuestionnaireState({
         isActive,
@@ -335,6 +324,39 @@ function AppProvider({ children }) {
           console.log('✅ État du questionnaire sauvegardé dans Firestore');
         } catch (error) {
           console.error('❌ Erreur sauvegarde Firestore:', error);
+        }
+      }
+    },
+    
+    // Marquer le questionnaire comme complété et le fermer
+    completeQuestionnaire: async () => {
+      // Fermer dans le state
+      dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE, payload: false });
+      dispatch({ type: ACTION_TYPES.SET_QUESTIONNAIRE_STEP, payload: 0 });
+
+      // Sauvegarder l'état complété côté client
+      persistenceService.saveQuestionnaireState({
+        isActive: false,
+        currentStep: 0,
+        completed: true,
+        timestamp: Date.now()
+      });
+
+      // Sauvegarder dans Firestore si utilisateur connecté
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, {
+            questionnaireState: {
+              isActive: false,
+              currentStep: 0,
+              completed: true,
+              timestamp: Date.now()
+            }
+          }, { merge: true });
+          console.log('✅ Questionnaire marqué comme complété');
+        } catch (error) {
+          console.error('❌ Erreur sauvegarde état questionnaire:', error);
         }
       }
     },

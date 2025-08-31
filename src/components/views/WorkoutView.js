@@ -16,7 +16,6 @@ function UltraRobustWorkoutView() {
   const {
     isQuestionnaire,
     actions,
-    equipmentProfile
   } = useAppContext();
 
   const [user] = useAuthState(auth);
@@ -43,8 +42,6 @@ function UltraRobustWorkoutView() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
 
-  // Vérifier si l'utilisateur a déjà configuré son lieu d'entraînement
-  const isLocationConfigured = Boolean(equipmentProfile.location);
 
   // Charger les programmes sauvegardés depuis Firestore
   useEffect(() => {
@@ -82,14 +79,7 @@ function UltraRobustWorkoutView() {
     return () => { isMounted = false; };
   }, [user?.uid]);
 
-  // Démarrer le questionnaire si nécessaire
-  useEffect(() => {
-    // Ne démarrer le QCM automatiquement que si l'utilisateur est connecté
-    if (!isLocationConfigured && !isQuestionnaire && user) {
-      actions.setQuestionnaire(true);
-      actions.setQuestionnaireStep(0);
-    }
-  }, [isLocationConfigured, isQuestionnaire, actions, user]);
+  // Ne plus démarrer automatiquement le questionnaire
 
   // Lock scroll on body while sheet is open
   useEffect(() => {

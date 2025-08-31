@@ -126,11 +126,11 @@ function HomeView() {
                   navigate('/auth');
                   return;
                 }
-                actions.setQuestionnaire(true);
+                navigate('/settings');
               }}
               className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:from-yellow-600 hover:to-red-600 active:scale-95 transition-all duration-200"
             >
-              Commencer la configuration
+              Ouvrir les paramètres
             </button>
           </div>
         )}

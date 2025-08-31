@@ -183,10 +183,8 @@ function Questionnaire() {
     if (questionnaireStep < questions.length - 1) {
       actions.setQuestionnaireStep(questionnaireStep + 1);
     } else {      // Terminer le questionnaire
-      actions.setQuestionnaire(false);
-      actions.setQuestionnaireStep(0);
+      actions.completeQuestionnaire();
       actions.setSearchStatus('Configuration terminée !');
-      
       console.log('🎉 Questionnaire terminé !');
       console.log('📊 EquipmentProfile final:', equipmentProfile);
       console.log('🍽️ NutritionProfile final:', nutritionProfile);
