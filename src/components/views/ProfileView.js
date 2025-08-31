@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 // Overview only — editing moves to Settings
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
-import { User, ChevronRight, Activity, Target, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { User, Activity, Target, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -235,7 +235,6 @@ function ProfileView() {
                   <h4 className="text-gray-600 text-sm">Objectif</h4>
                   <p className="font-semibold">{getGoalText(userProfile.goal)}</p>
                 </div>
-                <ChevronRight size={18} className="text-gray-400" />
               </div>
             </div>
 
@@ -248,7 +247,6 @@ function ProfileView() {
                   <h4 className="text-gray-600 text-sm">Niveau d'activité</h4>
                   <p className="font-semibold">{getActivityText(userProfile.activityLevel)}</p>
                 </div>
-                <ChevronRight size={18} className="text-gray-400" />
               </div>
             </div>
           </div>

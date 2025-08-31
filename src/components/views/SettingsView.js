@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Save, User, Target, Dumbbell, Apple, Database } from 'lucide-react';
+import { ArrowLeft, Save, User, Target, Dumbbell, Apple } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { useFormPersistence } from '../../hooks/useFormPersistence';
@@ -7,14 +7,12 @@ import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import Input from '../ui/Input';
 import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../firebase';
-import DataManagement from '../debug/DataManagement';
 
 function SettingsView() {
   const { userProfile, equipmentProfile, nutritionProfile, actions } = useAppContext();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
-  const [showDataManagement, setShowDataManagement] = useState(false);
   const [formData, setFormData] = useState({
     // Profil utilisateur
     firstName: '',
@@ -77,10 +75,10 @@ function SettingsView() {
   useEffect(() => {
     // D'abord essayer de charger les données sauvegardées du formulaire
     const savedFormData = loadSavedData();
-    
+
     // Puis charger les données des profils ou utiliser les données sauvegardées
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-    
+
     const initialData = {
       firstName: savedFormData.firstName || userData.firstName || userProfile.firstName || '',
       lastName: savedFormData.lastName || userData.lastName || userProfile.lastName || '',
@@ -98,10 +96,10 @@ function SettingsView() {
       allergies: savedFormData.allergies || nutritionProfile.allergies || [],
       favorites: savedFormData.favorites || nutritionProfile.favorites || []
     };
-    
+
     setFormData(initialData);
     setAccountEmail(user?.email || '');
-    
+
     // Si on a des données sauvegardées, informer l'utilisateur
     if (Object.keys(savedFormData).length > 0) {
       console.log('🔄 Données de formulaire restaurées depuis la sauvegarde automatique');
@@ -164,7 +162,7 @@ function SettingsView() {
     clearSavedData();
 
     actions.setSearchStatus('Paramètres sauvegardés !');
-    
+
     // Retourner au profil après 1 seconde
     setTimeout(() => {
       navigate('/auth');
@@ -182,7 +180,7 @@ function SettingsView() {
     <div className="pb-20 p-6 bg-gray-50 min-h-screen">      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <button 
+          <button
             onClick={() => navigateWithConfirmation('/auth')}
             className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
           >
@@ -205,11 +203,10 @@ function SettingsView() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors ${
-                activeTab === tab.id
+              className={`flex items-center px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors ${activeTab === tab.id
                   ? 'bg-purple-500 text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <Icon size={18} className="mr-2" />
               {tab.label}
@@ -237,7 +234,7 @@ function SettingsView() {
                 placeholder="Doe"
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="Âge"
@@ -437,11 +434,10 @@ function SettingsView() {
                     <button
                       key={equipment}
                       onClick={() => handleEquipmentToggle(equipment)}
-                      className={`p-3 rounded-xl border-2 transition-colors ${
-                        formData.homeEquipment.includes(equipment)
+                      className={`p-3 rounded-xl border-2 transition-colors ${formData.homeEquipment.includes(equipment)
                           ? 'border-purple-500 bg-purple-50 text-purple-700'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-purple-200'
-                      }`}
+                        }`}
                     >
                       {equipment === 'dumbbells' && 'Haltères'}
                       {equipment === 'kettlebell' && 'Kettlebell'}
@@ -495,23 +491,6 @@ function SettingsView() {
         <Save className="mr-2" size={20} />
         Sauvegarder les modifications
       </button>
-
-      {/* Bouton debug pour la gestion des données */}
-      {process.env.NODE_ENV === 'development' && (
-        <button
-          onClick={() => setShowDataManagement(true)}
-          className="w-full bg-gray-500 text-white py-2 rounded-lg mt-4 flex items-center justify-center text-sm"
-        >
-          <Database className="mr-2" size={16} />
-          Gérer les données (Debug)
-        </button>
-      )}
-
-      {/* Composant de gestion des données */}
-      <DataManagement 
-        isOpen={showDataManagement}
-        onClose={() => setShowDataManagement(false)}
-      />
     </div>
   );
 }
