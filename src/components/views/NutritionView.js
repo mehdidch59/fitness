@@ -28,6 +28,7 @@ import {
 } from '../../hooks/useNutrition';
 import { mistralService } from '../../services/mistralNutritionService';
 import { nutritionFirestoreService } from '../../services/nutritionFirestoreService';
+import { useI18n } from '../../utils/i18n';
 
 // Composant Error Boundary stable
 class ErrorBoundary extends React.Component {
@@ -50,16 +51,16 @@ class ErrorBoundary extends React.Component {
         <div className="p-6 bg-red-50 border border-red-200 rounded-xl">
           <div className="flex items-center mb-3">
             <AlertCircle size={20} className="text-red-600 mr-2" />
-            <h3 className="font-semibold text-red-800">Une erreur s'est produite</h3>
+            <h3 className="font-semibold text-red-800">{(window.__i18n_t && window.__i18n_t('nutrition.error.title','Une erreur s\'est produite')) || 'Une erreur s\'est produite'}</h3>
           </div>
           <p className="text-red-700 text-sm mb-4">
-            Impossible d'afficher cette section. Essayez de rafraîchir la page.
+            {(window.__i18n_t && window.__i18n_t('nutrition.error.desc',"Impossible d'afficher cette section. Essayez de rafraîchir la page.")) || "Impossible d'afficher cette section. Essayez de rafraîchir la page."}
           </p>
           <button
             onClick={() => window.location.reload()}
             className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm hover:bg-red-200"
           >
-            Rafraîchir la page
+            {(window.__i18n_t && window.__i18n_t('common.refreshPage','Rafraîchir la page')) || 'Rafraîchir la page'}
           </button>
         </div>
       );
@@ -70,36 +71,39 @@ class ErrorBoundary extends React.Component {
 }
 
 // Composant AuthPrompt séparé
-const AuthPrompt = ({ onClose }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
-    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-      <div className="text-center">
-        <LogIn size={48} className="mx-auto mb-4 text-purple-600" />
-        <h3 className="text-xl font-bold mb-2">Connexion requise</h3>
-        <p className="text-gray-600 mb-6">
-          Connectez-vous pour sauvegarder vos recettes favorites et accéder à vos préférences personnalisées.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-          >
-            Plus tard
-          </button>
-          <button
-            onClick={() => {
-              onClose();
-              console.log('Redirection vers page de connexion');
-            }}
-            className="flex-1 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800"
-          >
-            Se connecter
-          </button>
+const AuthPrompt = ({ onClose }) => {
+  const { t } = useI18n();
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+        <div className="text-center">
+          <LogIn size={48} className="mx-auto mb-4 text-purple-600" />
+          <h3 className="text-xl font-bold mb-2">{t('nutrition.authRequired', 'Connexion requise')}</h3>
+          <p className="text-gray-600 mb-6">
+            {t('nutrition.authMsg', 'Connectez-vous pour sauvegarder vos recettes favorites et accéder à vos préférences personnalisées.')}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            >
+              {t('common.later', 'Plus tard')}
+            </button>
+            <button
+              onClick={() => {
+                onClose();
+                console.log('Redirection vers page de connexion');
+              }}
+              className="flex-1 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800"
+            >
+              {t('common.login', 'Se connecter')}
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Composant RecipeDetail séparé - Respect des règles des hooks
 const RecipeDetail = ({
@@ -115,6 +119,7 @@ const RecipeDetail = ({
   onShowAuthPrompt
 }) => {
   const [detailError, setDetailError] = useState(null);
+  const { t } = useI18n();
 
   // ✅ Hooks au niveau supérieur du composant
   const { data: isFavorite, refetch: refetchIsFavorite } = useIsRecipeFavorite(recipe?.id);
@@ -177,9 +182,9 @@ const RecipeDetail = ({
     return (
       <div className="p-6 text-center">
         <AlertCircle size={48} className="mx-auto mb-4 text-red-400" />
-        <p className="text-red-600">Recette introuvable</p>
+        <p className="text-red-600">{t('nutrition.notFound', 'Recette introuvable')}</p>
         <button onClick={onBack} className="mt-4 px-4 py-2 bg-gray-100 rounded-lg">
-          Retour
+          {t('common.back', 'Retour')}
         </button>
       </div>
     );
@@ -194,7 +199,7 @@ const RecipeDetail = ({
             className="flex items-center text-purple-700 hover:text-purple-800 font-medium"
           >
             <ArrowLeft size={20} className="mr-2" />
-            Retour aux recettes
+            {(window.__i18n_t && window.__i18n_t('nutrition.backToRecipes','Retour aux recettes')) || 'Retour aux recettes'}
           </button>
 
           <button
@@ -212,10 +217,10 @@ const RecipeDetail = ({
               className={`mr-2 ${isFavorite ? 'fill-current' : ''}`}
             />
             {!user
-              ? 'Se connecter pour favoris'
+              ? ((window.__i18n_t && window.__i18n_t('nutrition.loginForFav','Se connecter pour favoris')) || 'Se connecter pour favoris')
               : isAddingToFavorites || isRemovingFromFavorites
-                ? 'Chargement...'
-                : isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'
+                ? ((window.__i18n_t && window.__i18n_t('common.loading','Chargement...')) || 'Chargement...')
+                : isFavorite ? ((window.__i18n_t && window.__i18n_t('nutrition.removeFav','Retirer des favoris')) || 'Retirer des favoris') : ((window.__i18n_t && window.__i18n_t('nutrition.addFav','Ajouter aux favoris')) || 'Ajouter aux favoris')
             }
           </button>
         </div>
@@ -242,7 +247,7 @@ const RecipeDetail = ({
             </div>
 
             <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700">
-              {recipe.source || 'IA Nutritionnelle'}
+              {recipe.source || t('nutrition.aiSource', 'IA Nutritionnelle')}
             </div>
           </div>
 
@@ -254,55 +259,55 @@ const RecipeDetail = ({
               {recipe.viewCount > 0 && (
                 <div className="flex items-center">
                   <Eye size={14} className="mr-1" />
-                  <span>{recipe.viewCount} vues</span>
+                  <span>{recipe.viewCount} {t('nutrition.views', 'vues')}</span>
                 </div>
               )}
               {recipe.favoriteCount > 0 && (
                 <div className="flex items-center">
                   <Heart size={14} className="mr-1" />
-                  <span>{recipe.favoriteCount} favoris</span>
+                  <span>{recipe.favoriteCount} {t('nutrition.favoritesLabel', 'favoris')}</span>
                 </div>
               )}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               <div className="bg-yellow-50 p-4 rounded-xl">
-                <div className="text-yellow-700 font-semibold text-lg">{recipe.calories || 'N/A'}</div>
-                <div className="text-yellow-800 text-sm">Calories</div>
+                <div className="text-yellow-700 font-semibold text-lg">{recipe.calories || t('common.undefined', 'N/A')}</div>
+                <div className="text-yellow-800 text-sm">{t('nutrition.calories', 'Calories')}</div>
               </div>
               <div className="bg-blue-50 p-4 rounded-xl">
-                <div className="text-blue-700 font-semibold text-lg">{recipe.protein || 'N/A'}g</div>
-                <div className="text-blue-800 text-sm">Protéines</div>
+                <div className="text-blue-700 font-semibold text-lg">{recipe.protein || t('common.undefined', 'N/A')}g</div>
+                <div className="text-blue-800 text-sm">{t('nutrition.proteins', 'Protéines')}</div>
               </div>
               <div className="bg-green-50 p-4 rounded-xl">
-                <div className="text-green-700 font-semibold text-lg">{recipe.carbs || 'N/A'}g</div>
-                <div className="text-green-800 text-sm">Glucides</div>
+                <div className="text-green-700 font-semibold text-lg">{recipe.carbs || t('common.undefined', 'N/A')}g</div>
+                <div className="text-green-800 text-sm">{t('nutrition.carbs', 'Glucides')}</div>
               </div>
               <div className="bg-orange-50 p-4 rounded-xl">
-                <div className="text-orange-700 font-semibold text-lg">{recipe.fats || 'N/A'}g</div>
-                <div className="text-orange-800 text-sm">Lipides</div>
+                <div className="text-orange-700 font-semibold text-lg">{recipe.fats || t('common.undefined', 'N/A')}g</div>
+                <div className="text-orange-800 text-sm">{t('nutrition.fats', 'Lipides')}</div>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center">
                 <Clock size={18} className="text-gray-600 mr-2" />
-                <span className="text-gray-700">{recipe.time || 'N/A'} min</span>
+                <span className="text-gray-700">{recipe.time || t('common.undefined', 'N/A')} {t('nutrition.minutes', 'min')}</span>
               </div>
               <div className="flex items-center">
                 <Users size={18} className="text-gray-600 mr-2" />
-                <span className="text-gray-700">{recipe.servings || 1} portion{(recipe.servings || 1) > 1 ? 's' : ''}</span>
+                <span className="text-gray-700">{recipe.servings || 1} {t('nutrition.servings', 'portion')}{(recipe.servings || 1) > 1 ? 's' : ''}</span>
               </div>
               <div className="flex items-center">
                 <Target size={18} className="text-gray-600 mr-2" />
-                <span className="text-gray-700">{recipe.difficulty || 'Facile'}</span>
+                <span className="text-gray-700">{recipe.difficulty || t('nutrition.easy', 'Facile')}</span>
               </div>
             </div>
 
             {recipe.massGainScore && (
               <div className="mb-6 p-4 bg-purple-50 rounded-xl">
                 <div className="flex items-center justify-between">
-                  <span className="text-purple-800 font-medium">Score Prise de Masse</span>
+                  <span className="text-purple-800 font-medium">{t('nutrition.massGainScore', 'Score Prise de Masse')}</span>
                   <div className="flex items-center">
                     <div className="w-24 bg-purple-200 rounded-full h-2 mr-3">
                       <div
@@ -315,7 +320,7 @@ const RecipeDetail = ({
                 </div>
               </div>
             )}            <div className="mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Ingrédients</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">{t('nutrition.ingredients', 'Ingrédients')}</h3>
               <div className="bg-gray-50 p-4 rounded-xl">
                 {recipe.ingredients && recipe.ingredients.length > 0 ? (
                   <ul className="space-y-2">
@@ -350,7 +355,7 @@ const RecipeDetail = ({
                     })}
                   </ul>
                 ) : (
-                  <p className="text-gray-600 italic">Ingrédients non spécifiés</p>
+                  <p className="text-gray-600 italic">{(window.__i18n_t && window.__i18n_t('nutrition.noIngredients','Ingrédients non spécifiés')) || 'Ingrédients non spécifiés'}</p>
                 )}
               </div>
             </div>
@@ -440,6 +445,7 @@ const RecipeDetail = ({
 function NutritionView() {
   const { actions } = useAppContext();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [viewMode, setViewMode] = useState('discover');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
@@ -451,15 +457,15 @@ function NutritionView() {
 
   // Callbacks stables pour les hooks
   const onSuccess = useCallback(() => {
-    actions.setSearchStatus('Recettes trouvées !');
+    actions.setSearchStatus(t('nutrition.searchFound', 'Recettes trouvées !'));
     setError(null);
-  }, [actions]);
+  }, [actions, t]);
 
   const onError = useCallback((err) => {
     console.error('Erreur de recherche:', err);
-    actions.setSearchStatus('Erreur lors de la recherche');
-    setError(err?.message || 'Erreur de récupération des recettes');
-  }, [actions]);
+    actions.setSearchStatus(t('nutrition.searchError', 'Erreur lors de la recherche'));
+    setError(err?.message || t('nutrition.fetchError', 'Erreur de récupération des recettes'));
+  }, [actions, t]);
 
   // Options stables pour les hooks
   const hookOptions = useMemo(() => ({
@@ -528,19 +534,19 @@ function NutritionView() {
   const handleRefreshRecipes = useCallback(() => {
     try {
       if (!user?.uid) {
-        setError('Connectez-vous pour générer des recettes');
+        setError(t('nutrition.loginToGenerateRecipes', 'Connectez-vous pour générer des recettes'));
         setShowAuthPrompt(true);
         return;
       }
       
       setError(null);
-      actions.setSearchStatus('Génération de nouvelles recettes...');
+      actions.setSearchStatus(t('nutrition.generatingNewRecipes', 'Génération de nouvelles recettes...'));
       generateNew();
     } catch (error) {
       console.error('Erreur génération:', error);
-      setError('Erreur lors de la génération');
+      setError(t('nutrition.generationError', 'Erreur lors de la génération'));
     }
-  }, [actions, generateNew, user?.uid]);
+  }, [actions, generateNew, user?.uid, t]);
 
   // Effect pour afficher le statut utilisateur
   useEffect(() => {
@@ -554,7 +560,7 @@ function NutritionView() {
       // Vérification préliminaire de l'authentification
       if (!user?.uid) {
         console.log('❌ Pas d\'utilisateur connecté - user?.uid:', user?.uid);
-        setError('Connectez-vous pour générer un plan nutritionnel');
+        setError(t('nutrition.loginToGeneratePlan', 'Connectez-vous pour générer un plan nutritionnel'));
         setShowAuthPrompt(true);
         return;
       }
@@ -562,13 +568,13 @@ function NutritionView() {
       console.log('🚀 Démarrage génération nutrition pour utilisateur:', user.uid);
       
       setIsGeneratingNutrition(true);
-      setGenerationStage('Démarrage de la génération du plan nutritionnel...');
+      setGenerationStage(t('nutrition.stage.start', 'Démarrage de la génération du plan nutritionnel...'));
       setGenerationProgress(0);
       setError(null);
 
       // Update progress incrementally
       setGenerationProgress(20);
-      setGenerationStage('Analyse des besoins nutritionnels...');
+      setGenerationStage(t('nutrition.stage.analysis', 'Analyse des besoins nutritionnels...'));
         // Récupérer le profil utilisateur depuis le localStorage ou définir des valeurs par défaut
       let userProfile = {};
       try {
@@ -597,7 +603,7 @@ function NutritionView() {
       }
 
       setGenerationProgress(40);
-      setGenerationStage('Génération de nouvelles recettes...');
+      setGenerationStage(t('nutrition.stage.generatingRecipes', 'Génération de nouvelles recettes...'));
 
       // Générer de nouvelles recettes via Mistral uniquement
       try {
@@ -612,7 +618,7 @@ function NutritionView() {
         console.log('✅ Nouvelles recettes générées via Mistral:', newRecipes.length);
 
         setGenerationProgress(70);
-        setGenerationStage('Sauvegarde des recettes...');        // Sauvegarder les nouvelles recettes
+        setGenerationStage(t('nutrition.stage.saving', 'Sauvegarde des recettes...'));        // Sauvegarder les nouvelles recettes
         try {
           const currentUserId = user?.uid;
           if (!currentUserId) {
@@ -628,7 +634,7 @@ function NutritionView() {
         }
 
         setGenerationProgress(90);
-        setGenerationStage('Finalisation du plan nutritionnel...');
+        setGenerationStage(t('nutrition.stage.finalizing', 'Finalisation du plan nutritionnel...'));
 
         // Appeler le refresh pour actualiser les données affichées
         try {
@@ -643,10 +649,10 @@ function NutritionView() {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         setGenerationProgress(100);
-        setGenerationStage('Plan nutritionnel généré avec succès !');
+        setGenerationStage(t('nutrition.generatedSuccessfully', 'Plan nutritionnel généré avec succès !'));
 
         // Actualiser les données après génération
-        actions.setSearchStatus('Plan nutritionnel généré avec succès !');
+        actions.setSearchStatus(t('nutrition.generatedSuccessfully', 'Plan nutritionnel généré avec succès !'));
 
       } catch (mistralError) {
         console.error('❌ Erreur Mistral:', mistralError);
@@ -662,8 +668,8 @@ function NutritionView() {
 
     } catch (error) {
       console.error('❌ Erreur lors de la génération du plan nutritionnel:', error);
-      setGenerationStage('Erreur lors de la génération - Veuillez réessayer');
-      setError(error?.message || 'Erreur lors de la génération du plan nutritionnel');
+      setGenerationStage(t('nutrition.stage.error', 'Erreur lors de la génération - Veuillez réessayer'));
+      setError(error?.message || t('nutrition.generationPlanError', 'Erreur lors de la génération du plan nutritionnel'));
       
       setTimeout(() => {
         setGenerationProgress(0);
@@ -671,7 +677,7 @@ function NutritionView() {
         setIsGeneratingNutrition(false);
       }, 3000);
     }
-  }, [generateNew, user?.uid, actions]);
+  }, [generateNew, user?.uid, actions, t]);
 
   // Fonction stable pour basculer entre les vues
   const toggleViewMode = useCallback((mode) => {
@@ -687,9 +693,9 @@ function NutritionView() {
       }
     } catch (error) {
       console.error('Erreur changement de mode:', error);
-      setError('Erreur lors du changement de vue');
+      setError(t('nutrition.viewChangeError', 'Erreur lors du changement de vue'));
     }
-  }, [user, refetchFavorites]);
+  }, [user, refetchFavorites, t]);
 
   // Données actuelles selon le mode - mémorisées
   const currentRecipes = useMemo(() =>
@@ -749,7 +755,7 @@ function NutritionView() {
         {showAuthPrompt && <AuthPrompt onClose={handleCloseAuthPrompt} />}
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 max-w-5xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold">Nutrition</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t('nutrition.title', 'Nutrition')}</h2>
 
           <div className="flex items-center gap-2 flex-wrap">
             <button
@@ -760,7 +766,7 @@ function NutritionView() {
                 }`}
             >
               <Search size={16} className="inline mr-2" />
-              Découvrir
+              {t('nutrition.discover', 'Découvrir')}
             </button>
             <button
               onClick={() => toggleViewMode('favorites')}
@@ -770,7 +776,7 @@ function NutritionView() {
                 }`}
             >
               <Heart size={16} className="inline mr-2" />
-              Favoris {favoriteRecipes?.length ? `(${favoriteRecipes.length})` : ''}
+              {t('nutrition.favorites', 'Favoris')} {favoriteRecipes?.length ? `(${favoriteRecipes.length})` : ''}
               {!user && (
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-600 rounded-full"></div>
               )}
@@ -783,7 +789,7 @@ function NutritionView() {
             <div className="flex items-center">
               <AlertCircle size={20} className="text-red-600 mr-3" />
               <div>
-                <p className="text-red-600 font-medium">Erreur</p>
+                <p className="text-red-600 font-medium">{t('nutrition.error.title', 'Une erreur s\'est produite')}</p>
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
             </div>
@@ -795,13 +801,13 @@ function NutritionView() {
             <div className="flex items-center">
               <LogIn size={20} className="text-amber-700 mr-3" />
               <div>
-                <p className="text-amber-900 font-medium">Connexion requise</p>
-                <p className="text-amber-800 text-sm">Connectez-vous pour accéder à vos favoris</p>
+                <p className="text-amber-900 font-medium">{t('nutrition.authRequired', 'Connexion requise')}</p>
+                <p className="text-amber-800 text-sm">{t('nutrition.loginForFavAccess', 'Connectez-vous pour accéder à vos favoris')}</p>
                 <button 
                   onClick={() => setShowAuthPrompt(true)}
                   className="mt-2 text-amber-800 underline text-sm font-medium"
                 >
-                  Se connecter maintenant
+                  {t('nutrition.loginNow', 'Se connecter maintenant')}
                 </button>
               </div>
             </div>
@@ -813,13 +819,13 @@ function NutritionView() {
             <div className="flex items-center">
               <LogIn size={20} className="text-blue-700 mr-3" />
               <div>
-                <p className="text-blue-900 font-medium">Accès limité</p>
-                <p className="text-blue-800 text-sm">Connectez-vous pour générer des recettes personnalisées</p>
+                <p className="text-blue-900 font-medium">{t('nutrition.limitedAccess', 'Accès limité')}</p>
+                <p className="text-blue-800 text-sm">{t('nutrition.loginForPersonalized', 'Connectez-vous pour générer des recettes personnalisées')}</p>
                 <button 
                   onClick={() => setShowAuthPrompt(true)}
                   className="mt-2 text-blue-800 underline text-sm font-medium"
                 >
-                  Se connecter maintenant
+                  {t('nutrition.loginNow', 'Se connecter maintenant')}
                 </button>
               </div>
             </div>
@@ -830,19 +836,19 @@ function NutritionView() {
           <div className="flex justify-center items-center py-8">
             <RefreshCw size={32} className="text-purple-600 animate-spin" />
             <p className="ml-3 text-purple-800">
-              {viewMode === 'favorites' ? 'Chargement des favoris...' : 'Recherche de recettes en cours...'}
+              {viewMode === 'favorites' ? t('nutrition.loadingFavorites', 'Chargement des favoris...') : t('nutrition.searchingRecipes', 'Recherche de recettes en cours...')}
             </p>
           </div>
         )}
 
         {isError && viewMode === 'discover' && (
           <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
-            <p className="text-red-600">Erreur: {fetchError?.message || "Impossible de trouver des recettes"}</p>
+            <p className="text-red-600">{t('search.errorTitle', 'Erreur de recherche')}: {fetchError?.message || t('nutrition.unableToFind', 'Impossible de trouver des recettes')}</p>
             <button
               onClick={handleRefreshRecipes}
               className="mt-2 bg-red-100 text-red-800 px-4 py-2 rounded-lg text-sm"
             >
-              Réessayer
+              {t('search.errorTryAgain', 'Réessayer')}
             </button>
           </div>
         )}

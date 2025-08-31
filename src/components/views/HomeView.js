@@ -4,6 +4,7 @@ import { useAppContext } from '../../context/AppContext';
 import { useWorkouts } from '../../hooks/useWorkouts';
 import { useNutrition } from '../../hooks/useNutrition';
 import { Link, useNavigate } from 'react-router-dom';
+import { useI18n } from '../../utils/i18n';
 import { useAuth } from '../../hooks/useAuth';
 
 function HomeView() {
@@ -15,6 +16,7 @@ function HomeView() {
   } = useAppContext();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   
   // Utiliser les hooks personnalisés
   const { workoutPrograms, isLoading: isLoadingWorkouts, findSuitableWorkouts } = useWorkouts();
@@ -66,19 +68,19 @@ function HomeView() {
     <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
         <h1 className="text-3xl font-bold mb-2">Fitness IA 💪</h1>
-        <p className="opacity-90 text-lg">Programmes personnalisés par recherche web</p>
+        <p className="opacity-90 text-lg">{t('home.subtitle', 'Programmes personnalisés par recherche web')}</p>
       </div>
 
       <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg">
             <Calendar className="mb-3 text-purple-500" size={28} />
-            <p className="text-sm text-gray-600">Séances</p>
+            <p className="text-sm text-gray-600">{t('home.sessions', 'Séances')}</p>
             <p className="text-3xl font-bold">{workoutPrograms ? workoutPrograms.length : 0}</p>
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-lg">
             <Search className="mb-3 text-blue-500" size={28} />
-            <p className="text-sm text-gray-600">Recherches IA</p>
+            <p className="text-sm text-gray-600">{t('home.searches', 'Recherches IA')}</p>
             <p className="text-3xl font-bold">{nutritionPlans ? nutritionPlans.length : 0}</p>
           </div>        </div>
 
@@ -86,24 +88,24 @@ function HomeView() {
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
           <div className="flex items-center mb-4">
             <Zap className="mr-3" size={28} />
-            <h3 className="text-xl font-bold">Fonctionnalités IA Avancées</h3>
+            <h3 className="text-xl font-bold">{t('home.advanced.title', 'Fonctionnalités IA Avancées')}</h3>
           </div>
           <p className="mb-4 opacity-90">
-            Découvrez nos nouvelles fonctionnalités révolutionnaires !
+            {t('home.advanced.desc', 'Découvrez nos nouvelles fonctionnalités révolutionnaires !')}
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div className="bg-white bg-opacity-20 p-3 rounded-xl flex items-center">
               <Camera className="mr-2" size={20} />
-              <span className="text-sm font-medium">Scanner Frigo</span>
+              <span className="text-sm font-medium">{t('home.advanced.fridge', 'Scanner Frigo')}</span>
             </div>
             <div className="bg-white bg-opacity-20 p-3 rounded-xl flex items-center">
               <Calendar className="mr-2" size={20} />
-              <span className="text-sm font-medium">Meal Planning</span>
+              <span className="text-sm font-medium">{t('home.advanced.mealPlanning', 'Meal Planning')}</span>
             </div>
             <div className="bg-white bg-opacity-20 p-3 rounded-xl flex items-center">
               <Trophy className="mr-2" size={20} />
-              <span className="text-sm font-medium">Gamification</span>
+              <span className="text-sm font-medium">{t('home.advanced.gamification', 'Gamification')}</span>
             </div>
           </div>
           
@@ -111,7 +113,7 @@ function HomeView() {
             to="/advanced"
             className="block w-full bg-white text-indigo-600 py-3 px-6 rounded-xl font-bold text-center hover:bg-gray-100 transition-colors"
           >
-            Découvrir les Fonctionnalités IA+
+            {t('home.advanced.cta', 'Découvrir les Fonctionnalités IA+')}
           </Link>
         </div>
 
@@ -119,7 +121,7 @@ function HomeView() {
         {(!equipmentProfile.location || !nutritionProfile.dietType) && (
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-yellow-200">
             <Settings className="mx-auto mb-3 text-yellow-500" size={32} />
-            <h3 className="font-semibold text-center mb-4">Configuration requise</h3>
+            <h3 className="font-semibold text-center mb-4">{t('home.required', 'Configuration requise')}</h3>
             <button
               onClick={() => {
                 if (!isAuthenticated) {
@@ -130,7 +132,7 @@ function HomeView() {
               }}
               className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:from-yellow-600 hover:to-red-600 active:scale-95 transition-all duration-200"
             >
-              Ouvrir les paramètres
+              {t('home.openSettings', 'Ouvrir les paramètres')}
             </button>
           </div>
         )}
@@ -146,12 +148,12 @@ function HomeView() {
             {loadingWorkout || isLoadingWorkouts ? (
               <>
                 <RefreshCw size={28} className="animate-spin" />
-                <span>Recherche...</span>
+                <span>{t('common.searching', 'Recherche...')}</span>
               </>
             ) : (
               <>
                 <Play size={28} />
-                <span>Générer Programme IA</span>
+                <span>{t('home.generateWorkout', 'Générer Programme IA')}</span>
               </>
             )}
           </button>
@@ -167,12 +169,12 @@ function HomeView() {
             {loadingRecipes || isAddingPlan ? (
               <>
                 <RefreshCw size={28} className="animate-spin" />
-                <span>Recherche...</span>
+                <span>{t('common.searching', 'Recherche...')}</span>
               </>
             ) : (
               <>
                 <Apple size={28} />
-                <span>Trouver Recettes IA</span>
+                <span>{t('home.findRecipes', 'Trouver Recettes IA')}</span>
               </>
             )}
           </button>
@@ -187,9 +189,7 @@ function HomeView() {
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-4">
           <div className="flex items-center justify-center">
             <Search className="text-blue-600 mr-2" size={20} />
-            <span className="text-blue-800 font-semibold">
-              Recherche web en temps réel
-            </span>
+            <span className="text-blue-800 font-semibold">{t('home.realtime', 'Recherche web en temps réel')}</span>
           </div>
         </div>
       </div>

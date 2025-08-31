@@ -29,8 +29,8 @@ function IAView() {
   const features = [
     {
       id: 'coach',
-      title: 'Coach IA Personnel',
-      description: 'Conseils personnalisés basés sur vos habitudes',
+      title: t('ia.features.coach.title', 'Coach IA Personnel'),
+      description: t('ia.features.coach.desc', 'Conseils personnalisés basés sur vos habitudes'),
       icon: Brain,
       color: 'from-purple-500 to-pink-500',
       bgColor: 'bg-purple-50',
@@ -38,8 +38,8 @@ function IAView() {
     },
     {
       id: 'mood',
-      title: 'Recettes par Humeur',
-      description: 'Des recettes adaptées à votre état d\'esprit',
+      title: t('ia.features.mood.title', 'Recettes par Humeur'),
+      description: t('ia.features.mood.desc', 'Des recettes adaptées à votre état d\'esprit'),
       icon: Heart,
       color: 'from-red-500 to-pink-500',
       bgColor: 'bg-red-50',
@@ -47,8 +47,8 @@ function IAView() {
     },
     {
       id: 'fridge',
-      title: 'Scanner Frigo',
-      description: 'Générez des recettes avec vos ingrédients',
+      title: t('ia.features.fridge.title', 'Scanner Frigo'),
+      description: t('ia.features.fridge.desc', 'Générez des recettes avec vos ingrédients'),
       icon: Camera,
       color: 'from-green-500 to-teal-500',
       bgColor: 'bg-green-50',
@@ -56,8 +56,8 @@ function IAView() {
     },
     {
       id: 'budget',
-      title: 'Recettes Économiques',
-      description: 'Planifiez vos repas selon votre budget',
+      title: t('ia.features.budget.title', 'Recettes Économiques'),
+      description: t('ia.features.budget.desc', 'Planifiez vos repas selon votre budget'),
       icon: Target,
       color: 'from-blue-500 to-indigo-500',
       bgColor: 'bg-blue-50',
@@ -65,8 +65,8 @@ function IAView() {
     },
     {
       id: 'insights',
-      title: 'Analyses & Insights',
-      description: 'Comprenez vos habitudes alimentaires',
+      title: t('ia.features.insights.title', 'Analyses & Insights'),
+      description: t('ia.features.insights.desc', 'Comprenez vos habitudes alimentaires'),
       icon: BarChart3,
       color: 'from-orange-500 to-red-500',
       bgColor: 'bg-orange-50',
@@ -336,7 +336,7 @@ function IAView() {
                 {activeFeature === 'mood' && (
                   <div className="mb-6 p-4 bg-gray-50 rounded-xl">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sélectionnez votre humeur actuelle :
+                      {t('ia.mood.label', 'Sélectionnez votre humeur actuelle :')}
                     </label>
                     <select
                       value={mood}

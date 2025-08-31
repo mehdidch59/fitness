@@ -241,16 +241,16 @@ function UltraRobustWorkoutView() {
   const renderHeader = () => (
     <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white p-8 rounded-b-3xl shadow-lg">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Programmes 💪</h1>
+        <h1 className="text-3xl font-bold">{t('workout.headerTitle', 'Programmes 💪')}</h1>
         <BookOpen className="opacity-90" />
       </div>
       <p className="opacity-90 text-lg mt-2">
-        Des programmes complets (FullBody, HalfBody, Split) alignés sur ton profil
+        {t('workout.headerSubtitle', 'Des programmes complets (FullBody, HalfBody, Split) alignés sur ton profil')}
       </p>
       {lastGeneration && (
         <div className="mt-3 text-sm opacity-90 flex items-center">
           <Clock size={16} className="mr-2" />
-          Dernière génération : {new Date(lastGeneration).toLocaleString()}
+          {t('workout.lastGeneration', 'Dernière génération')} : {new Date(lastGeneration).toLocaleString()}
         </div>
       )}
     </div>
@@ -261,38 +261,43 @@ function UltraRobustWorkoutView() {
       <div className="bg-white shadow rounded-2xl p-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <p className="text-sm text-gray-600 mb-2">Recherche</p>
+            <p className="text-sm text-gray-600 mb-2">{t('workout.searchLabel', 'Recherche')}</p>
             <div className="flex items-center bg-gray-100 rounded-xl p-2">
               <Search size={18} className="text-gray-500 mr-2" />
               <input
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder="Filtrer par titre / description..."
+                placeholder={t('workout.searchPlaceholder', 'Filtrer par titre / description...')}
                 className="bg-transparent outline-none w-full text-sm"
               />
             </div>
           </div>
 
           <div>
-            <p className="text-sm text-gray-600 mb-2">Niveau de difficulté</p>
+            <p className="text-sm text-gray-600 mb-2">{t('workout.difficultyLabel', 'Niveau de difficulté')}</p>
             <div className="flex gap-2 flex-wrap">
-              {['all', 'débutant', 'intermédiaire', 'avancé'].map(level => (
+              {[
+                { value: 'all', label: t('workout.levels.all', 'Tous') },
+                { value: 'débutant', label: t('workout.levels.beginner', 'Débutant') },
+                { value: 'intermédiaire', label: t('workout.levels.intermediate', 'Intermédiaire') },
+                { value: 'avancé', label: t('workout.levels.advanced', 'Avancé') }
+              ].map(opt => (
                 <button
-                  key={level}
-                  onClick={() => setDifficultyFilter(level)}
-                  className={`px-3 py-1 rounded-full text-sm transition-colors ${difficultyFilter === level
+                  key={opt.value}
+                  onClick={() => setDifficultyFilter(opt.value)}
+                  className={`px-3 py-1 rounded-full text-sm transition-colors ${difficultyFilter === opt.value
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
-                  {level}
+                  {opt.label}
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <p className="text-sm text-gray-600 mb-2">Actions</p>
+            <p className="text-sm text-gray-600 mb-2">{t('workout.actionsLabel', 'Actions')}</p>
             <div className="flex gap-2">
               <button
                 onClick={handleRealisticGeneration}
@@ -316,7 +321,7 @@ function UltraRobustWorkoutView() {
                 onClick={async () => {
                   if (!user?.uid) return;
                   setIsGenerating(true);
-                  setGenerationStage('Chargement historique filtré...');
+                  setGenerationStage(t('workout.filteredHistoryLoading', 'Chargement historique filtré...'));
                   try {
                     const res = await workoutFirestoreService.loadProgramsFiltered(user.uid, {
                       focusMuscle,
@@ -325,12 +330,12 @@ function UltraRobustWorkoutView() {
                     if (res?.programs?.length) {
                       setGeneratedPrograms(res.programs);
                       setLastGeneration(res.generatedAt || new Date());
-                      actions.setSearchStatus('Historique chargé (filtres appliqués)');
+                      actions.setSearchStatus(t('workout.filteredHistoryLoaded', 'Historique chargé (filtres appliqués)'));
                     } else {
-                      actions.setSearchStatus('Aucun programme trouvé avec ces filtres');
+                      actions.setSearchStatus(t('workout.noProgramWithFilters', 'Aucun programme trouvé avec ces filtres'));
                     }
                   } catch (e) {
-                    actions.setSearchStatus(`Erreur chargement historique: ${e.message}`);
+                    actions.setSearchStatus(`${t('workout.filteredHistoryError', 'Erreur chargement historique')}: ${e.message}`);
                   } finally {
                     setIsGenerating(false);
                     setGenerationStage('');
@@ -338,7 +343,7 @@ function UltraRobustWorkoutView() {
                 }}
                 className="px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800 hover:bg-gray-200"
               >
-                Charger historiques (filtres)
+                {t('workout.filteredHistory', 'Charger historiques (filtres)')}
               </button>
               <button
                 onClick={() => {
@@ -350,7 +355,7 @@ function UltraRobustWorkoutView() {
                 }}
                 className="px-3 py-2 rounded-xl text-sm bg-white border border-gray-300 text-gray-800 hover:bg-gray-50"
               >
-                Réinitialiser filtres
+                {t('workout.resetFilters', 'Réinitialiser filtres')}
               </button>
             </div>
           </div>
@@ -405,14 +410,14 @@ function UltraRobustWorkoutView() {
               onChange={(e) => setFocusMuscle(e.target.value)}
               className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm"
             >
-              <option value="">Aucun</option>
-              <option value="pectoraux">Pectoraux</option>
-              <option value="dos">Dos</option>
-              <option value="épaules">Épaules</option>
-              <option value="bras">Bras</option>
-              <option value="jambes">Jambes</option>
-              <option value="fessiers">Fessiers</option>
-              <option value="abdos">Abdos / Core</option>
+              <option value="">{t('workout.muscles.none', 'Aucun')}</option>
+              <option value="pectoraux">{t('workout.muscles.chest', 'Pectoraux')}</option>
+              <option value="dos">{t('workout.muscles.back', 'Dos')}</option>
+              <option value="épaules">{t('workout.muscles.shoulders', 'Épaules')}</option>
+              <option value="bras">{t('workout.muscles.arms', 'Bras')}</option>
+              <option value="jambes">{t('workout.muscles.legs', 'Jambes')}</option>
+              <option value="fessiers">{t('workout.muscles.glutes', 'Fessiers')}</option>
+              <option value="abdos">{t('workout.muscles.abs', 'Abdos / Core')}</option>
             </select>
           </div>
         </div>
@@ -426,21 +431,21 @@ function UltraRobustWorkoutView() {
         <div className="bg-white p-4 rounded-2xl shadow flex items-center">
           <Calendar className="text-purple-500 mr-3" />
           <div>
-            <p className="text-sm text-gray-600">Programmes</p>
+            <p className="text-sm text-gray-600">{t('workout.stats.programs', 'Programmes')}</p>
             <p className="text-2xl font-bold">{generatedPrograms?.length || 0}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl shadow flex items-center">
           <BarChart2 className="text-blue-500 mr-3" />
           <div>
-            <p className="text-sm text-gray-600">Générations</p>
+            <p className="text-sm text-gray-600">{t('workout.stats.generations', 'Générations')}</p>
             <p className="text-2xl font-bold">{programStats?.totalGenerations || 0}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl shadow flex items-center">
           <Timer className="text-green-500 mr-3" />
           <div>
-            <p className="text-sm text-gray-600">Dernière</p>
+            <p className="text-sm text-gray-600">{t('workout.stats.last', 'Dernière')}</p>
             <p className="text-2xl font-bold">
               {programStats?.lastGeneration
                 ? new Date(programStats.lastGeneration).toLocaleDateString()
@@ -487,7 +492,7 @@ function UltraRobustWorkoutView() {
           ) : (
             <div className="flex items-center">
               <Play size={20} className="mr-2" />
-              <span>Générer programme de musculation</span>
+              <span>{t('workout.generateCta', 'Générer programme de musculation')}</span>
             </div>
           )}
         </div>
@@ -505,7 +510,7 @@ function UltraRobustWorkoutView() {
     <div className="p-4 max-w-5xl mx-auto">
       {generatedPrograms.length === 0 ? (
         <div className="bg-white border rounded-2xl p-6 text-center text-gray-600">
-          Aucun programme généré pour le moment.
+          {t('workout.noPrograms', 'Aucun programme généré pour le moment.')}
         </div>
       ) : (
         <div className="space-y-4">
@@ -517,20 +522,20 @@ function UltraRobustWorkoutView() {
               }}
               className={`px-3 py-1 rounded-lg text-sm ${selectionMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
             >
-              {selectionMode ? 'Annuler sélection' : 'Sélectionner'}
+              {selectionMode ? t('workout.cancelSelection', 'Annuler sélection') : t('workout.select', 'Sélectionner')}
             </button>
             <button
               onClick={async () => {
                 if (!user?.uid) return;
                 setIsGenerating(true);
-                setGenerationStage('Rafraîchissement des programmes...');
+                setGenerationStage(t('workout.refreshingPrograms', 'Rafraîchissement des programmes...'));
                 try {
                   const saved = await workoutFirestoreService.loadGeneratedPrograms(user.uid);
                   setGeneratedPrograms(saved?.programs || []);
                   setLastGeneration(saved?.generatedAt || new Date());
-                  actions.setSearchStatus('Programmes rafraîchis');
+                  actions.setSearchStatus(t('workout.programsRefreshed', 'Programmes rafraîchis'));
                 } catch (e) {
-                  actions.setSearchStatus(`Erreur rafraîchissement: ${e.message}`);
+                  actions.setSearchStatus(`${t('workout.refreshError', 'Erreur rafraîchissement')}: ${e.message}`);
                 } finally {
                   setIsGenerating(false);
                   setGenerationStage('');
@@ -563,9 +568,9 @@ function UltraRobustWorkoutView() {
                   }}
                   className="px-3 py-1 rounded-lg text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
                 >
-                  Tout sélectionner
+                  {t('workout.selectAll', 'Tout sélectionner')}
                 </button>
-                <span className="text-sm text-gray-600 mr-2">{selectedProgramIds.size} sélectionné(s)</span>
+                <span className="text-sm text-gray-600 mr-2">{selectedProgramIds.size} {t('workout.selectedSuffix', 'sélectionné(s)')}</span>
                 <button
                   onClick={() => {
                     const ids = Array.from(selectedProgramIds);
@@ -576,7 +581,7 @@ function UltraRobustWorkoutView() {
                   disabled={selectedProgramIds.size === 0}
                   className={`px-3 py-1 rounded-lg text-sm flex items-center ${selectedProgramIds.size === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700'}`}
                 >
-                  <Trash2 size={14} className="mr-1" /> Supprimer
+                  <Trash2 size={14} className="mr-1" /> {t('workout.delete', 'Supprimer')}
                 </button>
               </div>
             )}
@@ -600,7 +605,7 @@ function UltraRobustWorkoutView() {
                       });
                     }}
                     className="absolute top-4 left-4 p-1 rounded-md hover:bg-gray-100"
-                    aria-label="Sélectionner le programme"
+                    aria-label={t('workout.selectProgramAria', 'Sélectionner le programme')}
                   >
                     {selectedProgramIds.has(program.id) ? <CheckSquare size={18} className="text-purple-600" /> : <Square size={18} className="text-gray-400" />}
                   </button>
@@ -608,20 +613,20 @@ function UltraRobustWorkoutView() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold flex items-center gap-2">
-                      <span>{program.title || `Programme ${idx + 1}`}</span>
+                      <span>{program.title || `${t('workout.program.title', 'Programme')} ${idx + 1}`}</span>
                       {program.focusMuscle && (
                         <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium whitespace-nowrap">
-                          Accent: {program.focusMuscle}
+                          {t('workout.program.accent', 'Accent')}: {program.focusMuscle}
                         </span>
                       )}
                     </h3>
                     <p className="text-sm text-gray-600">{program.description}</p>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs">
                       {program.type && (
-                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">Type: {program.type}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{t('workout.program.type', 'Type')}: {program.type}</span>
                       )}
                       {program.pattern && (
-                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">Pattern: {program.pattern}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{t('workout.program.pattern', 'Pattern')}: {program.pattern}</span>
                       )}
                       {program.frequency && (
                         <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{program.frequency}</span>
@@ -658,7 +663,7 @@ function UltraRobustWorkoutView() {
                 <div className="mt-3 flex gap-2 flex-wrap">
                   {(program.workouts || []).map((w) => (
                     <span key={w.day} className="text-xs bg-gray-100 rounded px-2 py-1">
-                      {w.day}: {(w.exercises || []).length} exos
+                      {w.day}: {(w.exercises || []).length} {t('workout.program.exercisesShort', 'exos')}
                     </span>
                   ))}
                 </div>
@@ -688,16 +693,16 @@ function UltraRobustWorkoutView() {
                   <span className="truncate">{program.title}</span>
                   {program.focusMuscle && (
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium whitespace-nowrap">
-                      Accent: {program.focusMuscle}
+                      {t('workout.program.accent', 'Accent')}: {program.focusMuscle}
                     </span>
                   )}
                 </h3>
                 <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-700">
                   {program.type && (
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100">Type: {program.type}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100">{t('workout.program.type', 'Type')}: {program.type}</span>
                   )}
                   {program.pattern && (
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100">Pattern: {program.pattern}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100">{t('workout.program.pattern', 'Pattern')}: {program.pattern}</span>
                   )}
                   {program.frequency && (
                     <span className="px-2 py-0.5 rounded-full bg-gray-100">{program.frequency}</span>
@@ -710,7 +715,7 @@ function UltraRobustWorkoutView() {
               <button
                 onClick={closeDetails}
                 className="p-2 rounded-full hover:bg-gray-100 active:scale-95"
-                aria-label="Fermer"
+                aria-label={t('workout.close', 'Fermer')}
               >
                 <X size={20} />
               </button>
@@ -728,9 +733,9 @@ function UltraRobustWorkoutView() {
                     aria-expanded={isExpanded}
                   >
                     <div className="flex items-center gap-2 text-left">
-                      <span className="font-medium text-sm">{w.day || `Jour ${idx + 1}`}</span>
+                      <span className="font-medium text-sm">{w.day || `${t('workout.program.day', 'Jour')} ${idx + 1}`}</span>
                       <span className="text-xs text-gray-500">
-                        {exercises.length} exos • {w.duration || program.sessionDuration || '60 min'}
+                        {exercises.length} {t('workout.program.exercisesShort', 'exos')} • {w.duration || program.sessionDuration || `60 ${t('workout.program.minutesShort', 'min')}`}
                       </span>
                     </div>
                     {isExpanded ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
@@ -743,7 +748,7 @@ function UltraRobustWorkoutView() {
                           <div className="flex items-center justify-between">
                             <div className="font-medium pr-2 truncate">{e.name}</div>
                             <div className="text-xs text-gray-600 whitespace-nowrap">
-                              {typeof e.sets === 'number' ? `${e.sets}x` : ''}{e.reps || ''}{e.rest ? ` • repos ${e.rest}` : ''}
+                              {typeof e.sets === 'number' ? `${e.sets}x` : ''}{e.reps || ''}{e.rest ? ` • ${t('workout.program.rest', 'repos')} ${e.rest}` : ''}
                             </div>
                           </div>
                           {e.notes && (
@@ -783,14 +788,14 @@ function UltraRobustWorkoutView() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-6">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5">
-            <h4 className="text-lg font-semibold mb-2">Confirmer la suppression</h4>
-            <p className="text-sm text-gray-600 mb-4">Supprimer définitivement {pendingDeleteIds.length} programme(s) ?</p>
+            <h4 className="text-lg font-semibold mb-2">{t('workout.deleteConfirmTitle', 'Confirmer la suppression')}</h4>
+            <p className="text-sm text-gray-600 mb-4">{t('workout.deleteConfirmPrefix', 'Supprimer définitivement')} {pendingDeleteIds.length} {t('workout.deleteConfirmSuffix', 'programme(s) ?')}</p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200"
               >
-                Annuler
+                {t('workout.cancel', 'Annuler')}
               </button>
               <button
                 onClick={async () => {
@@ -811,7 +816,7 @@ function UltraRobustWorkoutView() {
                 }}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
               >
-                Supprimer
+                {t('workout.delete', 'Supprimer')}
               </button>
             </div>
           </div>

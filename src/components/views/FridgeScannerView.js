@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Camera, Upload, Zap, Clock, TrendingUp, ShoppingCart, Eye, RefreshCw } from 'lucide-react';
 import { fridgeScannerService } from '../../services/fridgeScannerService';
+import { useI18n } from '../../utils/i18n';
 import { useAuth } from '../../context/AuthContext';
 import { usePopup } from '../../context/PopupContext';
 
@@ -11,10 +12,11 @@ const FridgeScannerView = () => {
   const [activeTab, setActiveTab] = useState('scanner');
   const fileInputRef = useRef(null);
   const { user } = useAuth();
+  const { t } = useI18n();
   const { showInfoPopup, showErrorPopup } = usePopup();
   const handleImageCapture = useCallback(async (file) => {
     if (!user) {
-      showErrorPopup('Connexion requise', 'Veuillez vous connecter pour utiliser le scanner de frigo');
+      showErrorPopup(t('fridge.loginRequired','Connexion requise'), t('fridge.loginMsg','Veuillez vous connecter pour utiliser le scanner de frigo'));
       return;
     }
 
@@ -30,13 +32,13 @@ const FridgeScannerView = () => {
       await fridgeScannerService.saveScanHistory(result, user.uid);
       
       showInfoPopup(
-        'Scan terminé !', 
-        `${result.detectedIngredients.length} ingrédients détectés et ${result.suggestedRecipes.length} recettes générées`
+        t('fridge.scanDone','Scan terminé !'), 
+        `${result.detectedIngredients.length} ${t('fridge.detectedIngredients','ingrédients détectés')} ${t('common.and','et')} ${result.suggestedRecipes.length} ${t('fridge.generatedRecipes','recettes générées')}`
       );
       
     } catch (error) {
       console.error('Erreur scan frigo:', error);
-      showErrorPopup('Erreur de scan', 'Impossible d\'analyser l\'image. Veuillez réessayer.');
+      showErrorPopup(t('fridge.scanError','Erreur de scan'), t('fridge.cannotAnalyze','Impossible d\'analyser l\'image. Veuillez réessayer.'));
     } finally {
       setIsScanning(false);
     }
@@ -56,10 +58,8 @@ const FridgeScannerView = () => {
   const renderScanner = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Scanner de Frigo</h2>
-        <p className="text-gray-600">
-          Photographiez votre frigo pour découvrir des recettes anti-gaspillage
-        </p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('fridge.title','Scanner de Frigo')}</h2>
+        <p className="text-gray-600">{t('fridge.subtitle','Photographiez votre frigo pour découvrir des recettes anti-gaspillage')}</p>
       </div>
 
       {/* Zone de capture */}
@@ -74,19 +74,15 @@ const FridgeScannerView = () => {
             {isScanning && (
               <div className="flex items-center justify-center space-x-2 text-purple-600">
                 <RefreshCw className="animate-spin" size={20} />
-                <span>Analyse en cours...</span>
+                <span>{t('fridge.scanning','Analyse en cours...')}</span>
               </div>
             )}
           </div>
         ) : (
           <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-400 transition-colors">
             <Camera size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Prenez une photo de votre frigo
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Notre IA analysera vos ingrédients et suggérera des recettes
-            </p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('fridge.takePhoto','Prenez une photo de votre frigo')}</h3>
+            <p className="text-gray-600 mb-4">{t('fridge.aiWillAnalyze','Notre IA analysera vos ingrédients et suggérera des recettes')}</p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
@@ -95,7 +91,7 @@ const FridgeScannerView = () => {
                 className="flex items-center justify-center px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Upload size={20} className="mr-2" />
-                {isScanning ? 'Analyse...' : 'Choisir une image'}
+                {isScanning ? t('fridge.scanningShort','Analyse...') : t('fridge.chooseImage','Choisir une image')}
               </button>
             </div>
           </div>
@@ -112,12 +108,12 @@ const FridgeScannerView = () => {
 
       {/* Conseils */}
       <div className="bg-blue-50 rounded-xl p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">💡 Conseils pour un meilleur scan</h4>
+        <h4 className="font-semibold text-blue-900 mb-2">{t('fridge.tipsTitle','💡 Conseils pour un meilleur scan')}</h4>
         <ul className="text-blue-800 text-sm space-y-1">
-          <li>• Prenez une photo claire avec un bon éclairage</li>
-          <li>• Assurez-vous que les étiquettes sont visibles</li>
-          <li>• Ouvrez les tiroirs et compartiments</li>
-          <li>• Évitez les reflets sur les emballages</li>
+          <li>• {t('fridge.tip1','Prenez une photo claire avec un bon éclairage')}</li>
+          <li>• {t('fridge.tip2','Assurez-vous que les étiquettes sont visibles')}</li>
+          <li>• {t('fridge.tip3','Ouvrez les tiroirs et compartiments')}</li>
+          <li>• {t('fridge.tip4','Évitez les reflets sur les emballages')}</li>
         </ul>
       </div>
     </div>

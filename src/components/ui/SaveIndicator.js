@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../../utils/i18n';
 import { Check, Save, AlertCircle } from 'lucide-react';
 
 const SaveIndicator = ({ 
@@ -12,15 +13,16 @@ const SaveIndicator = ({
   hasUnsavedChanges = false,
   showDetails = false 
 }) => {
+  const { t } = useI18n();
   const [showStatus, setShowStatus] = useState(false);
   const [statusText, setStatusText] = useState('');
 
   useEffect(() => {
     if (isSaving) {
-      setStatusText('Sauvegarde en cours...');
+      setStatusText(t('save.saving', 'Sauvegarde en cours...'));
       setShowStatus(true);
     } else if (lastSaved) {
-      setStatusText(`Sauvegardé à ${new Date(lastSaved).toLocaleTimeString()}`);
+      setStatusText(`${t('save.savedAt', 'Sauvegardé à')} ${new Date(lastSaved).toLocaleTimeString()}`);
       setShowStatus(true);
       
       // Masquer après 3 secondes
@@ -30,10 +32,10 @@ const SaveIndicator = ({
       
       return () => clearTimeout(timer);
     } else if (hasUnsavedChanges) {
-      setStatusText('Modifications non sauvegardées');
+      setStatusText(t('save.unsaved', 'Modifications non sauvegardées'));
       setShowStatus(true);
     }
-  }, [isSaving, lastSaved, hasUnsavedChanges]);
+  }, [isSaving, lastSaved, hasUnsavedChanges, t]);
 
   if (!showStatus && !showDetails) return null;
 
@@ -63,7 +65,7 @@ const SaveIndicator = ({
       
       {showDetails && lastSaved && (
         <div className="ml-2 text-xs opacity-75">
-          Dernière sync: {new Date(lastSaved).toLocaleString()}
+          {t('save.lastSync', 'Dernière sync')}: {new Date(lastSaved).toLocaleString()}
         </div>
       )}
     </div>

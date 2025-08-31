@@ -4,6 +4,7 @@ import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { User, Activity, Target, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../utils/i18n';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
@@ -11,6 +12,7 @@ function ProfileView() {
   const { userProfile, actions } = useAppContext();
   const { user, logout } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useI18n();
 
   // Fonction pour récupérer le profil depuis Firestore (mémorisée avec useCallback)
   const fetchUserProfileFromFirestore = useCallback(async () => {
@@ -170,7 +172,7 @@ function ProfileView() {
   // Mode affichage
   return (
     <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">Mon Profil</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">{t('profile.title', 'Mon Profil')}</h2>
 
       {complete ? (
         <>
@@ -183,18 +185,18 @@ function ProfileView() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold">{userProfile.name}</h3>
-                  <p className="text-gray-600">{userProfile.age} ans • {getGenderText(userProfile.gender)}</p>
+                  <p className="text-gray-600">{userProfile.age} {t('profile.years','ans')} • {getGenderText(userProfile.gender)}</p>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-600 text-sm mb-1">Taille</p>
+                <p className="text-gray-600 text-sm mb-1">{t('profile.height','Taille')}</p>
                 <p className="text-lg font-semibold">{userProfile.height} cm</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-600 text-sm mb-1">Poids</p>
+                <p className="text-gray-600 text-sm mb-1">{t('profile.weight','Poids')}</p>
                 <p className="text-lg font-semibold">{userProfile.weight} kg</p>
               </div>
             </div>
@@ -202,7 +204,7 @@ function ProfileView() {
             {bmi && (
               <div className="bg-purple-50 p-4 rounded-xl mb-4">
                 <div className="flex justify-between items-center">
-                  <h4 className="font-semibold text-purple-900">IMC</h4>
+                  <h4 className="font-semibold text-purple-900">{t('profile.bmi','IMC')}</h4>
                   <span className={`font-bold text-xl ${bmiCategory.color}`}>{bmi}</span>
                 </div>
                 <p className={`text-sm ${bmiCategory.color}`}>{bmiCategory.text}</p>
@@ -256,7 +258,7 @@ function ProfileView() {
             className="w-full max-w-4xl mx-auto mt-3 inline-flex items-center justify-center bg-white border border-gray-300 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-50"
           >
             <SettingsIcon className="mr-2" size={18} />
-            Paramètres
+            {t('settings.title','Paramètres')}
           </Link>
 
           <button
@@ -264,7 +266,7 @@ function ProfileView() {
             className="w-full bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold mt-4 flex items-center justify-center hover:bg-gray-300 transition-colors"
           >
             <LogOut className="mr-2" size={20} />
-            Se déconnecter
+            {t('profile.logout','Se déconnecter')}
           </button>
         </>
       ) : (

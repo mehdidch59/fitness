@@ -5,11 +5,13 @@ import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { profileSyncService } from '../../services/profileSync';
 import Input from '../ui/Input';
+import { useI18n } from '../../utils/i18n';
 
 function AuthView() {
   const { actions } = useAppContext();
   const { login, register, loading, error } = useAuth(); // Utiliser Firebase
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -120,10 +122,10 @@ function AuthView() {
             <User size={32} className="text-purple-600" />
           </div>
           <h2 className="text-3xl font-bold mb-2">
-            {isLogin ? 'Connexion' : 'Inscription'}
+            {isLogin ? t('auth.login', 'Connexion') : t('auth.signup', 'Inscription')}
           </h2>
           <p className="text-gray-600">
-            {isLogin ? 'Bon retour parmi nous !' : 'Créez votre compte fitness'}
+            {isLogin ? t('auth.welcomeBack', 'Bon retour parmi nous !') : t('auth.createAccount', 'Créez votre compte fitness')}
           </p>
         </div>        <div className="bg-white rounded-2xl shadow-lg p-6">
           {/* Afficher l'erreur Firebase s'il y en a une */}
@@ -141,7 +143,7 @@ function AuthView() {
                 isLogin ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600'
               }`}
             >
-              Connexion
+              {t('auth.login', 'Connexion')}
             </button>
             <button
               onClick={() => setIsLogin(false)}
@@ -149,7 +151,7 @@ function AuthView() {
                 !isLogin ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600'
               }`}
             >
-              Inscription
+              {t('auth.signup', 'Inscription')}
             </button>
           </div>
 
@@ -159,14 +161,14 @@ function AuthView() {
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="Prénom"
+                    label={t('auth.firstName', 'Prénom')}
                     value={formData.firstName}
                     onChange={(value) => handleInputChange('firstName', value)}
                     placeholder="John"
                     required
                   />
                   <Input
-                    label="Nom"
+                    label={t('auth.lastName', 'Nom')}
                     value={formData.lastName}
                     onChange={(value) => handleInputChange('lastName', value)}
                     placeholder="Doe"
@@ -176,7 +178,7 @@ function AuthView() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="Âge"
+                    label={t('auth.age', 'Âge')}
                     type="number"
                     value={formData.age}
                     onChange={(value) => handleInputChange('age', value)}
@@ -184,7 +186,7 @@ function AuthView() {
                     required
                   />
                   <Input
-                    label="Genre"
+                    label={t('auth.gender', 'Genre')}
                     type="select"
                     value={formData.gender}
                     onChange={(value) => handleInputChange('gender', value)}
@@ -198,7 +200,7 @@ function AuthView() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="Poids (kg)"
+                    label={t('auth.weight', 'Poids (kg)')}
                     type="number"
                     value={formData.weight}
                     onChange={(value) => handleInputChange('weight', value)}
@@ -206,7 +208,7 @@ function AuthView() {
                     required
                   />
                   <Input
-                    label="Taille (cm)"
+                    label={t('auth.height', 'Taille (cm)')}
                     type="number"
                     value={formData.height}
                     onChange={(value) => handleInputChange('height', value)}
@@ -216,7 +218,7 @@ function AuthView() {
                 </div>
 
                 <Input
-                  label="Objectif"
+                  label={t('auth.goal', 'Objectif')}
                   type="select"
                   value={formData.goal}
                   onChange={(value) => handleInputChange('goal', value)}
@@ -229,7 +231,7 @@ function AuthView() {
                 />
 
                 <Input
-                  label="Niveau d'activité"
+                  label={t('auth.activityLevel', 'Niveau d\'activité')}
                   type="select"
                   value={formData.activityLevel}
                   onChange={(value) => handleInputChange('activityLevel', value)}
@@ -248,7 +250,7 @@ function AuthView() {
             {/* Email et mot de passe */}
             <div className="relative">
               <Input
-                label="Email"
+                label={t('auth.email', 'Email')}
                 type="email"
                 value={formData.email}
                 onChange={(value) => handleInputChange('email', value)}
@@ -260,7 +262,7 @@ function AuthView() {
 
             <div className="relative">
               <Input
-                label="Mot de passe"
+                label={t('auth.password', 'Mot de passe')}
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(value) => handleInputChange('password', value)}
@@ -280,7 +282,7 @@ function AuthView() {
               type="submit"
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold mt-6"
             >
-              {isLogin ? 'Se connecter' : 'Créer mon compte'}
+              {isLogin ? t('auth.loginCta', 'Se connecter') : t('auth.createCta', 'Créer mon compte')}
             </button>
           </form>
         </div>

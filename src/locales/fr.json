@@ -2,6 +2,8 @@
   "workout": {
     "generate": "Générer",
     "refresh": "Rafraîchir",
+    "headerTitle": "Programmes 💪",
+    "headerSubtitle": "Des programmes complets (FullBody, HalfBody, Split) alignés sur ton profil",
     "mode": "Mode",
     "auto": "Auto",
     "manual": "Manuel",
@@ -13,7 +15,60 @@
     "delete": "Supprimer",
     "details": "Voir détails",
     "lastGeneration": "Dernière génération",
-    "filteredHistory": "Charger historiques (filtres)"
+    "filteredHistory": "Charger historiques (filtres)",
+    "filteredHistoryLoading": "Chargement historique filtré...",
+    "filteredHistoryLoaded": "Historique chargé (filtres appliqués)",
+    "noProgramWithFilters": "Aucun programme trouvé avec ces filtres",
+    "filteredHistoryError": "Erreur chargement historique",
+    "resetFilters": "Réinitialiser filtres",
+    "searchLabel": "Recherche",
+    "searchPlaceholder": "Filtrer par titre / description...",
+    "difficultyLabel": "Niveau de difficulté",
+    "actionsLabel": "Actions",
+    "generateCta": "Générer programme de musculation",
+    "noPrograms": "Aucun programme généré pour le moment.",
+    "cancelSelection": "Annuler sélection",
+    "selectedSuffix": "sélectionné(s)",
+    "refreshingPrograms": "Rafraîchissement des programmes...",
+    "programsRefreshed": "Programmes rafraîchis",
+    "refreshError": "Erreur rafraîchissement",
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "selectProgramAria": "Sélectionner le programme",
+    "deleteConfirmTitle": "Confirmer la suppression",
+    "deleteConfirmPrefix": "Supprimer définitivement",
+    "deleteConfirmSuffix": "programme(s) ?",
+    "levels": {
+      "all": "Tous",
+      "beginner": "Débutant",
+      "intermediate": "Intermédiaire",
+      "advanced": "Avancé"
+    },
+    "program": {
+      "title": "Programme",
+      "accent": "Accent",
+      "type": "Type",
+      "pattern": "Pattern",
+      "day": "Jour",
+      "exercisesShort": "exos",
+      "minutesShort": "min",
+      "rest": "repos"
+    },
+    "muscles": {
+      "none": "Aucun",
+      "chest": "Pectoraux",
+      "back": "Dos",
+      "shoulders": "Épaules",
+      "arms": "Bras",
+      "legs": "Jambes",
+      "glutes": "Fessiers",
+      "abs": "Abdos / Core"
+    },
+    "stats": {
+      "programs": "Programmes",
+      "generations": "Générations",
+      "last": "Dernière"
+    }
   },
   "settings": {
     "preferences": "Préférences de l'application",
@@ -22,7 +77,11 @@
     "themeDark": "Sombre",
     "language": "Langue",
     "languageFr": "Français",
-    "languageEn": "English"
+    "languageEn": "English",
+    "title": "Paramètres",
+    "unsaved": "Modifications non sauvegardées",
+    "personalInfo": "Informations personnelles",
+    "account": "Compte"
   },
   "ia": {
     "title": "IA+ Avancée",
@@ -63,6 +122,121 @@
   "common": {
     "login": "Se connecter",
     "generate": "Générer",
-    "generating": "Génération..."
+    "generating": "Génération...",
+    "searching": "Recherche...",
+    "soon": "Fonctionnalité à venir",
+    "soonDesc": "Cette fonctionnalité sera disponible prochainement.",
+    "undefined": "Non défini",
+    "select": "Sélectionner...",
+    "refreshPage": "Rafraîchir la page",
+    "later": "Plus tard",
+    "back": "Retour",
+    "loading": "Chargement...",
+    "ok": "OK"
+  },
+  "home": {
+    "subtitle": "Programmes personnalisés par recherche web",
+    "sessions": "Séances",
+    "searches": "Recherches IA",
+    "advanced": {
+      "title": "Fonctionnalités IA Avancées",
+      "desc": "Découvrez nos nouvelles fonctionnalités révolutionnaires !",
+      "fridge": "Scanner Frigo",
+      "mealPlanning": "Meal Planning",
+      "gamification": "Gamification",
+      "cta": "Découvrir les Fonctionnalités IA+"
+    },
+    "required": "Configuration requise",
+    "openSettings": "Ouvrir les paramètres",
+    "generateWorkout": "Générer Programme IA",
+    "findRecipes": "Trouver Recettes IA",
+    "realtime": "Recherche web en temps réel"
+  },
+  "nav": {
+    "home": "Accueil",
+    "profile": "Profil",
+    "workout": "Entraînement",
+    "nutrition": "Nutrition",
+    "tracking": "Suivi",
+    "advanced": "IA+"
+  },
+  "auth": {
+    "login": "Connexion",
+    "signup": "Inscription",
+    "welcomeBack": "Bon retour parmi nous !",
+    "createAccount": "Créez votre compte fitness",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "age": "Âge",
+    "gender": "Genre",
+    "weight": "Poids (kg)",
+    "height": "Taille (cm)",
+    "goal": "Objectif",
+    "activityLevel": "Niveau d'activité",
+    "email": "Email",
+    "password": "Mot de passe",
+    "loginCta": "Se connecter",
+    "createCta": "Créer mon compte"
+  },
+  "tracking": {
+    "title": "Statistiques",
+    "loginPrompt": "Connectez-vous pour accéder au suivi.",
+    "sessions": "Séances",
+    "minutes": "Minutes",
+    "weeklyActivity": "Activité hebdomadaire",
+    "history": "Historique",
+    "generatedProgram": "Programme généré",
+    "foundRecipes": "Recettes trouvées",
+    "noActivity": "Aucune activité enregistrée"
+  },
+  "search": {
+    "emptyTitle": "Recherche vide",
+    "emptyMsg": "Veuillez entrer un terme de recherche.",
+    "errorTitle": "Erreur de recherche",
+    "errorMsg": "Une erreur est survenue lors de la recherche.",
+    "recipesErrorMsg": "Une erreur est survenue lors de la recherche de recettes.",
+    "title": "Recherche",
+    "placeholder": "Rechercher des exercices, recettes...",
+    "massGain": "Recettes prise de masse",
+    "customPrograms": "Programmes personnalisés",
+    "personalized": "Toutes les recherches sont personnalisées selon votre objectif",
+    "popupInfo": "Les résultats s'afficheront dans un popup pour une meilleure expérience mobile."
+  },
+  "save": {
+    "saving": "Sauvegarde en cours...",
+    "savedAt": "Sauvegardé à",
+    "unsaved": "Modifications non sauvegardées",
+    "lastSync": "Dernière sync"
+  },
+  "profile": {
+    "title": "Mon Profil",
+    "years": "ans",
+    "height": "Taille",
+    "weight": "Poids",
+    "bmi": "IMC",
+    "logout": "Se déconnecter"
+  },
+  "nutrition": {
+    "error": {
+      "title": "Une erreur s'est produite",
+      "desc": "Impossible d'afficher cette section. Essayez de rafraîchir la page."
+    },
+    "authRequired": "Connexion requise",
+    "authMsg": "Connectez-vous pour sauvegarder vos recettes favorites et accéder à vos préférences personnalisées.",
+    "notFound": "Recette introuvable",
+    "backToRecipes": "Retour aux recettes",
+    "loginForFav": "Se connecter pour favoris",
+    "removeFav": "Retirer des favoris",
+    "addFav": "Ajouter aux favoris",
+    "calories": "Calories",
+    "proteins": "Protéines",
+    "carbs": "Glucides",
+    "fats": "Lipides",
+    "minutes": "min",
+    "servings": "portion",
+    "easy": "Facile",
+    "massGainScore": "Score Prise de Masse",
+    "ingredients": "Ingrédients",
+    "noIngredients": "Ingrédients non spécifiés"
   }
 }

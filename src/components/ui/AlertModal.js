@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../utils/i18n';
 
 /**
  * Composant modal d'alerte réutilisable
@@ -6,12 +7,13 @@ import React from 'react';
 const AlertModal = ({
   title,
   message,
-  buttonText = 'OK',
+  buttonText,
   type = 'warning',
   onClose,
   secondaryButtonText = null,
   onSecondaryClick = null
 }) => {
+  const { t } = useI18n();
   // Déterminer les couleurs selon le type d'alerte
   const getColors = () => {
     switch (type) {
@@ -57,7 +59,7 @@ const AlertModal = ({
             onClick={onClose}
             className={`w-full ${colors.button} text-white py-3 rounded-xl font-semibold transition-all hover:shadow-lg active:scale-98`}
           >
-            {buttonText}
+            {buttonText || t('common.ok','OK')}
           </button>
 
           {secondaryButtonText && onSecondaryClick && (

@@ -8,11 +8,13 @@ import Input from '../ui/Input';
 import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../firebase';
 import { persistenceService } from '../../services/persistenceService';
+import { useI18n } from '../../utils/i18n';
 
 function SettingsView() {
   const { userProfile, equipmentProfile, nutritionProfile, actions } = useAppContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     // Profil utilisateur
@@ -217,10 +219,10 @@ function SettingsView() {
           >
             <ArrowLeft size={24} className="text-gray-700" />
           </button>
-          <h2 className="text-2xl font-bold">Paramètres</h2>
+          <h2 className="text-2xl font-bold">{t('settings.title', 'Paramètres')}</h2>
           {hasUnsavedChanges && (
             <span className="ml-3 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-              Modifications non sauvegardées
+              {t('settings.unsaved', 'Modifications non sauvegardées')}
             </span>
           )}
         </div>
@@ -250,7 +252,7 @@ function SettingsView() {
       <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 max-w-5xl mx-auto">
         {activeTab === 'profile' && (
           <>
-            <h3 className="text-xl font-bold mb-4">Informations personnelles</h3>
+            <h3 className="text-xl font-bold mb-4">{t('settings.personalInfo', 'Informations personnelles')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Prénom"
@@ -304,7 +306,7 @@ function SettingsView() {
             </div>
 
             <div className="mt-8 border-t pt-6">
-              <h3 className="text-xl font-bold mb-4">Compte</h3>
+              <h3 className="text-xl font-bold mb-4">{t('settings.account', 'Compte')}</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -434,30 +436,30 @@ function SettingsView() {
             </div>
 
             <div className="mt-8 border-t pt-6">
-              <h3 className="text-xl font-bold mb-4">Préférences de l'application</h3>
+              <h3 className="text-xl font-bold mb-4">{t('settings.preferences', 'Préférences de l\'application')}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Thème</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.theme', 'Thème')}</label>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setAppTheme('light')}
                       className={`px-3 py-2 rounded-lg border ${appTheme === 'light' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-800 border-gray-300'}`}
-                    >Clair</button>
+                    >{t('settings.themeLight', 'Clair')}</button>
                     <button
                       onClick={() => setAppTheme('dark')}
                       className={`px-3 py-2 rounded-lg border ${appTheme === 'dark' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-800 border-gray-300'}`}
-                    >Sombre</button>
+                    >{t('settings.themeDark', 'Sombre')}</button>
                   </div>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Langue</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.language', 'Langue')}</label>
                   <select
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                     value={appLanguage}
                     onChange={(e) => setAppLanguage(e.target.value)}
                   >
-                    <option value="fr">Français</option>
-                    <option value="en">English</option>
+                    <option value="fr">{t('settings.languageFr', 'Français')}</option>
+                    <option value="en">{t('settings.languageEn', 'English')}</option>
                   </select>
                 </div>
               </div>

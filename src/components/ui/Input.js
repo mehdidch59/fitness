@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../utils/i18n';
 
 /**
  * Composant Input optimisé pour éviter les problèmes de focus
@@ -14,6 +15,7 @@ function Input({
   required = false,
   error = null
 }) {
+  const { t } = useI18n();
   const handleChange = (e) => {
     onChange(e.target.value);
   };
@@ -38,7 +40,7 @@ function Input({
           className={inputClasses}
           required={required}
         >
-          <option value="">Sélectionner...</option>
+          <option value="">{t('common.select', 'Sélectionner...')}</option>
           {options.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}

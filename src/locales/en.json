@@ -2,6 +2,8 @@
   "workout": {
     "generate": "Generate",
     "refresh": "Refresh",
+    "headerTitle": "Programs 💪",
+    "headerSubtitle": "Complete programs (FullBody, Upper/Lower, Split) tailored to your profile",
     "mode": "Mode",
     "auto": "Auto",
     "manual": "Manual",
@@ -13,7 +15,60 @@
     "delete": "Delete",
     "details": "See details",
     "lastGeneration": "Last generation",
-    "filteredHistory": "Load history (filters)"
+    "filteredHistory": "Load history (filters)",
+    "filteredHistoryLoading": "Loading filtered history...",
+    "filteredHistoryLoaded": "History loaded (filters applied)",
+    "noProgramWithFilters": "No program found with these filters",
+    "filteredHistoryError": "History loading error",
+    "resetFilters": "Reset filters",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Filter by title / description...",
+    "difficultyLabel": "Difficulty level",
+    "actionsLabel": "Actions",
+    "generateCta": "Generate workout program",
+    "noPrograms": "No program generated yet.",
+    "cancelSelection": "Cancel selection",
+    "selectedSuffix": "selected",
+    "refreshingPrograms": "Refreshing programs...",
+    "programsRefreshed": "Programs refreshed",
+    "refreshError": "Refresh error",
+    "close": "Close",
+    "cancel": "Cancel",
+    "selectProgramAria": "Select program",
+    "deleteConfirmTitle": "Confirm deletion",
+    "deleteConfirmPrefix": "Permanently delete",
+    "deleteConfirmSuffix": "program(s)?",
+    "levels": {
+      "all": "All",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "program": {
+      "title": "Program",
+      "accent": "Focus",
+      "type": "Type",
+      "pattern": "Pattern",
+      "day": "Day",
+      "exercisesShort": "exercises",
+      "minutesShort": "min",
+      "rest": "rest"
+    },
+    "muscles": {
+      "none": "None",
+      "chest": "Chest",
+      "back": "Back",
+      "shoulders": "Shoulders",
+      "arms": "Arms",
+      "legs": "Legs",
+      "glutes": "Glutes",
+      "abs": "Abs / Core"
+    },
+    "stats": {
+      "programs": "Programs",
+      "generations": "Generations",
+      "last": "Last"
+    }
   },
   "settings": {
     "preferences": "App Preferences",
@@ -22,7 +77,11 @@
     "themeDark": "Dark",
     "language": "Language",
     "languageFr": "Français",
-    "languageEn": "English"
+    "languageEn": "English",
+    "title": "Settings",
+    "unsaved": "Unsaved changes",
+    "personalInfo": "Personal information",
+    "account": "Account"
   },
   "ia": {
     "title": "Advanced IA+",
@@ -63,6 +122,121 @@
   "common": {
     "login": "Login",
     "generate": "Generate",
-    "generating": "Generating..."
+    "generating": "Generating...",
+    "searching": "Searching...",
+    "soon": "Coming soon",
+    "soonDesc": "This feature will be available soon.",
+    "undefined": "Undefined",
+    "select": "Select...",
+    "refreshPage": "Refresh page",
+    "later": "Later",
+    "back": "Back",
+    "loading": "Loading...",
+    "ok": "OK"
+  },
+  "home": {
+    "subtitle": "Personalized programs via web search",
+    "sessions": "Sessions",
+    "searches": "AI Searches",
+    "advanced": {
+      "title": "Advanced AI Features",
+      "desc": "Discover our new revolutionary features!",
+      "fridge": "Fridge Scanner",
+      "mealPlanning": "Meal Planning",
+      "gamification": "Gamification",
+      "cta": "Explore AI+ Features"
+    },
+    "required": "Configuration required",
+    "openSettings": "Open settings",
+    "generateWorkout": "Generate AI Program",
+    "findRecipes": "Find AI Recipes",
+    "realtime": "Real-time web search"
+  },
+  "nav": {
+    "home": "Home",
+    "profile": "Profile",
+    "workout": "Training",
+    "nutrition": "Nutrition",
+    "tracking": "Tracking",
+    "advanced": "IA+"
+  },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign up",
+    "welcomeBack": "Welcome back!",
+    "createAccount": "Create your fitness account",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "age": "Age",
+    "gender": "Gender",
+    "weight": "Weight (kg)",
+    "height": "Height (cm)",
+    "goal": "Goal",
+    "activityLevel": "Activity level",
+    "email": "Email",
+    "password": "Password",
+    "loginCta": "Sign in",
+    "createCta": "Create account"
+  },
+  "tracking": {
+    "title": "Statistics",
+    "loginPrompt": "Sign in to access tracking.",
+    "sessions": "Sessions",
+    "minutes": "Minutes",
+    "weeklyActivity": "Weekly activity",
+    "history": "History",
+    "generatedProgram": "Program generated",
+    "foundRecipes": "Recipes found",
+    "noActivity": "No activity recorded"
+  },
+  "search": {
+    "emptyTitle": "Empty search",
+    "emptyMsg": "Please enter a search term.",
+    "errorTitle": "Search error",
+    "errorMsg": "An error occurred during search.",
+    "recipesErrorMsg": "An error occurred while searching recipes.",
+    "title": "Search",
+    "placeholder": "Search for exercises, recipes...",
+    "massGain": "Mass-gain recipes",
+    "customPrograms": "Custom programs",
+    "personalized": "All searches are personalized to your goal",
+    "popupInfo": "Results will show in a popup for a better mobile experience."
+  },
+  "save": {
+    "saving": "Saving...",
+    "savedAt": "Saved at",
+    "unsaved": "Unsaved changes",
+    "lastSync": "Last sync"
+  },
+  "profile": {
+    "title": "My Profile",
+    "years": "years",
+    "height": "Height",
+    "weight": "Weight",
+    "bmi": "BMI",
+    "logout": "Log out"
+  },
+  "nutrition": {
+    "error": {
+      "title": "An error occurred",
+      "desc": "Unable to display this section. Try refreshing the page."
+    },
+    "authRequired": "Login required",
+    "authMsg": "Sign in to save favorites and access personalized preferences.",
+    "notFound": "Recipe not found",
+    "backToRecipes": "Back to recipes",
+    "loginForFav": "Sign in to favorite",
+    "removeFav": "Remove from favorites",
+    "addFav": "Add to favorites",
+    "calories": "Calories",
+    "proteins": "Proteins",
+    "carbs": "Carbs",
+    "fats": "Fats",
+    "minutes": "min",
+    "servings": "serving",
+    "easy": "Easy",
+    "massGainScore": "Mass Gain Score",
+    "ingredients": "Ingredients",
+    "noIngredients": "Ingredients not specified"
   }
 }

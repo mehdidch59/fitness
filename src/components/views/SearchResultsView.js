@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { usePopup } from '../../context/PopupContext';
+import { useI18n } from '../../utils/i18n';
 import { webSearchService } from '../../services/api';
 import { useAppContext } from '../../context/AppContext';
 
 const SearchResultsView = () => {
   const { showSearchResultsPopup, showInfoPopup, showErrorPopup } = usePopup();
+  const { t } = useI18n();
   const { state } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -12,7 +14,7 @@ const SearchResultsView = () => {
   // Effectuer une recherche
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
-      showInfoPopup('Recherche vide', 'Veuillez entrer un terme de recherche.');
+      showInfoPopup(t('search.emptyTitle', 'Recherche vide'), t('search.emptyMsg', 'Veuillez entrer un terme de recherche.'));
       return;
     }
     
@@ -34,7 +36,7 @@ const SearchResultsView = () => {
           `Vous avez sélectionné: ${selectedItem.title || selectedItem.name}`);
       });
     } catch (error) {
-      showErrorPopup('Erreur de recherche', 'Une erreur est survenue lors de la recherche.');
+      showErrorPopup(t('search.errorTitle', 'Erreur de recherche'), t('search.errorMsg', 'Une erreur est survenue lors de la recherche.'));
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +62,7 @@ const SearchResultsView = () => {
           `Vous avez sélectionné: ${selectedRecipe.name}\nCalories: ${selectedRecipe.calories} - Protéines: ${selectedRecipe.protein}g`);
       });
     } catch (error) {
-      showErrorPopup('Erreur de recherche', 'Une erreur est survenue lors de la recherche de recettes.');
+      showErrorPopup(t('search.errorTitle', 'Erreur de recherche'), t('search.recipesErrorMsg', 'Une erreur est survenue lors de la recherche de recettes.'));
     } finally {
       setIsLoading(false);
     }
@@ -68,13 +70,13 @@ const SearchResultsView = () => {
   
   return (
     <div className="p-4 sm:p-6">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Recherche</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">{t('search.title', 'Recherche')}</h1>
       
       <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 max-w-3xl mx-auto">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
           <input
             type="text"
-            placeholder="Rechercher des exercices, recettes..."
+            placeholder={t('search.placeholder', 'Rechercher des exercices, recettes...')}
             className="flex-1 p-3 border border-gray-300 rounded-xl"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -94,23 +96,23 @@ const SearchResultsView = () => {
             onClick={findMassGainRecipes}
             disabled={isLoading}
           >
-            Recettes prise de masse
+            {t('search.massGain', 'Recettes prise de masse')}
           </button>
           
           <button
             className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 rounded-xl text-center font-semibold"
             onClick={() => {
-              showInfoPopup('Fonctionnalité à venir', 'Cette fonctionnalité sera disponible prochainement.');
+              showInfoPopup(t('common.soon', 'Fonctionnalité à venir'), t('common.soonDesc', 'Cette fonctionnalité sera disponible prochainement.'));
             }}
           >
-            Programmes personnalisés
+            {t('search.customPrograms', 'Programmes personnalisés')}
           </button>
         </div>
       </div>
       
       <div className="text-center text-gray-600 text-sm max-w-3xl mx-auto">
-        <p>Toutes les recherches sont personnalisées selon votre objectif: {state.userProfile.fitnessGoal || 'Non défini'}</p>
-        <p className="mt-2">Les résultats s'afficheront dans un popup pour une meilleure expérience mobile.</p>
+        <p>{t('search.personalized', 'Toutes les recherches sont personnalisées selon votre objectif')}: {state.userProfile.fitnessGoal || t('common.undefined', 'Non défini')}</p>
+        <p className="mt-2">{t('search.popupInfo', 'Les résultats s\'afficheront dans un popup pour une meilleure expérience mobile.')}</p>
       </div>
     </div>
   );
