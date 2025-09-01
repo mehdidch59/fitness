@@ -81,7 +81,71 @@
     "title": "Paramètres",
     "unsaved": "Modifications non sauvegardées",
     "personalInfo": "Informations personnelles",
-    "account": "Compte"
+    "account": "Compte",
+    "unsavedLeaveWarning": "Vous avez des modifications non sauvegardées dans vos paramètres. Voulez-vous vraiment quitter ?",
+    "saved": "Paramètres sauvegardés !",
+    "tabs": {
+      "profile": "Profil",
+      "goals": "Objectifs",
+      "equipment": "Équipement",
+      "nutrition": "Nutrition"
+    },
+    "form": {
+      "firstName": "Prénom",
+      "firstNamePlaceholder": "John",
+      "lastName": "Nom",
+      "lastNamePlaceholder": "Doe",
+      "age": "Âge",
+      "agePlaceholder": "25",
+      "gender": "Genre",
+      "weightPlaceholder": "70",
+      "heightPlaceholder": "175"
+    },
+    "accountSection": "Compte",
+    "accountSaved": "Compte mis à jour",
+    "errorPrefix": "Erreur",
+    "account": {
+      "currentEmail": "Email actuel",
+      "emailPlaceholder": "email@exemple.com",
+      "emailUnverified": "Email non vérifié",
+      "verifyEmail": "Vérifier mon email",
+      "verificationSent": "Email de vérification envoyé",
+      "emailVerified": "Email vérifié",
+      "changeEmail": "Changer l'email",
+      "newEmail": "Nouvel email",
+      "newEmailPlaceholder": "nouvel.email@exemple.com",
+      "currentPassword": "Mot de passe actuel",
+      "fillEmailAndPassword": "Veuillez saisir un nouvel email et votre mot de passe actuel",
+      "emailUpdated": "Email mis à jour",
+      "changeEmailCta": "Changer l'email",
+      "changePassword": "Changer le mot de passe",
+      "newPassword": "Nouveau mot de passe",
+      "fillPasswords": "Veuillez saisir votre mot de passe actuel et le nouveau",
+      "passwordUpdated": "Mot de passe mis à jour",
+      "updatePasswordCta": "Mettre à jour le mot de passe",
+      "deleteAccount": "Supprimer le compte",
+      "deleteIrreversible": "Action irréversible. Votre profil et vos données principales seront supprimés.",
+      "fillPassword": "Veuillez saisir votre mot de passe pour confirmer",
+      "deleteConfirm": "Confirmez-vous la suppression définitive de votre compte ?",
+      "deleted": "Compte supprimé",
+      "deleteAccountCta": "Supprimer mon compte"
+    },
+    "goals": {
+      "title": "Objectifs fitness",
+      "mainGoal": "Objectif principal",
+      "activityLevel": "Niveau d'activité"
+    },
+    "equipment": {
+      "title": "Équipement disponible",
+      "location": "Lieu d'entraînement",
+      "homeEquipmentTitle": "Équipement à domicile"
+    },
+    "nutrition": {
+      "title": "Préférences nutritionnelles",
+      "dietType": "Type de régime",
+      "cookingTime": "Temps de cuisine"
+    },
+    "save": "Sauvegarder les modifications"
   },
   "ia": {
     "title": "IA+ Avancée",
@@ -104,7 +168,7 @@
         "desc": "Générez des recettes avec vos ingrédients"
       },
       "budget": {
-        "title": "Recettes Économiques",
+        "title": "Recettes Éco",
         "desc": "Planifiez vos repas selon votre budget"
       },
       "insights": {

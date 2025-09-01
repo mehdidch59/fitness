@@ -79,7 +79,7 @@ function SettingsView() {
   // Hook pour gérer les changements non sauvegardés
   const { navigateWithConfirmation } = useUnsavedChanges(
     hasUnsavedChanges,
-    'Vous avez des modifications non sauvegardées dans vos paramètres. Voulez-vous vraiment quitter ?'
+    t('settings.unsavedLeaveWarning', 'Vous avez des modifications non sauvegardées dans vos paramètres. Voulez-vous vraiment quitter ?')
   );
 
   // Charger les données existantes
@@ -193,7 +193,7 @@ function SettingsView() {
     // Nettoyer les données temporaires du formulaire
     clearSavedData();
 
-    actions.setSearchStatus('Paramètres sauvegardés !');
+    actions.setSearchStatus(t('settings.saved', 'Paramètres sauvegardés !'));
 
     // Retourner au profil après 1 seconde
     setTimeout(() => {
@@ -202,10 +202,10 @@ function SettingsView() {
   };
 
   const tabs = [
-    { id: 'profile', label: 'Profil', icon: User },
-    { id: 'goals', label: 'Objectifs', icon: Target },
-    { id: 'equipment', label: 'Équipement', icon: Dumbbell },
-    { id: 'nutrition', label: 'Nutrition', icon: Apple }
+    { id: 'profile', label: t('settings.tabs.profile', 'Profil'), icon: User },
+    { id: 'goals', label: t('settings.tabs.goals', 'Objectifs'), icon: Target },
+    { id: 'equipment', label: t('settings.tabs.equipment', 'Équipement'), icon: Dumbbell },
+    { id: 'nutrition', label: t('settings.tabs.nutrition', 'Nutrition'), icon: Apple }
   ];
 
   return (
@@ -255,79 +255,79 @@ function SettingsView() {
             <h3 className="text-xl font-bold mb-4">{t('settings.personalInfo', 'Informations personnelles')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
-                label="Prénom"
+                label={t('settings.form.firstName', 'Prénom')}
                 value={formData.firstName}
                 onChange={(value) => handleInputChange('firstName', value)}
-                placeholder="John"
+                placeholder={t('settings.form.firstNamePlaceholder', 'John')}
               />
               <Input
-                label="Nom"
+                label={t('settings.form.lastName', 'Nom')}
                 value={formData.lastName}
                 onChange={(value) => handleInputChange('lastName', value)}
-                placeholder="Doe"
+                placeholder={t('settings.form.lastNamePlaceholder', 'Doe')}
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
-                label="Âge"
+                label={t('settings.form.age', 'Âge')}
                 type="number"
                 value={formData.age}
                 onChange={(value) => handleInputChange('age', value)}
-                placeholder="25"
+                placeholder={t('settings.form.agePlaceholder', '25')}
               />
               <Input
-                label="Genre"
+                label={t('settings.form.gender', 'Genre')}
                 type="select"
                 value={formData.gender}
                 onChange={(value) => handleInputChange('gender', value)}
                 options={[
-                  { value: 'male', label: 'Homme' },
-                  { value: 'female', label: 'Femme' }
+                  { value: 'male', label: t('profile.gender.male', 'Homme') },
+                  { value: 'female', label: t('profile.gender.female', 'Femme') }
                 ]}
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
-                label="Poids (kg)"
+                label={t('auth.weight', 'Poids (kg)')}
                 type="number"
                 value={formData.weight}
                 onChange={(value) => handleInputChange('weight', value)}
-                placeholder="70"
+                placeholder={t('settings.form.weightPlaceholder', '70')}
               />
               <Input
-                label="Taille (cm)"
+                label={t('auth.height', 'Taille (cm)')}
                 type="number"
                 value={formData.height}
                 onChange={(value) => handleInputChange('height', value)}
-                placeholder="175"
+                placeholder={t('settings.form.heightPlaceholder', '175')}
               />
             </div>
 
             <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-              <h3 className="text-xl font-bold mb-4">{t('settings.account', 'Compte')}</h3>
+              <h3 className="text-xl font-bold mb-4">{t('settings.accountSection', 'Compte')}</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Input
-                    label="Email actuel"
+                    label={t('settings.account.currentEmail', 'Email actuel')}
                     value={accountEmail}
                     onChange={setAccountEmail}
-                    placeholder="email@exemple.com"
+                    placeholder={t('settings.account.emailPlaceholder', 'email@exemple.com')}
                     disabled
                   />
-                  {!user?.emailVerified && (
+                  {!user?.emailVerified ? (
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-orange-700 dark:text-orange-200 bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded">Email non vérifié</span>
+                      <span className="text-sm text-orange-700 dark:text-orange-200 bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded">{t('settings.account.emailUnverified', 'Email non vérifié')}</span>
                       <button
                         onClick={async () => {
                           setAccountLoading(true);
                           try {
                             await authService.sendVerificationEmail();
-                            actions.setSearchStatus('Email de vérification envoyé');
+                            actions.setSearchStatus(t('settings.account.verificationSent', 'Email de vérification envoyé'));
                           } catch (e) {
-                            actions.setSearchStatus(`Erreur: ${e.message}`);
+                            actions.setSearchStatus(`${t('settings.errorPrefix', 'Erreur')}: ${e.message}`);
                           } finally {
                             setAccountLoading(false);
                           }
@@ -335,32 +335,36 @@ function SettingsView() {
                         className="text-sm px-3 py-2 rounded bg-purple-600 hover:bg-purple-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white disabled:opacity-50"
                         disabled={accountLoading}
                       >
-                        Vérifier mon email
+                        {t('settings.account.verifyEmail', 'Vérifier mon email')}
                       </button>
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      <span className="text-sm text-green-800 dark:text-green-200 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">{t('settings.account.emailVerified', 'Email vérifié')}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm font-medium mb-2">Changer l'email</p>
+                  <p className="text-sm font-medium mb-2">{t('settings.account.changeEmail', "Changer l'email")}</p>
                   <div className="grid grid-cols-1 gap-2">
-                    <Input label="Nouvel email" value={newEmail} onChange={setNewEmail} placeholder="nouvel.email@exemple.com" />
-                    <Input label="Mot de passe actuel" type="password" value={currentPasswordForEmail} onChange={setCurrentPasswordForEmail} placeholder="••••••••" />
+                    <Input label={t('settings.account.newEmail', 'Nouvel email')} value={newEmail} onChange={setNewEmail} placeholder={t('settings.account.newEmailPlaceholder', 'nouvel.email@exemple.com')} />
+                    <Input label={t('settings.account.currentPassword', 'Mot de passe actuel')} type="password" value={currentPasswordForEmail} onChange={setCurrentPasswordForEmail} placeholder="••••••••" />
                     <button
                       onClick={async () => {
                         if (!newEmail || !currentPasswordForEmail) {
-                          actions.setSearchStatus('Veuillez saisir un nouvel email et votre mot de passe actuel');
+                          actions.setSearchStatus(t('settings.account.fillEmailAndPassword', 'Veuillez saisir un nouvel email et votre mot de passe actuel'));
                           return;
                         }
                         setAccountLoading(true);
                         try {
                           await authService.changeEmail(newEmail, currentPasswordForEmail);
-                          actions.setSearchStatus('Email mis à jour');
+                          actions.setSearchStatus(t('settings.account.emailUpdated', 'Email mis à jour'));
                           setAccountEmail(newEmail);
                           setNewEmail('');
                           setCurrentPasswordForEmail('');
                         } catch (e) {
-                          actions.setSearchStatus(`Erreur: ${e.message}`);
+                          actions.setSearchStatus(`${t('settings.errorPrefix', 'Erreur')}: ${e.message}`);
                         } finally {
                           setAccountLoading(false);
                         }
@@ -368,7 +372,7 @@ function SettingsView() {
                       className="mt-2 px-3 py-2 rounded bg-gray-800 text-white hover:bg-black disabled:opacity-50"
                       disabled={accountLoading}
                     >
-                      Changer l'email
+                      {t('settings.account.changeEmailCta', "Changer l'email")}
                     </button>
                   </div>
                 </div>
@@ -376,23 +380,23 @@ function SettingsView() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm font-medium mb-2">Changer le mot de passe</p>
-                  <Input label="Mot de passe actuel" type="password" value={currentPasswordForPwd} onChange={setCurrentPasswordForPwd} placeholder="••••••••" />
-                  <Input label="Nouveau mot de passe" type="password" value={newPassword} onChange={setNewPassword} placeholder="••••••••" />
+                  <p className="text-sm font-medium mb-2">{t('settings.account.changePassword', 'Changer le mot de passe')}</p>
+                  <Input label={t('settings.account.currentPassword', 'Mot de passe actuel')} type="password" value={currentPasswordForPwd} onChange={setCurrentPasswordForPwd} placeholder="••••••••" />
+                  <Input label={t('settings.account.newPassword', 'Nouveau mot de passe')} type="password" value={newPassword} onChange={setNewPassword} placeholder="••••••••" />
                   <button
                     onClick={async () => {
                       if (!currentPasswordForPwd || !newPassword) {
-                        actions.setSearchStatus('Veuillez saisir votre mot de passe actuel et le nouveau');
+                        actions.setSearchStatus(t('settings.account.fillPasswords', 'Veuillez saisir votre mot de passe actuel et le nouveau'));
                         return;
                       }
                       setAccountLoading(true);
                       try {
                         await authService.changePassword(currentPasswordForPwd, newPassword);
-                        actions.setSearchStatus('Mot de passe mis à jour');
+                        actions.setSearchStatus(t('settings.account.passwordUpdated', 'Mot de passe mis à jour'));
                         setCurrentPasswordForPwd('');
                         setNewPassword('');
                       } catch (e) {
-                        actions.setSearchStatus(`Erreur: ${e.message}`);
+                        actions.setSearchStatus(`${t('settings.errorPrefix', 'Erreur')}: ${e.message}`);
                       } finally {
                         setAccountLoading(false);
                       }
@@ -400,28 +404,28 @@ function SettingsView() {
                     className="mt-2 px-3 py-2 rounded bg-gray-800 text-white hover:bg-black disabled:opacity-50"
                     disabled={accountLoading}
                   >
-                    Changer le mot de passe
+                    {t('settings.account.updatePasswordCta', 'Mettre à jour le mot de passe')}
                   </button>
                 </div>
 
                 <div className="bg-red-50 p-4 rounded-xl border border-red-200">
-                  <p className="text-sm font-semibold mb-2 text-red-800">Supprimer le compte</p>
-                  <p className="text-xs text-red-700 mb-3">Action irréversible. Votre profil et vos données principales seront supprimés.</p>
-                  <Input label="Mot de passe actuel" type="password" value={currentPasswordForDelete} onChange={setCurrentPasswordForDelete} placeholder="••••••••" />
+                  <p className="text-sm font-semibold mb-2 text-red-800">{t('settings.account.deleteAccount', 'Supprimer le compte')}</p>
+                  <p className="text-xs text-red-700 mb-3">{t('settings.account.deleteIrreversible', 'Action irréversible. Votre profil et vos données principales seront supprimés.')}</p>
+                  <Input label={t('settings.account.currentPassword', 'Mot de passe actuel')} type="password" value={currentPasswordForDelete} onChange={setCurrentPasswordForDelete} placeholder="••••••••" />
                   <button
                     onClick={async () => {
                       if (!currentPasswordForDelete) {
-                        actions.setSearchStatus('Veuillez saisir votre mot de passe pour confirmer');
+                        actions.setSearchStatus(t('settings.account.fillPassword', 'Veuillez saisir votre mot de passe pour confirmer'));
                         return;
                       }
-                      if (!window.confirm('Confirmez-vous la suppression définitive de votre compte ?')) return;
+                      if (!window.confirm(t('settings.account.deleteConfirm', 'Confirmez-vous la suppression définitive de votre compte ?'))) return;
                       setAccountLoading(true);
                       try {
                         await authService.deleteAccount(currentPasswordForDelete);
-                        actions.setSearchStatus('Compte supprimé');
+                        actions.setSearchStatus(t('settings.account.deleted', 'Compte supprimé'));
                         navigate('/auth');
                       } catch (e) {
-                        actions.setSearchStatus(`Erreur: ${e.message}`);
+                        actions.setSearchStatus(`${t('settings.errorPrefix', 'Erreur')}: ${e.message}`);
                       } finally {
                         setAccountLoading(false);
                       }
@@ -429,7 +433,7 @@ function SettingsView() {
                     className="mt-2 px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 w-full"
                     disabled={accountLoading}
                   >
-                    Supprimer mon compte
+                    {t('settings.account.deleteAccountCta', 'Supprimer mon compte')}
                   </button>
                 </div>
               </div>
@@ -456,30 +460,30 @@ function SettingsView() {
 
         {activeTab === 'goals' && (
           <>
-            <h3 className="text-xl font-bold mb-4">Objectifs fitness</h3>
+            <h3 className="text-xl font-bold mb-4">{t('settings.goals.title', 'Objectifs fitness')}</h3>
             <Input
-              label="Objectif principal"
+              label={t('settings.goals.mainGoal', 'Objectif principal')}
               type="select"
               value={formData.goal}
               onChange={(value) => handleInputChange('goal', value)}
               options={[
-                { value: 'lose_weight', label: 'Perdre du poids' },
-                { value: 'gain_muscle', label: 'Prendre du muscle' },
-                { value: 'maintain', label: 'Maintenir ma forme' }
+                { value: 'lose_weight', label: t('profile.goalLabels.lose_weight', 'Perdre du poids') },
+                { value: 'gain_muscle', label: t('profile.goalLabels.gain_muscle', 'Prendre du muscle') },
+                { value: 'maintain', label: t('profile.goalLabels.maintain', 'Maintenir ma forme') }
               ]}
             />
 
             <Input
-              label="Niveau d'activité"
+              label={t('settings.goals.activityLevel', "Niveau d'activité")}
               type="select"
               value={formData.activityLevel}
               onChange={(value) => handleInputChange('activityLevel', value)}
               options={[
-                { value: 'sedentary', label: 'Sédentaire' },
-                { value: 'light', label: 'Léger (1-3 fois/sem)' },
-                { value: 'moderate', label: 'Modéré (3-5 fois/sem)' },
-                { value: 'active', label: 'Actif (6-7 fois/sem)' },
-                { value: 'very_active', label: 'Très actif' }
+                { value: 'sedentary', label: t('profile.activityLabels.sedentary', 'Sédentaire') },
+                { value: 'light', label: t('profile.activityLabels.light', 'Léger (1-3 fois/sem)') },
+                { value: 'moderate', label: t('profile.activityLabels.moderate', 'Modéré (3-5 fois/sem)') },
+                { value: 'active', label: t('profile.activityLabels.active', 'Actif (6-7 fois/sem)') },
+                { value: 'very_active', label: t('profile.activityLabels.very_active', 'Très actif') }
               ]}
             />
           </>
@@ -487,23 +491,23 @@ function SettingsView() {
 
         {activeTab === 'equipment' && (
           <>
-            <h3 className="text-xl font-bold mb-4">Équipement disponible</h3>
+            <h3 className="text-xl font-bold mb-4">{t('settings.equipment.title', 'Équipement disponible')}</h3>
             <Input
-              label="Lieu d'entraînement"
+              label={t('settings.equipment.location', "Lieu d'entraînement")}
               type="select"
               value={formData.location}
               onChange={(value) => handleInputChange('location', value)}
               options={[
-                { value: 'home', label: 'À la maison' },
-                { value: 'gym', label: 'En salle' },
-                { value: 'both', label: 'Les deux' }
+                { value: 'home', label: t('questionnaire.location.home', 'À la maison') },
+                { value: 'gym', label: t('questionnaire.location.gym', 'En salle') },
+                { value: 'both', label: t('questionnaire.location.both', 'Les deux') }
               ]}
             />
 
             {(formData.location === 'home' || formData.location === 'both') && (
               <>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Équipement à domicile
+                  {t('settings.equipment.homeEquipmentTitle', 'Équipement à domicile')}
                 </label>
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -518,14 +522,14 @@ function SettingsView() {
                           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:border-purple-200 dark:hover:border-purple-400/50'
                         }`}
                 >
-                      {equipment === 'dumbbells' && 'Haltères'}
-                      {equipment === 'kettlebell' && 'Kettlebell'}
-                      {equipment === 'resistanceBands' && 'Bandes élastiques'}
-                      {equipment === 'pullupBar' && 'Barre de traction'}
-                      {equipment === 'bench' && 'Banc'}
-                      {equipment === 'yoga' && 'Tapis yoga'}
-                      {equipment === 'jumpRope' && 'Corde à sauter'}
-                      {equipment === 'foam' && 'Rouleau massage'}
+                      {equipment === 'dumbbells' && t('questionnaire.equipment.dumbbells', 'Haltères')}
+                      {equipment === 'kettlebell' && t('questionnaire.equipment.kettlebell', 'Kettlebell')}
+                      {equipment === 'resistanceBands' && t('questionnaire.equipment.resistanceBands', 'Bandes élastiques')}
+                      {equipment === 'pullupBar' && t('questionnaire.equipment.pullupBar', 'Barre de traction')}
+                      {equipment === 'bench' && t('questionnaire.equipment.bench', 'Banc')}
+                      {equipment === 'yoga' && t('questionnaire.equipment.yoga', 'Tapis yoga')}
+                      {equipment === 'jumpRope' && t('questionnaire.equipment.jumpRope', 'Corde à sauter')}
+                      {equipment === 'foam' && t('questionnaire.equipment.foam', 'Rouleau massage')}
                     </button>
                   ))}
                 </div>
@@ -536,28 +540,28 @@ function SettingsView() {
 
         {activeTab === 'nutrition' && (
           <>
-            <h3 className="text-xl font-bold mb-4">Préférences nutritionnelles</h3>
+            <h3 className="text-xl font-bold mb-4">{t('settings.nutrition.title', 'Préférences nutritionnelles')}</h3>
             <Input
-              label="Type de régime"
+              label={t('settings.nutrition.dietType', 'Type de régime')}
               type="select"
               value={formData.dietType}
               onChange={(value) => handleInputChange('dietType', value)}
               options={[
-                { value: 'omnivore', label: 'Omnivore' },
-                { value: 'vegetarian', label: 'Végétarien' },
-                { value: 'vegan', label: 'Végan' }
+                { value: 'omnivore', label: t('questionnaire.diet.omnivore', 'Omnivore') },
+                { value: 'vegetarian', label: t('questionnaire.diet.vegetarian', 'Végétarien') },
+                { value: 'vegan', label: t('questionnaire.diet.vegan', 'Végan') }
               ]}
             />
 
             <Input
-              label="Temps de cuisine"
+              label={t('settings.nutrition.cookingTime', 'Temps de cuisine')}
               type="select"
               value={formData.cookingTime}
               onChange={(value) => handleInputChange('cookingTime', value)}
               options={[
-                { value: 'quick', label: 'Express (< 15 min)' },
-                { value: 'medium', label: 'Modéré (15-30 min)' },
-                { value: 'long', label: 'J\'aime cuisiner (> 30 min)' }
+                { value: 'quick', label: t('questionnaire.cooking.quick', 'Express (< 15 min)') },
+                { value: 'medium', label: t('questionnaire.cooking.medium', 'Modéré (15-30 min)') },
+                { value: 'long', label: t('questionnaire.cooking.long', "J'aime cuisiner (> 30 min)") }
               ]}
             />
           </>
@@ -568,7 +572,7 @@ function SettingsView() {
         className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6 flex items-center justify-center hover:shadow-md transition-shadow"
       >
         <Save className="mr-2" size={20} />
-        Sauvegarder les modifications
+        {t('settings.save', 'Sauvegarder les modifications')}
       </button>
     </div>
   );

@@ -81,7 +81,71 @@
     "title": "Settings",
     "unsaved": "Unsaved changes",
     "personalInfo": "Personal information",
-    "account": "Account"
+    "account": "Account",
+    "unsavedLeaveWarning": "You have unsaved changes in your settings. Do you really want to leave?",
+    "saved": "Settings saved!",
+    "tabs": {
+      "profile": "Profile",
+      "goals": "Goals",
+      "equipment": "Equipment",
+      "nutrition": "Nutrition"
+    },
+    "form": {
+      "firstName": "First name",
+      "firstNamePlaceholder": "John",
+      "lastName": "Last name",
+      "lastNamePlaceholder": "Doe",
+      "age": "Age",
+      "agePlaceholder": "25",
+      "gender": "Gender",
+      "weightPlaceholder": "70",
+      "heightPlaceholder": "175"
+    },
+    "accountSection": "Account",
+    "accountSaved": "Account updated",
+    "errorPrefix": "Error",
+    "account": {
+      "currentEmail": "Current email",
+      "emailPlaceholder": "email@example.com",
+      "emailUnverified": "Email not verified",
+      "verifyEmail": "Verify my email",
+      "verificationSent": "Verification email sent",
+      "emailVerified": "Email verified",
+      "changeEmail": "Change email",
+      "newEmail": "New email",
+      "newEmailPlaceholder": "new.email@example.com",
+      "currentPassword": "Current password",
+      "fillEmailAndPassword": "Please enter a new email and your current password",
+      "emailUpdated": "Email updated",
+      "changeEmailCta": "Change email",
+      "changePassword": "Change password",
+      "newPassword": "New password",
+      "fillPasswords": "Please enter your current and new password",
+      "passwordUpdated": "Password updated",
+      "updatePasswordCta": "Update password",
+      "deleteAccount": "Delete account",
+      "deleteIrreversible": "Irreversible action. Your profile and main data will be deleted.",
+      "fillPassword": "Please enter your password to confirm",
+      "deleteConfirm": "Do you confirm permanent deletion of your account?",
+      "deleted": "Account deleted",
+      "deleteAccountCta": "Delete my account"
+    },
+    "goals": {
+      "title": "Fitness goals",
+      "mainGoal": "Main goal",
+      "activityLevel": "Activity level"
+    },
+    "equipment": {
+      "title": "Available equipment",
+      "location": "Training location",
+      "homeEquipmentTitle": "Home equipment"
+    },
+    "nutrition": {
+      "title": "Nutrition preferences",
+      "dietType": "Diet type",
+      "cookingTime": "Cooking time"
+    },
+    "save": "Save changes"
   },
   "ia": {
     "title": "Advanced IA+",

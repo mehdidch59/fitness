@@ -64,7 +64,7 @@ function IAView() {
     },
     {
       id: 'budget',
-      title: t('ia.features.budget.title', 'Recettes Économiques'),
+      title: t('ia.features.budget.title', 'Recettes Éco'),
       description: t('ia.features.budget.desc', 'Planifiez vos repas selon votre budget'),
       icon: Target,
       color: 'from-blue-500 to-indigo-500',
@@ -296,8 +296,8 @@ function IAView() {
                   key={feature.id}
                   onClick={() => setActiveFeature(feature.id)}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${isActive
-                      ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200 shadow-sm'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-purple-300 dark:hover:border-purple-400/50 hover:shadow-sm'
+                    ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200 shadow-sm'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-purple-300 dark:hover:border-purple-400/50 hover:shadow-sm'
                     }`}
                 >
                   <div className={`flex items-center mb-2 ${feature.id === 'budget' ? 'gap-4' : 'gap-2'}`}>
@@ -339,9 +339,9 @@ function IAView() {
                   <button
                     onClick={() => handleFeatureAction(feature.id)}
                     disabled={isLoading || !isLoggedIn}
-                    className={`px-8 py-3.5 rounded-xl font-semibold flex items-center gap-4 transition-all ${isLoading || !isLoggedIn
-                        ? 'bg-gray-400 cursor-not-allowed text-white'
-                        : 'bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white hover:from-purple-600 hover:to-pink-600 dark:hover:from-indigo-600 dark:hover:to-violet-700 shadow-lg hover:shadow-xl'
+                    className={`px-6 py-3.5 rounded-xl font-semibold flex items-center transition-all ${isLoading || !isLoggedIn
+                      ? 'bg-gray-400 cursor-not-allowed text-white'
+                      : 'bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white hover:from-purple-600 hover:to-pink-600 dark:hover:from-indigo-600 dark:hover:to-violet-700 shadow-lg hover:shadow-xl'
                       }`}
                   >
                     {isLoading ? (
