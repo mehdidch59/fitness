@@ -1,8 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
+import { persistenceService } from '../services/persistenceService';
 import { useAppContext } from '../context/AppContext';
 import { mistralSearchService } from '../services/mistralIntegration';
 
-const DAY_ORDER = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+function getDayOrder() {
+  try {
+    const lang = persistenceService.loadAppSettings()?.language || 'fr';
+    return lang === 'en'
+      ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+      : ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  } catch { return ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche']; }
+}
 
 /** Validation/tri stricts : aucune complétion ni fallback */
 function normalizeStrict(program) {
@@ -17,6 +25,7 @@ function normalizeStrict(program) {
     if (!w) throw new Error(`normalizeStrict: missing workout for ${day} (${program.id || 'unknown'})`);
     return w;
   });
+  const DAY_ORDER = getDayOrder();
   return {
     ...program,
     workouts: ordered.sort((a,b)=>DAY_ORDER.indexOf(a.day)-DAY_ORDER.indexOf(b.day))

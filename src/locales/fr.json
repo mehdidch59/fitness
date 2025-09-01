@@ -115,6 +115,14 @@
     "mood": {
       "label": "Sélectionnez votre humeur actuelle :"
     },
+    "coach": {
+      "sportHabits": "Vos habitudes sportives",
+      "nutritionHabits": "Vos habitudes nutritionnelles",
+      "sportPlaceholder": "Ex: 3 séances/sem (force + cardio), 45-60min, objectif principal...",
+      "nutritionPlaceholder": "Ex: 3 repas/jour + 1 collation, légumes 1x/jour, ~1,5L eau, sucre le soir...",
+      "generated": "Conseils du coach IA générés !",
+      "error": "Erreur lors de la génération des conseils"
+    },
     "featuresCta": "Fonctionnalités Disponibles",
     "ready": "Prêt à utiliser",
     "help": "Cliquez sur \"Générer\" pour découvrir les recommandations IA personnalisées."
@@ -208,13 +216,102 @@
     "unsaved": "Modifications non sauvegardées",
     "lastSync": "Dernière sync"
   },
+  "welcome": {
+    "title": "Bienvenue dans votre app fitness",
+    "content": "Cette application va vous aider à atteindre vos objectifs fitness avec des programmes personnalisés.",
+    "primary": "Commencer",
+    "secondary": "Compléter mon profil"
+  },
+  "profileIncomplete": {
+    "title": "Complétez votre profil",
+    "content": "Pour une expérience optimale, veuillez compléter votre profil.",
+    "primary": "Compléter maintenant",
+    "secondary": "Plus tard"
+  },
+  "questionnaire": {
+    "title": "Configuration",
+    "whereTrain": "Où vous entraînez-vous ?",
+    "diet": "Votre régime alimentaire ?",
+    "cookingTime": "Temps de cuisine ?",
+    "location": {
+      "home": "🏠 À la maison",
+      "gym": "🏋️ En salle",
+      "both": "🔄 Les deux"
+    },
+    "diet": {
+      "omnivore": "🍖 Omnivore",
+      "vegetarian": "🥗 Végétarien",
+      "vegan": "🌱 Végan"
+    },
+    "cooking": {
+      "quick": "⚡ Express (< 15 min)",
+      "medium": "🕐 Modéré (15-30 min)",
+      "long": "🍳 J'aime cuisiner (> 30 min)"
+    },
+    "homeEquipment": {
+      "title": "Quel équipement avez-vous à la maison ?"
+    },
+    "equipment": {
+      "dumbbells": "Haltères",
+      "kettlebell": "Kettlebell",
+      "resistanceBands": "Bandes élastiques",
+      "pullupBar": "Barre de traction",
+      "bench": "Banc de musculation",
+      "yoga": "Tapis de yoga/fitness",
+      "jumpRope": "Corde à sauter",
+      "foam": "Rouleau de massage"
+    },
+    "skip": "Passer",
+    "save": "Enregistrer",
+    "skipThis": "Passer cette question",
+    "authRequired": "Connexion requise",
+    "authMessage": "Vous devez être connecté pour effectuer le questionnaire de configuration.",
+    "done": "Configuration terminée !",
+    "debug": {
+      "question": "Question",
+      "type": "Type",
+      "field": "Champ",
+      "selected": "Sélectionnés",
+      "items": "équipements"
+    }
+  },
   "profile": {
     "title": "Mon Profil",
     "years": "ans",
     "height": "Taille",
     "weight": "Poids",
     "bmi": "IMC",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "goalLabel": "Objectif",
+    "activityLevelLabel": "Niveau d'activité",
+    "completeTitle": "Complétez votre profil",
+    "completeDesc": "Pour calculer votre IMC et personnaliser votre expérience",
+    "openSettings": "Ouvrir les paramètres",
+    "goalLabels": {
+      "lose_weight": "Perdre du poids",
+      "gain_muscle": "Prendre du muscle",
+      "maintain": "Maintenir ma forme"
+    },
+    "activityLabels": {
+      "sedentary": "Sédentaire",
+      "light": "Léger (1-3 fois/sem)",
+      "moderate": "Modéré (3-5 fois/sem)",
+      "active": "Actif (6-7 fois/sem)",
+      "very_active": "Très actif"
+    },
+    "gender": {
+      "male": "Homme",
+      "female": "Femme"
+    },
+    "bmiCategory": {
+      "unknown": "Non calculé",
+      "underweight": "Insuffisance pondérale",
+      "normal": "Corpulence normale",
+      "overweight": "Surpoids",
+      "obese1": "Obésité modérée",
+      "obese2": "Obésité sévère",
+      "obese3": "Obésité morbide"
+    }
   },
   "nutrition": {
     "error": {
@@ -234,9 +331,23 @@
     "fats": "Lipides",
     "minutes": "min",
     "servings": "portion",
+    "servingsPlural": "portions",
     "easy": "Facile",
     "massGainScore": "Score Prise de Masse",
     "ingredients": "Ingrédients",
-    "noIngredients": "Ingrédients non spécifiés"
+    "noIngredients": "Ingrédients non spécifiés",
+    "aiRecipe": "Recette IA",
+    "clickToViewDetails": "Cliquez pour voir détails",
+    "newRecipes": "Nouvelles Recettes",
+    "reload": "Recharger",
+    "noFavorites": "Aucune recette en favoris",
+    "discoverRecipes": "Découvrir des recettes",
+    "noRecipesFound": "Aucune recette trouvée",
+    "loginToStart": "Se connecter pour commencer",
+    "reloadRecipes": "Recharger les recettes",
+    "loginToGeneratePlan": "Connectez-vous pour générer un plan nutritionnel",
+    "generatingPlan": "Génération plan nutritionnel...",
+    "generatePlanCtaTitle": "Génération Plan Nutritionnel",
+    "generatePlanCtaSubtitle": "🥗 Menus • Recettes • Répartition macros • Planning hebdomadaire"
   }
 }

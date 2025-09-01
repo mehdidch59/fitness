@@ -72,13 +72,13 @@ function HomeView() {
       </div>
 
       <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white p-6 rounded-2xl shadow-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
             <Calendar className="mb-3 text-purple-500" size={28} />
             <p className="text-sm text-gray-600">{t('home.sessions', 'Séances')}</p>
             <p className="text-3xl font-bold">{workoutPrograms ? workoutPrograms.length : 0}</p>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-lg">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
             <Search className="mb-3 text-blue-500" size={28} />
             <p className="text-sm text-gray-600">{t('home.searches', 'Recherches IA')}</p>
             <p className="text-3xl font-bold">{nutritionPlans ? nutritionPlans.length : 0}</p>
@@ -119,7 +119,7 @@ function HomeView() {
 
         <div className="space-y-4">
         {(!equipmentProfile.location || !nutritionProfile.dietType) && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-yellow-200 dark:border-yellow-700">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-700">
             <Settings className="mx-auto mb-3 text-yellow-500" size={32} />
             <h3 className="font-semibold text-center mb-4">{t('home.required', 'Configuration requise')}</h3>
             <button
@@ -130,7 +130,7 @@ function HomeView() {
                 }
                 navigate('/settings');
               }}
-              className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:from-yellow-600 hover:to-red-600 active:scale-95 transition-all duration-200"
+              className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-md hover:from-yellow-600 hover:to-red-600 active:scale-95 transition-all duration-200"
             >
               {t('home.openSettings', 'Ouvrir les paramètres')}
             </button>

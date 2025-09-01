@@ -245,6 +245,94 @@ class PersonalAICoachService {
     }
   }
 
+  /**
+   * Nouveau: Génère des conseils personnalisés à partir d'habitudes saisies par l'utilisateur
+   */
+  async generateCoachingFromHabits(userId, userProfile = {}, habits = {}, locale = 'fr') {
+    try {
+      const profile = await this.getUserProfile(userId);
+      const mergedProfile = { ...profile, ...userProfile };
+      const lang = (locale || 'fr').startsWith('en') ? 'en' : 'fr';
+
+      const sysIntro = lang === 'en'
+        ? 'You are an experienced fitness and nutrition coach. Produce concise, practical, safe advice.'
+        : 'Tu es un coach expert en musculation et nutrition. Fournis des conseils concis, pratiques et sûrs.';
+
+      const prompt = `${sysIntro}\n\n` +
+        `${lang === 'en' ? 'USER PROFILE' : 'PROFIL UTILISATEUR'}: ${JSON.stringify(mergedProfile)}\n` +
+        `${lang === 'en' ? 'HABITS (free text by user)' : 'HABITUDES (texte libre de l\'utilisateur)'}: ${JSON.stringify(habits)}\n\n` +
+        `${lang === 'en' ? 'TASK' : 'TÂCHE'}: ` +
+        (lang === 'en'
+          ? 'Analyze the habits, then return STRICT JSON with the following fields. Keep advice realistic and tailored to the profile. Use the same language as above.'
+          : 'Analyse les habitudes, puis renvoie UNIQUEMENT un JSON STRICT avec les champs ci-dessous. Donne des conseils réalistes, adaptés au profil. Réponds en français.') +
+        `\n\n\`\`\`json\n{
+  "personalizedMessage": "${lang === 'en' ? 'Short supportive intro' : 'Courte introduction motivante'}",
+  "actionPlan": [
+    { "action": "...", "why": "...", "when": "${lang === 'en' ? 'this week' : 'cette semaine'}" },
+    { "action": "...", "why": "...", "when": "${lang === 'en' ? 'today' : 'aujourd\'hui'}" }
+  ],
+  "training": [
+    { "tip": "..." },
+    { "tip": "..." }
+  ],
+  "nutrition": [
+    { "tip": "..." },
+    { "tip": "..." }
+  ]
+}\n\`\`\`\n\n${lang === 'en' ? 'IMPORTANT: Return ONLY the JSON, no extra text.' : 'IMPORTANT: Retourne UNIQUEMENT le JSON, sans texte supplémentaire.'}`;
+
+      let content;
+      try {
+        content = await mistralService.callMistralAPI(prompt);
+      } catch (e) {
+        console.warn('Coach IA: fallback local (API error):', e?.message || e);
+      }
+
+      if (content) {
+        try {
+          const parsed = JSON.parse(content);
+          // Normalisation minimale
+          parsed.personalizedMessage = parsed.personalizedMessage || '';
+          parsed.actionPlan = Array.isArray(parsed.actionPlan) ? parsed.actionPlan : [];
+          return parsed;
+        } catch (e) {
+          console.warn('Coach IA: parse error, fallback local');
+        }
+      }
+
+      // Fallback local simple si l'API échoue
+      const fallbackMsg = lang === 'en'
+        ? 'Let’s build steady habits. Here is a simple, tailored plan to start today.'
+        : 'Construisons des habitudes régulières. Voici un plan simple et adapté pour démarrer dès aujourd\'hui.';
+      return {
+        personalizedMessage: fallbackMsg,
+        actionPlan: [
+          {
+            action: lang === 'en' ? 'Add 1 portion of vegetables at lunch and dinner' : 'Ajoute 1 portion de légumes au déjeuner et au dîner',
+            why: lang === 'en' ? 'Fiber and micronutrients improve energy and satiety' : 'Les fibres et micronutriments améliorent énergie et satiété',
+            when: lang === 'en' ? 'this week' : 'cette semaine'
+          },
+          {
+            action: lang === 'en' ? '3 workouts/week: 2 strength + 1 cardio (20–30 min)' : '3 séances/sem : 2 force + 1 cardio (20–30 min)',
+            why: lang === 'en' ? 'Balanced approach for health and body composition' : 'Approche équilibrée pour la santé et la composition corporelle',
+            when: lang === 'en' ? 'starting today' : 'dès aujourd\'hui'
+          }
+        ],
+        training: [
+          { tip: lang === 'en' ? 'Progressively increase loads (1–2 reps or +2.5kg each week)' : 'Augmente progressivement les charges (1–2 reps ou +2,5kg par semaine)' },
+          { tip: lang === 'en' ? 'Sleep 7–8h; recovery is key' : 'Dors 7–8h ; la récupération est clé' }
+        ],
+        nutrition: [
+          { tip: lang === 'en' ? 'Aim for 1.2–1.6g protein/kg/day' : 'Vise 1,2–1,6g de protéines/kg/jour' },
+          { tip: lang === 'en' ? 'Drink ~2L water/day; more if training' : 'Bois ~2L d\'eau/jour ; plus si entraînement' }
+        ]
+      };
+    } catch (error) {
+      console.error('❌ Coach IA (habits) error:', error);
+      throw error;
+    }
+  }
+
   // === MÉTHODES UTILITAIRES ===
 
   async getMealHistory(userId, timeframe) {

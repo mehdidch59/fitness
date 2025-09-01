@@ -439,19 +439,6 @@ function SettingsView() {
               <h3 className="text-xl font-bold mb-4">{t('settings.preferences', 'Préférences de l\'application')}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.theme', 'Thème')}</label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setAppTheme('light')}
-                      className={`px-3 py-2 rounded-lg border ${appTheme === 'light' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-800 border-gray-300'}`}
-                    >{t('settings.themeLight', 'Clair')}</button>
-                    <button
-                      onClick={() => setAppTheme('dark')}
-                      className={`px-3 py-2 rounded-lg border ${appTheme === 'dark' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-300'}`}
-                    >{t('settings.themeDark', 'Sombre')}</button>
-                  </div>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.language', 'Langue')}</label>
                   <select
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"

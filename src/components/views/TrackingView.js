@@ -9,43 +9,16 @@ import { useI18n } from '../../utils/i18n';
 function TrackingView() {
   const { stats } = useAppContext();
   const { isAuthenticated } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
-  // Générer des données fictives pour le graphique
+  // Données de graphique cohérentes (pas de valeurs aléatoires)
   const chartData = Array.from({ length: 7 }, (_, i) => ({
-    date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR', { weekday: 'short' }),
-    activité: Math.floor(Math.random() * 3)
+    date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(locale || 'fr-FR', { weekday: 'short' }),
+    activité: 0
   }));
 
-  // Générer un historique fictif
-  const generateHistory = () => {
-    const history = [];
-    const today = new Date();
-    
-    for (let i = 0; i < 5; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const dateStr = date.toLocaleDateString('fr-FR');
-      
-      if (i % 2 === 0) {
-        history.push({
-          type: 'workout',
-          date: dateStr,
-          source: 'Programme personnalisé'
-        });
-      } else {
-        history.push({
-          type: 'nutrition',
-          date: dateStr,
-          source: 'Plan nutritionnel'
-        });
-      }
-    }
-    
-    return history;
-  };
-  
-  const activityHistory = generateHistory();
+  // Pas d'historique fictif: laisser vide si aucune activité
+  const activityHistory = [];
 
   if (!isAuthenticated) {
     return (
@@ -68,7 +41,7 @@ function TrackingView() {
     <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
       <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">{t('tracking.title', 'Statistiques')}</h2>
 
-      <div className="grid grid-cols-2 gap-4 mb-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 max-w-5xl mx-auto">
         <div className="bg-gradient-to-br from-purple-500 to-pink-500 dark:from-indigo-600 dark:to-violet-700 text-white p-6 rounded-2xl">
           <Activity className="mb-3" size={28} />
           <p className="text-sm opacity-90">{t('tracking.sessions', 'Séances')}</p>

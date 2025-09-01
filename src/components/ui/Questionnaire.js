@@ -5,6 +5,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../../utils/i18n';
 
 function Questionnaire() {
   const { questionnaireStep, equipmentProfile, nutritionProfile, actions } = useAppContext();
@@ -12,6 +13,7 @@ function Questionnaire() {
   const navigate = useNavigate();
   const [selectedEquipment, setSelectedEquipment] = useState([]);
   const [showEquipmentQuestion, setShowEquipmentQuestion] = useState(false);
+  const { t } = useI18n();
 
   // Réinitialiser les équipements sélectionnés lorsque le questionnaire se ferme
   useEffect(() => {
@@ -72,32 +74,32 @@ function Questionnaire() {
     // Questions de base
     const baseQuestions = [
       {
-        title: "Où vous entraînez-vous ?",
+        title: t('questionnaire.whereTrain', 'Où vous entraînez-vous ?'),
         field: 'location',
         options: [
-          { value: 'home', label: '🏠 À la maison' },
-          { value: 'gym', label: '🏋️ En salle' },
-          { value: 'both', label: '🔄 Les deux' }
+          { value: 'home', label: t('questionnaire.location.home', '🏠 À la maison') },
+          { value: 'gym', label: t('questionnaire.location.gym', '🏋️ En salle') },
+          { value: 'both', label: t('questionnaire.location.both', '🔄 Les deux') }
         ],
         targetProfile: 'equipmentProfile'
       },
       {
-        title: "Votre régime alimentaire ?",
+        title: t('questionnaire.diet', 'Votre régime alimentaire ?'),
         field: 'dietType',
         options: [
-          { value: 'omnivore', label: '🍖 Omnivore' },
-          { value: 'vegetarian', label: '🥗 Végétarien' },
-          { value: 'vegan', label: '🌱 Végan' }
+          { value: 'omnivore', label: t('questionnaire.diet.omnivore', '🍖 Omnivore') },
+          { value: 'vegetarian', label: t('questionnaire.diet.vegetarian', '🥗 Végétarien') },
+          { value: 'vegan', label: t('questionnaire.diet.vegan', '🌱 Végan') }
         ],
         targetProfile: 'nutritionProfile'
       },
       {
-        title: "Temps de cuisine ?",
+        title: t('questionnaire.cookingTime', 'Temps de cuisine ?'),
         field: 'cookingTime',
         options: [
-          { value: 'quick', label: '⚡ Express (< 15 min)' },
-          { value: 'medium', label: '🕐 Modéré (15-30 min)' },
-          { value: 'long', label: '🍳 J\'aime cuisiner (> 30 min)' }
+          { value: 'quick', label: t('questionnaire.cooking.quick', '⚡ Express (< 15 min)') },
+          { value: 'medium', label: t('questionnaire.cooking.medium', '🕐 Modéré (15-30 min)') },
+          { value: 'long', label: t('questionnaire.cooking.long', '🍳 J\'aime cuisiner (> 30 min)') }
         ],
         targetProfile: 'nutritionProfile'
       }
@@ -106,18 +108,18 @@ function Questionnaire() {
     // Ajouter conditionnellement la question d'équipement
     if (showEquipmentQuestion) {
       const equipmentQuestion = {
-        title: "Quel équipement avez-vous à la maison ?",
+        title: t('questionnaire.homeEquipment.title', 'Quel équipement avez-vous à la maison ?'),
         field: 'homeEquipment',
         type: 'multiselect',
         options: [
-          { value: 'dumbbells', label: 'Haltères' },
-          { value: 'kettlebell', label: 'Kettlebell' },
-          { value: 'resistanceBands', label: 'Bandes élastiques' },
-          { value: 'pullupBar', label: 'Barre de traction' },
-          { value: 'bench', label: 'Banc de musculation' },
-          { value: 'yoga', label: 'Tapis de yoga/fitness' },
-          { value: 'jumpRope', label: 'Corde à sauter' },
-          { value: 'foam', label: 'Rouleau de massage' }
+          { value: 'dumbbells', label: t('questionnaire.equipment.dumbbells', 'Haltères') },
+          { value: 'kettlebell', label: t('questionnaire.equipment.kettlebell', 'Kettlebell') },
+          { value: 'resistanceBands', label: t('questionnaire.equipment.resistanceBands', 'Bandes élastiques') },
+          { value: 'pullupBar', label: t('questionnaire.equipment.pullupBar', 'Barre de traction') },
+          { value: 'bench', label: t('questionnaire.equipment.bench', 'Banc de musculation') },
+          { value: 'yoga', label: t('questionnaire.equipment.yoga', 'Tapis de yoga/fitness') },
+          { value: 'jumpRope', label: t('questionnaire.equipment.jumpRope', 'Corde à sauter') },
+          { value: 'foam', label: t('questionnaire.equipment.foam', 'Rouleau de massage') }
         ],
         targetProfile: 'equipmentProfile'
       };
@@ -184,7 +186,7 @@ function Questionnaire() {
       actions.setQuestionnaireStep(questionnaireStep + 1);
     } else {      // Terminer le questionnaire
       actions.completeQuestionnaire();
-      actions.setSearchStatus('Configuration terminée !');
+      actions.setSearchStatus(t('questionnaire.done', 'Configuration terminée !'));
       console.log('🎉 Questionnaire terminé !');
       console.log('📊 EquipmentProfile final:', equipmentProfile);
       console.log('🍽️ NutritionProfile final:', nutritionProfile);
@@ -208,9 +210,9 @@ function Questionnaire() {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl text-center">
-          <h3 className="text-2xl font-bold mb-2">Connexion requise</h3>
+          <h3 className="text-2xl font-bold mb-2">{t('questionnaire.authRequired', 'Connexion requise')}</h3>
           <p className="text-gray-600 mb-6">
-            Vous devez être connecté pour effectuer le questionnaire de configuration.
+            {t('questionnaire.authMessage', 'Vous devez être connecté pour effectuer le questionnaire de configuration.')}
           </p>
           <div className="flex gap-3">
             <button
@@ -219,7 +221,7 @@ function Questionnaire() {
               }}
               className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-2xl font-semibold hover:bg-gray-300 transition-colors"
             >
-              Fermer
+              {t('common.back', 'Retour')}
             </button>
             <button
               onClick={() => {
@@ -228,7 +230,7 @@ function Questionnaire() {
               }}
               className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-3 rounded-2xl font-semibold"
             >
-              Se connecter
+              {t('common.login', 'Se connecter')}
             </button>
           </div>
         </div>
@@ -239,7 +241,7 @@ function Questionnaire() {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
-        <h3 className="text-2xl font-bold mb-6 text-center">Configuration</h3>
+        <h3 className="text-2xl font-bold mb-6 text-center">{t('questionnaire.title', 'Configuration')}</h3>
 
         <div className="bg-gray-200 rounded-full h-2 mb-6">
           <div
@@ -278,14 +280,14 @@ function Questionnaire() {
                 onClick={handleSkip}
                 className="flex-1 bg-gray-200 text-gray-700 py-4 rounded-2xl font-semibold text-lg hover:bg-gray-300 transition-colors"
               >
-                Passer
+                {t('questionnaire.skip', 'Passer')}
               </button>
               <button
                 onClick={handleEquipmentSave}
                 className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-2xl font-semibold text-lg"
                 disabled={selectedEquipment.length === 0}
               >
-                Enregistrer {selectedEquipment.length > 0 && `(${selectedEquipment.length})`}
+                {t('questionnaire.save', 'Enregistrer')} {selectedEquipment.length > 0 && `(${selectedEquipment.length})`}
               </button>
             </div>
           </>
@@ -307,7 +309,7 @@ function Questionnaire() {
               onClick={handleSkip}
               className="w-full bg-gray-300 text-gray-700 py-3 rounded-2xl font-semibold text-lg mb-3 hover:bg-gray-400 transition-colors"
             >
-              Passer cette question
+              {t('questionnaire.skipThis', 'Passer cette question')}
             </button>
           </>
         )}
@@ -315,11 +317,11 @@ function Questionnaire() {
         {/* Debug info - à retirer en production */}
         <div className="mt-4 p-3 bg-gray-100 rounded-lg text-xs">
           <p className="font-semibold">🔍 Debug:</p>
-          <p>Question {questionnaireStep + 1}/{questions.length}</p>
-          <p>Type: {currentQuestion.targetProfile}</p>
-          <p>Champ: {currentQuestion.field}</p>
+          <p>{t('questionnaire.debug.question', 'Question')} {questionnaireStep + 1}/{questions.length}</p>
+          <p>{t('questionnaire.debug.type', 'Type')}: {currentQuestion.targetProfile}</p>
+          <p>{t('questionnaire.debug.field', 'Champ')}: {currentQuestion.field}</p>
           {currentQuestion.type === 'multiselect' && (
-            <p>Sélectionnés: {selectedEquipment.length} équipements</p>
+            <p>{t('questionnaire.debug.selected', 'Sélectionnés')}: {selectedEquipment.length} {t('questionnaire.debug.items', 'équipements')}</p>
           )}
         </div>
       </div>

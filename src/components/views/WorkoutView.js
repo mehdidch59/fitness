@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import {
   Dumbbell, BarChart2, Clock, ArrowRight, Search,
   X, ChevronDown, ChevronUp, Trash2, CheckSquare, Square,
   AlertCircle, Calendar,
-  Play, RotateCcw, Timer, BookOpen, RefreshCw
+  Play, RotateCcw, BookOpen, RefreshCw
 } from 'lucide-react';
 import Questionnaire from '../ui/Questionnaire';
 import { useI18n } from '../../utils/i18n';
@@ -268,7 +268,7 @@ function UltraRobustWorkoutView() {
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 placeholder={t('workout.searchPlaceholder', 'Filtrer par titre / description...')}
-                className="bg-transparent outline-none w-full text-sm"
+                className="bg-gray-100 dark:bg-gray-800 outline-none w-full text-sm"
               />
             </div>
           </div>
@@ -427,7 +427,7 @@ function UltraRobustWorkoutView() {
 
   const renderStats = () => (
     <div className="p-4 max-w-5xl mx-auto">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl shadow flex items-center">
           <Calendar className="text-purple-500 mr-3" />
           <div>
@@ -440,17 +440,6 @@ function UltraRobustWorkoutView() {
           <div>
             <p className="text-sm text-gray-600">{t('workout.stats.generations', 'Générations')}</p>
             <p className="text-2xl font-bold">{programStats?.totalGenerations || 0}</p>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-2xl shadow flex items-center">
-          <Timer className="text-green-500 mr-3" />
-          <div>
-            <p className="text-sm text-gray-600">{t('workout.stats.last', 'Dernière')}</p>
-            <p className="text-2xl font-bold">
-              {programStats?.lastGeneration
-                ? new Date(programStats.lastGeneration).toLocaleDateString()
-                : '-'}
-            </p>
           </div>
         </div>
       </div>

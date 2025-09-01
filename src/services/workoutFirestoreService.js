@@ -9,11 +9,19 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { persistenceService } from './persistenceService';
 
 const COLLECTION = 'generatedWorkoutPrograms';
 
-const DAY_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const sortByDay = (a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day);
+function getDayOrder() {
+  try {
+    const lang = persistenceService.loadAppSettings()?.language || 'fr';
+    return lang === 'en'
+      ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+      : ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  } catch { return ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche']; }
+}
+const sortByDay = (a, b) => getDayOrder().indexOf(a.day) - getDayOrder().indexOf(b.day);
 const MIN_EXERCISES_PER_DAY = 4;
 
 /* ─────────────────────────────
@@ -26,7 +34,8 @@ function validateProgramStrict(p = {}) {
 
   if (schedule.length < 3 || schedule.length > 7) errors.push('schedule length must be 3..7');
   if (new Set(schedule).size !== schedule.length) errors.push('schedule days must be unique');
-  if (schedule.some((d) => !DAY_ORDER.includes(d))) errors.push('schedule must use FR day names');
+  const DAY_ORDER = getDayOrder();
+  if (schedule.some((d) => !DAY_ORDER.includes(String(d)))) errors.push('schedule must use valid day names');
 
   if (workouts.length !== schedule.length) {
     errors.push('workouts length must equal schedule length');
@@ -68,6 +77,65 @@ function sanitizeProgramForSave(p) {
 /** Pour la lecture : on trie, on ne comble rien. */
 function sanitizeProgramForRead(p) {
   return sanitizeProgramForSave(p);
+}
+
+// ───────── Traduction à la volée EN/FR (jours, niveau, durée, fréquence) ─────────
+function translateProgramToLanguage(program, lang) {
+  const target = (lang === 'en') ? 'en' : 'fr';
+
+  const DAY_FR = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  const DAY_EN = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dayMapFrToEn = Object.fromEntries(DAY_FR.map((d,i)=>[d, DAY_EN[i]]));
+  const dayMapEnToFr = Object.fromEntries(DAY_EN.map((d,i)=>[d, DAY_FR[i]]));
+
+  const lvlFrToEn = { 'débutant':'beginner', 'intermédiaire':'intermediate', 'avancé':'advanced' };
+  const lvlEnToFr = { 'beginner':'débutant', 'intermediate':'intermédiaire', 'advanced':'avancé' };
+
+  const mapDay = (d) => {
+    if (!d) return d;
+    return target === 'en' ? (dayMapFrToEn[d] || d) : (dayMapEnToFr[d] || d);
+  };
+
+  const mapLevel = (l) => {
+    if (!l) return l;
+    const key = String(l).toLowerCase();
+    return target === 'en' ? (lvlFrToEn[key] || l) : (lvlEnToFr[key] || l);
+  };
+
+  const mapDuration = (s) => {
+    if (typeof s !== 'string') return s;
+    return target === 'en'
+      ? s.replace(/semaines?/gi, (m)=> m.toLowerCase()==='semaine'?'week':'weeks')
+      : s.replace(/weeks?/gi, (m)=> m.toLowerCase()==='week'?'semaine':'semaines');
+  };
+
+  const mapFrequency = (s) => {
+    if (typeof s !== 'string') return s;
+    // patterns like 3x/semaine or 4x/week
+    const m = s.match(/(\d+)x\/(semaine|week)/i);
+    if (m) {
+      const n = m[1];
+      return target === 'en' ? `${n}x/week` : `${n}x/semaine`;
+    }
+    return s;
+  };
+
+  const copy = JSON.parse(JSON.stringify(program || {}));
+  copy.level = mapLevel(copy.level);
+  copy.duration = mapDuration(copy.duration);
+  copy.frequency = mapFrequency(copy.frequency);
+  // sessionDuration left as-is (min)
+
+  if (Array.isArray(copy.schedule)) {
+    copy.schedule = copy.schedule.map(mapDay);
+  }
+  if (Array.isArray(copy.workouts)) {
+    copy.workouts = copy.workouts.map((w) => ({
+      ...w,
+      day: mapDay(w.day)
+    })).sort(sortByDay);
+  }
+  return copy;
 }
 
 class WorkoutFirestoreService {
@@ -173,6 +241,7 @@ class WorkoutFirestoreService {
       const now = new Date();
       const validDocs = [];
 
+      const lang = (persistenceService.loadAppSettings()?.language || 'fr');
       querySnapshot.forEach((snap) => {
         const data = snap.data();
         const expiresAt = data?.expiresAt?.toDate?.() ?? new Date(0);
@@ -182,7 +251,9 @@ class WorkoutFirestoreService {
         // garder uniquement les programmes valides
         const validPrograms = programs
           .map((p) => sanitizeProgramForRead(p))
-          .filter((p) => validateProgramStrict(p).ok);
+          .filter((p) => validateProgramStrict(p).ok)
+          .map((p) => translateProgramToLanguage(p, lang))
+          .map((p) => sanitizeProgramForRead(p));
 
         if (validPrograms.length > 0) {
           validDocs.push({
@@ -257,11 +328,14 @@ class WorkoutFirestoreService {
       const latest = candidates[0];
 
       // Nettoyer/valider les programmes et filtrer par type si nécessaire
+      const lang = (persistenceService.loadAppSettings()?.language || 'fr');
       const programs = (latest.programs || [])
         .map((p) => sanitizeProgramForRead(p))
         .filter((p) => validateProgramStrict(p).ok)
         .filter((p) => (type ? (String(p.type || '').toLowerCase() === String(type).toLowerCase()) : true))
-        .filter((p) => (focusMuscle ? (String(p.focusMuscle || '').toLowerCase() === String(focusMuscle).toLowerCase()) : true));
+        .filter((p) => (focusMuscle ? (String(p.focusMuscle || '').toLowerCase() === String(focusMuscle).toLowerCase()) : true))
+        .map((p) => translateProgramToLanguage(p, lang))
+        .map((p) => sanitizeProgramForRead(p));
 
       if (!programs.length) return null;
 

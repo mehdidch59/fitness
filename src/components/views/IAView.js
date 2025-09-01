@@ -16,13 +16,15 @@ import { useI18n } from '../../utils/i18n';
 function IAView() {
   const { userProfile, actions } = useAppContext();
   const [user] = useAuthState(auth);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [activeFeature, setActiveFeature] = useState('coach');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState({});
   const [mood, setMood] = useState('énergique');
   const [budget, setBudget] = useState(50);
   const [duration, setDuration] = useState(7);
+  const [sportHabits, setSportHabits] = useState('');
+  const [nutritionHabits, setNutritionHabits] = useState('');
   const isLoggedIn = Boolean(user?.uid);
 
   // Fonctionnalités IA disponibles
@@ -80,15 +82,20 @@ function IAView() {
     
     setIsLoading(true);
     try {
-      const advice = await personalAICoachService.generatePersonalizedCoaching(
-        user.uid, 
-        userProfile.goal || 'general'
+      const advice = await personalAICoachService.generateCoachingFromHabits(
+        user.uid,
+        userProfile || {},
+        {
+          sportHabits: sportHabits?.trim(),
+          nutritionHabits: nutritionHabits?.trim()
+        },
+        locale || 'fr'
       );
       setResults(prev => ({ ...prev, coach: advice }));
-      actions.setSearchStatus('Conseils du coach IA générés !');
+      actions.setSearchStatus(t('ia.coach.generated', 'Conseils du coach IA générés !'));
     } catch (error) {
       console.error('Erreur coach IA:', error);
-      actions.setSearchStatus('Erreur lors de la génération des conseils');
+      actions.setSearchStatus(t('ia.coach.error', 'Erreur lors de la génération des conseils'));
     } finally {
       setIsLoading(false);
     }
@@ -333,6 +340,35 @@ function IAView() {
                 </div>
 
                 {/* Paramètres spécifiques selon la fonctionnalité */}
+                {activeFeature === 'coach' && (
+                  <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('ia.coach.sportHabits', 'Vos habitudes sportives')}
+                      </label>
+                      <textarea
+                        value={sportHabits}
+                        onChange={(e) => setSportHabits(e.target.value)}
+                        rows={5}
+                        placeholder={t('ia.coach.sportPlaceholder', 'Ex: 3 séances/sem (force + cardio), 45-60min, objectif prise de muscle...')}
+                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-y"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('ia.coach.nutritionHabits', 'Vos habitudes nutritionnelles')}
+                      </label>
+                      <textarea
+                        value={nutritionHabits}
+                        onChange={(e) => setNutritionHabits(e.target.value)}
+                        rows={5}
+                        placeholder={t('ia.coach.nutritionPlaceholder', 'Ex: 3 repas/jour, 1 collation, légumes 1x/jour, ~1.5L eau, sucre le soir...')}
+                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-y"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {activeFeature === 'mood' && (
                   <div className="mb-6 p-4 bg-gray-50 rounded-xl">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -459,7 +495,7 @@ function IAView() {
 
                       {activeFeature === 'budget' && featureResults.recipes && (
                         <div className="space-y-4">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                             <div className="bg-white p-3 rounded-lg text-center">
                               <div className="text-2xl font-bold text-green-600">{featureResults.budgetPerDay}€</div>
                               <div className="text-xs text-gray-600">par jour</div>

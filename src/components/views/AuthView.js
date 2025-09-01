@@ -159,7 +159,7 @@ function AuthView() {
             {/* Champs d'inscription */}
             {!isLogin && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label={t('auth.firstName', 'Prénom')}
                     value={formData.firstName}
@@ -176,7 +176,7 @@ function AuthView() {
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label={t('auth.age', 'Âge')}
                     type="number"
@@ -198,7 +198,7 @@ function AuthView() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label={t('auth.weight', 'Poids (kg)')}
                     type="number"

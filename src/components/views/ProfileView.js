@@ -92,14 +92,13 @@ function ProfileView() {
 
   // Déterminer la catégorie d'IMC
   const getBMICategory = (bmi) => {
-    if (!bmi) return { text: 'Non calculé', color: 'text-gray-500' };
-
-    if (bmi < 18.5) return { text: 'Insuffisance pondérale', color: 'text-blue-500' };
-    if (bmi < 25) return { text: 'Corpulence normale', color: 'text-green-500' };
-    if (bmi < 30) return { text: 'Surpoids', color: 'text-yellow-500' };
-    if (bmi < 35) return { text: 'Obésité modérée', color: 'text-orange-500' };
-    if (bmi < 40) return { text: 'Obésité sévère', color: 'text-red-500' };
-    return { text: 'Obésité morbide', color: 'text-red-700' };
+    if (!bmi) return { text: t('profile.bmiCategory.unknown', 'Non calculé'), color: 'text-gray-500' };
+    if (bmi < 18.5) return { text: t('profile.bmiCategory.underweight', 'Insuffisance pondérale'), color: 'text-blue-500' };
+    if (bmi < 25) return { text: t('profile.bmiCategory.normal', 'Corpulence normale'), color: 'text-green-500' };
+    if (bmi < 30) return { text: t('profile.bmiCategory.overweight', 'Surpoids'), color: 'text-yellow-500' };
+    if (bmi < 35) return { text: t('profile.bmiCategory.obese1', 'Obésité modérée'), color: 'text-orange-500' };
+    if (bmi < 40) return { text: t('profile.bmiCategory.obese2', 'Obésité sévère'), color: 'text-red-500' };
+    return { text: t('profile.bmiCategory.obese3', 'Obésité morbide'), color: 'text-red-700' };
   };
 
   // Vérifier si le profil est complet
@@ -124,29 +123,29 @@ function ProfileView() {
   // Traduire les valeurs en texte lisible
   const getGoalText = (goal) => {
     switch (goal) {
-      case 'lose_weight': return 'Perdre du poids';
-      case 'gain_muscle': return 'Prendre du muscle';
-      case 'maintain': return 'Maintenir ma forme';
-      default: return 'Non défini';
+      case 'lose_weight': return t('profile.goalLabels.lose_weight', 'Perdre du poids');
+      case 'gain_muscle': return t('profile.goalLabels.gain_muscle', 'Prendre du muscle');
+      case 'maintain': return t('profile.goalLabels.maintain', 'Maintenir ma forme');
+      default: return t('common.undefined', 'Non défini');
     }
   };
 
   const getActivityText = (level) => {
     switch (level) {
-      case 'sedentary': return 'Sédentaire';
-      case 'light': return 'Léger (1-3 fois/sem)';
-      case 'moderate': return 'Modéré (3-5 fois/sem)';
-      case 'active': return 'Actif (6-7 fois/sem)';
-      case 'very_active': return 'Très actif';
-      default: return 'Non défini';
+      case 'sedentary': return t('profile.activityLabels.sedentary', 'Sédentaire');
+      case 'light': return t('profile.activityLabels.light', 'Léger (1-3 fois/sem)');
+      case 'moderate': return t('profile.activityLabels.moderate', 'Modéré (3-5 fois/sem)');
+      case 'active': return t('profile.activityLabels.active', 'Actif (6-7 fois/sem)');
+      case 'very_active': return t('profile.activityLabels.very_active', 'Très actif');
+      default: return t('common.undefined', 'Non défini');
     }
   };
 
   const getGenderText = (gender) => {
     switch (gender) {
-      case 'male': return 'Homme';
-      case 'female': return 'Femme';
-      default: return 'Non défini';
+      case 'male': return t('profile.gender.male', 'Homme');
+      case 'female': return t('profile.gender.female', 'Femme');
+      default: return t('common.undefined', 'Non défini');
     }
   };
 
@@ -234,7 +233,7 @@ function ProfileView() {
                   <Target size={20} className="text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-gray-600 text-sm">Objectif</h4>
+                  <h4 className="text-gray-600 text-sm">{t('profile.goalLabel', 'Objectif')}</h4>
                   <p className="font-semibold">{getGoalText(userProfile.goal)}</p>
                 </div>
               </div>
@@ -246,7 +245,7 @@ function ProfileView() {
                   <Activity size={20} className="text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-gray-600 text-sm">Niveau d'activité</h4>
+                  <h4 className="text-gray-600 text-sm">{t('profile.activityLevelLabel', "Niveau d'activité")}</h4>
                   <p className="font-semibold">{getActivityText(userProfile.activityLevel)}</p>
                 </div>
               </div>
@@ -275,13 +274,13 @@ function ProfileView() {
             <User size={24} className="text-yellow-600" />
           </div>
           <h3 className="text-lg font-semibold">Complétez votre profil</h3>
-          <p className="text-gray-600 text-sm">Pour calculer votre IMC et personnaliser votre expérience</p>
+          <p className="text-gray-600 text-sm">{t('profile.completeDesc', 'Pour calculer votre IMC et personnaliser votre expérience')}</p>
           <Link
             to="/settings"
             className="w-full inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-3 rounded-xl font-semibold mt-2"
           >
             <SettingsIcon className="mr-2" size={18} />
-            Ouvrir les paramètres
+            {t('profile.openSettings', 'Ouvrir les paramètres')}
           </Link>
         </div>
       )}

@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AppBootstrap from './components/AppBootstrap';
 import { useAuth } from './hooks/useAuth';
-import './styles/main.css';
 
 // Importer les providers
 import { UserSessionProvider } from './components/UserSessionProvider';

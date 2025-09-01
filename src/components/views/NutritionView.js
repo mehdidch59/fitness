@@ -192,7 +192,7 @@ const RecipeDetail = ({
 
   return (
     <ErrorBoundary>
-      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen overflow-x-hidden">
         <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-5xl mx-auto">
           <button
             onClick={onBack}
@@ -296,7 +296,7 @@ const RecipeDetail = ({
               </div>
               <div className="flex items-center">
                 <Users size={18} className="text-gray-600 mr-2" />
-                <span className="text-gray-700">{recipe.servings || 1} {t('nutrition.servings', 'portion')}{(recipe.servings || 1) > 1 ? 's' : ''}</span>
+                <span className="text-gray-700">{(recipe.servings || 1)} {t((recipe.servings || 1) > 1 ? 'nutrition.servingsPlural' : 'nutrition.servings', (recipe.servings || 1) > 1 ? 'portions' : 'portion')}</span>
               </div>
               <div className="flex items-center">
                 <Target size={18} className="text-gray-600 mr-2" />
@@ -751,7 +751,7 @@ function NutritionView() {
   // Vue principale avec la liste des recettes
   return (
     <ErrorBoundary>
-      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen overflow-x-hidden">
         {showAuthPrompt && <AuthPrompt onClose={handleCloseAuthPrompt} />}
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 max-w-5xl mx-auto">
@@ -896,11 +896,11 @@ function NutritionView() {
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-hidden">
               {currentRecipes.map((recipe, index) => (
                 <div
                   key={recipe.id || `recipe-${index}-${recipe.name?.substring(0, 10)}`}
-                  className={`relative bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02] ${selectionMode ? 'pl-10' : ''}`}
+                  className={`relative bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-transform transform-gpu duration-200 md:hover:scale-[1.02] ${selectionMode ? 'pl-10' : ''}`}
                   onClick={() => {
                     if (selectionMode) {
                       setSelectedRecipeIds(prev => {
@@ -930,7 +930,7 @@ function NutritionView() {
                     </button>
                   )}
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg flex-1">{recipe.name || 'Recette sans nom'}</h3>
+                    <h3 className="font-bold text-lg flex-1 break-words">{recipe.name || 'Recette sans nom'}</h3>
                     <div className="flex items-center gap-2 ml-4">
                       {recipe.favoriteCount > 0 && (
                         <div className="flex items-center text-red-600 text-xs">
@@ -1008,7 +1008,7 @@ function NutritionView() {
             {currentRecipes.map((recipe, index) => (
               <div
                 key={recipe.id || `recipe-${index}-${recipe.name?.substring(0, 10)}`}
-                className={`relative bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02] ${selectionMode ? 'pl-10' : ''}`}
+                className={`relative bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-transform transform-gpu duration-200 md:hover:scale-[1.02] ${selectionMode ? 'pl-10' : ''}`}
                 onClick={() => {
                   if (selectionMode) {
                     setSelectedRecipeIds(prev => {
@@ -1038,7 +1038,7 @@ function NutritionView() {
                   </button>
                 )}
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-lg flex-1">{recipe.name || 'Recette sans nom'}</h3>
+                  <h3 className="font-bold text-lg flex-1 break-words">{recipe.name || 'Recette sans nom'}</h3>
                   <div className="flex items-center gap-2 ml-4">
                     {recipe.favoriteCount > 0 && (
                       <div className="flex items-center text-red-600 text-xs">
@@ -1071,10 +1071,10 @@ function NutritionView() {
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center text-xs text-purple-700">
                     <Search size={12} className="mr-1" />
-                    <span>{recipe.source || 'Recette IA'}</span>
+                    <span>{recipe.source || t('nutrition.aiRecipe', 'Recette IA')}</span>
                   </div>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                    Cliquez pour voir détails
+                    {t('nutrition.clickToViewDetails', 'Cliquez pour voir détails')}
                   </span>
                 </div>
               </div>
@@ -1087,7 +1087,7 @@ function NutritionView() {
                   disabled={isGenerating}
                   className="bg-purple-100 text-purple-800 px-4 py-2 rounded-lg text-sm hover:bg-purple-200 disabled:opacity-50"
                 >
-                  🍽️ Nouvelles Recettes
+                  🍽️ {t('nutrition.newRecipes', 'Nouvelles Recettes')}
                 </button>
                 <button
                   onClick={() => refetchRecipes()}
@@ -1095,7 +1095,7 @@ function NutritionView() {
                   className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg text-sm hover:bg-blue-200 disabled:opacity-50 flex items-center"
                 >
                   <RefreshCw size={14} className={`mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-                  Recharger
+                  {t('nutrition.reload', 'Recharger')}
                 </button>
               </div>
             )}
@@ -1106,20 +1106,20 @@ function NutritionView() {
               <div>
                 <Bookmark className="mx-auto mb-4 text-gray-400" size={64} />
                 <p className="text-gray-600 mb-4">
-                  {!user ? 'Connectez-vous pour sauvegarder vos favoris' : 'Aucune recette en favoris'}
+                  {!user ? t('nutrition.loginForFavAccess', 'Connectez-vous pour sauvegarder vos favoris') : t('nutrition.noFavorites', 'Aucune recette en favoris')}
                 </p>
                 <button
                   onClick={() => toggleViewMode('discover')}
                   className="bg-gradient-to-r from-purple-700 to-blue-800 text-white px-6 py-3 rounded-xl font-medium hover:from-purple-800 hover:to-blue-900 transition-all"
                 >
-                  Découvrir des recettes
+                  {t('nutrition.discoverRecipes', 'Découvrir des recettes')}
                 </button>
               </div>
             ) : (
               <div>
                 <Apple className="mx-auto mb-4 text-gray-400" size={64} />
                 <p className="text-gray-600 mb-4">
-                  {!user ? 'Connectez-vous pour accéder à vos recettes personnalisées' : 'Aucune recette trouvée'}
+                  {!user ? t('nutrition.loginForPersonalized', 'Connectez-vous pour accéder à vos recettes personnalisées') : t('nutrition.noRecipesFound', 'Aucune recette trouvée')}
                 </p>
                 
                 {!user ? (
@@ -1127,7 +1127,7 @@ function NutritionView() {
                     onClick={() => setShowAuthPrompt(true)}
                     className="w-full mb-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-medium"
                   >
-                    Se connecter pour commencer
+                    {t('nutrition.loginToStart', 'Se connecter pour commencer')}
                   </button>
                 ) : (
                   <button 
@@ -1136,7 +1136,7 @@ function NutritionView() {
                     className="w-full mb-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium flex items-center justify-center disabled:opacity-50"
                   >
                     <RefreshCw size={18} className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                    Recharger les recettes
+                    {t('nutrition.reloadRecipes', 'Recharger les recettes')}
                   </button>
                 )}
                 
@@ -1161,7 +1161,7 @@ function NutritionView() {
                       <div className="flex flex-col items-center">
                         <div className="flex items-center mb-1">
                           <Utensils size={20} className="mr-2 animate-pulse" />
-                          <span>Génération plan nutritionnel...</span>
+                          <span>{t('nutrition.generatingPlan', 'Génération plan nutritionnel...')}</span>
                         </div>
                         <div className="flex items-center text-xs opacity-90 mb-1">
                           <span className="mr-2">{generationProgress}%</span>
@@ -1173,15 +1173,15 @@ function NutritionView() {
                     ) : !user ? (
                       <>
                         <AlertCircle size={20} className="mr-2" />
-                        Connectez-vous pour générer
+                        {t('nutrition.loginToGeneratePlan', 'Connectez-vous pour générer un plan nutritionnel')}
                       </>
                     ) : (
                       <div className="flex items-center">
                         <Apple size={20} className="mr-2" />
                         <div className="flex flex-col">
-                          <span>Génération Plan Nutritionnel</span>
+                          <span>{t('nutrition.generatePlanCtaTitle', 'Génération Plan Nutritionnel')}</span>
                           <span className="text-xs opacity-90">
-                            🥗 Menus • Recettes • Répartition macros • Planning hebdomadaire
+                            {t('nutrition.generatePlanCtaSubtitle', '🥗 Menus • Recettes • Répartition macros • Planning hebdomadaire')}
                           </span>
                         </div>
                       </div>

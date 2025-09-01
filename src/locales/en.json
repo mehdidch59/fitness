@@ -115,6 +115,14 @@
     "mood": {
       "label": "Select your current mood:"
     },
+    "coach": {
+      "sportHabits": "Your sports/training habits",
+      "nutritionHabits": "Your nutrition habits",
+      "sportPlaceholder": "e.g., 3 sessions/week (strength + cardio), 45–60 min, main goal...",
+      "nutritionPlaceholder": "e.g., 3 meals/day + 1 snack, vegetables 1x/day, ~1.5L water, sugar at night...",
+      "generated": "AI coach advice generated!",
+      "error": "Error generating advice"
+    },
     "featuresCta": "Available Features",
     "ready": "Ready to use",
     "help": "Click \"Generate\" to discover personalized AI recommendations."
@@ -208,13 +216,102 @@
     "unsaved": "Unsaved changes",
     "lastSync": "Last sync"
   },
+  "welcome": {
+    "title": "Welcome to your fitness app",
+    "content": "This app helps you reach your goals with personalized programs.",
+    "primary": "Start",
+    "secondary": "Complete my profile"
+  },
+  "profileIncomplete": {
+    "title": "Complete your profile",
+    "content": "For the best experience, please complete your profile.",
+    "primary": "Complete now",
+    "secondary": "Later"
+  },
+  "questionnaire": {
+    "title": "Setup",
+    "whereTrain": "Where do you train?",
+    "diet": "Your diet?",
+    "cookingTime": "Cooking time?",
+    "location": {
+      "home": "🏠 At home",
+      "gym": "🏋️ At the gym",
+      "both": "🔄 Both"
+    },
+    "diet": {
+      "omnivore": "🍖 Omnivore",
+      "vegetarian": "🥗 Vegetarian",
+      "vegan": "🌱 Vegan"
+    },
+    "cooking": {
+      "quick": "⚡ Express (< 15 min)",
+      "medium": "🕐 Moderate (15-30 min)",
+      "long": "🍳 I like cooking (> 30 min)"
+    },
+    "homeEquipment": {
+      "title": "What equipment do you have at home?"
+    },
+    "equipment": {
+      "dumbbells": "Dumbbells",
+      "kettlebell": "Kettlebell",
+      "resistanceBands": "Resistance bands",
+      "pullupBar": "Pull-up bar",
+      "bench": "Bench",
+      "yoga": "Yoga/fitness mat",
+      "jumpRope": "Jump rope",
+      "foam": "Foam roller"
+    },
+    "skip": "Skip",
+    "save": "Save",
+    "skipThis": "Skip this question",
+    "authRequired": "Login required",
+    "authMessage": "You must be signed in to complete the setup questionnaire.",
+    "done": "Setup completed!",
+    "debug": {
+      "question": "Question",
+      "type": "Type",
+      "field": "Field",
+      "selected": "Selected",
+      "items": "items"
+    }
+  },
   "profile": {
     "title": "My Profile",
     "years": "years",
     "height": "Height",
     "weight": "Weight",
     "bmi": "BMI",
-    "logout": "Log out"
+    "logout": "Log out",
+    "goalLabel": "Goal",
+    "activityLevelLabel": "Activity level",
+    "completeTitle": "Complete your profile",
+    "completeDesc": "To compute your BMI and personalize your experience",
+    "openSettings": "Open settings",
+    "goalLabels": {
+      "lose_weight": "Lose weight",
+      "gain_muscle": "Gain muscle",
+      "maintain": "Maintain"
+    },
+    "activityLabels": {
+      "sedentary": "Sedentary",
+      "light": "Light (1–3x/week)",
+      "moderate": "Moderate (3–5x/week)",
+      "active": "Active (6–7x/week)",
+      "very_active": "Very active"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "bmiCategory": {
+      "unknown": "Not calculated",
+      "underweight": "Underweight",
+      "normal": "Normal weight",
+      "overweight": "Overweight",
+      "obese1": "Obesity class I",
+      "obese2": "Obesity class II",
+      "obese3": "Obesity class III"
+    }
   },
   "nutrition": {
     "error": {
@@ -234,9 +331,23 @@
     "fats": "Fats",
     "minutes": "min",
     "servings": "serving",
+    "servingsPlural": "servings",
     "easy": "Easy",
     "massGainScore": "Mass Gain Score",
     "ingredients": "Ingredients",
-    "noIngredients": "Ingredients not specified"
+    "noIngredients": "Ingredients not specified",
+    "aiRecipe": "AI Recipe",
+    "clickToViewDetails": "Click to view details",
+    "newRecipes": "New Recipes",
+    "reload": "Reload",
+    "noFavorites": "No favorite recipes",
+    "discoverRecipes": "Discover recipes",
+    "noRecipesFound": "No recipes found",
+    "loginToStart": "Sign in to start",
+    "reloadRecipes": "Reload recipes",
+    "loginToGeneratePlan": "Sign in to generate a meal plan",
+    "generatingPlan": "Generating meal plan...",
+    "generatePlanCtaTitle": "Generate Meal Plan",
+    "generatePlanCtaSubtitle": "🥗 Menus • Recipes • Macros split • Weekly planning"
   }
 }

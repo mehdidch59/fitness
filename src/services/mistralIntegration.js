@@ -1,10 +1,20 @@
 // src/services/mistralIntegration.js
 import { mistralService } from './mistralService';
+import { persistenceService } from './persistenceService';
 
 /* ───────── Config usage IA ───────── */
 const USE_LOCAL_FALLBACK = false; // ↤ par défaut: on privilégie l'IA, pas de secours
 const MAX_RETRIES_JSON = 4;       // plus d'essais côté IA avant d'abandonner
-const DAY_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const DAY_ORDER_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const DAY_ORDER_EN = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function getAppLanguage() {
+  try { return persistenceService.loadAppSettings()?.language || 'fr'; } catch { return 'fr'; }
+}
+
+function getDayOrder(lang = getAppLanguage()) {
+  return (lang === 'en') ? DAY_ORDER_EN : DAY_ORDER_FR;
+}
 
 /* ───────── Utils profil ───────── */
 function toNumOrStr(v) {
@@ -64,6 +74,49 @@ function buildSchedulePromptSingle(profile, type, query, options = {}) {
   const typeLabel = type === 'fullbody' ? 'fullbody' : (type === 'halfbody' ? 'halfbody' : 'split');
   const focusMuscle = options.focusMuscleGroup ? String(options.focusMuscleGroup) : '';
 
+  const lang = getAppLanguage();
+  const dayOrder = getDayOrder(lang);
+
+  if (lang === 'en') {
+    return [
+      'You are a strength training coach specialized in personalized programming. Answer STRICTLY in English.',
+      `PROFILE: ${JSON.stringify(profile)}`,
+      `TASK: Propose exactly 1 "${typeLabel}" program and return ONLY its METADATA and SCHEDULE as strict JSON. Use the goal, activityLevel, bmi/bodyType, gender, and equipment (equipmentLocation, homeEquipment).`,
+      focusMuscle ? `WEEK MUSCLE EMPHASIS: ${focusMuscle} (distribute volume intelligently without neglecting other muscles).` : '',
+      '',
+      'OUTPUT CONSTRAINTS (single JSON object):',
+      '{',
+      `  "id": "program_${typeLabel}_<id>",`,
+      '  "type": "' + typeLabel + '",',
+      '  "title": "…",',
+      '  "description": "Very short sentence (<= 12 words) summarizing the program.",',
+      '  "level": "beginner|intermediate|advanced",',
+      '  "duration": "4-12 weeks",',
+      '  "frequency": "3x/week|4x/week|5x/week|6x/week",',
+      '  "sessionDuration": "45-90 min",',
+      '  "tips": ["…","…"],',
+      '  "schedule": ["DAYS_EN"]',
+      '}',
+      '',
+      'RULES FOR "schedule":',
+      `- 3 to 7 distinct days, chosen among: ${JSON.stringify(dayOrder)}.`,
+      '- Strictly use the English day names (exactly as in the list).',
+      '- Vary the daily focus (push/pull/legs/core depending on type and pattern).',
+      focusMuscle ? `- Add a slight weekly bias (1–2 extra exercises/week) for: ${focusMuscle}.` : '',
+      '- Return NO text outside JSON.',
+      '',
+      'PERSONALIZATION GUIDELINES:',
+      '- If goal = gain muscle: hypertrophy (8–12 reps), 60–90s rest, 5–6 exercises/session for intermediate, 6–8 for advanced.',
+      '- If goal = lose weight: metabolic circuits (12–20 reps), 30–60s rest, 4–6 exercises/session, priority to compound movements.',
+      '- If goal = strength: 3–6 heavy reps on compounds, 120–180s rest, accessories 8–12 reps.',
+      '- Adjust volume with BMI: bodyType = overweight/obese → moderate volume, more cardio/conditioning; lean/normal → standard or progressive volume.',
+      '- Use only available equipment (homeEquipment).',
+      "- Be creative: don't rely on prefilled exercise templates.",
+      '- Avoid repeating the exact same exercise across days (variations allowed).',
+      query ? `CONTEXT: ${query}` : ''
+    ].join('\\n');
+  }
+
   return [
     'Tu es un coach de musculation spécialisé en programmation personnalisée. Réponds STRICTEMENT en français.',
     `PROFIL: ${JSON.stringify(profile)}`,
@@ -85,7 +138,7 @@ function buildSchedulePromptSingle(profile, type, query, options = {}) {
     '}',
     '',
     'RÈGLES POUR "schedule":',
-    `- 3 à 7 jours, tous distincts, choisis parmi: ${JSON.stringify(DAY_ORDER)}.`,
+    `- 3 à 7 jours, tous distincts, choisis parmi: ${JSON.stringify(getDayOrder('fr'))}.`,
     '- Respecte strictement les noms en français (exactement comme dans la liste).',
     '- Varie le focus musculaire selon les jours (push/pull/legs/core selon type et pattern).',
     focusMuscle ? `- Ajoute un léger biais de volume (1-2 exercices/semaine en plus) sur: ${focusMuscle}.` : '',
@@ -103,6 +156,50 @@ function buildSchedulePromptSingle(profile, type, query, options = {}) {
 }
 
 function buildDayPrompt(programMeta, day, profile, extra = {}) {
+  const lang = getAppLanguage();
+  if (lang === 'en') {
+    return [
+      'You are a strength training coach. Answer STRICTLY in English.',
+      `PROFILE: ${JSON.stringify(profile)}`,
+      'PROGRAM_META: ' + JSON.stringify({
+        id: programMeta.id,
+        type: programMeta.type,
+        pattern: programMeta.pattern || undefined,
+        level: programMeta.level,
+        duration: programMeta.duration,
+        frequency: programMeta.frequency,
+        sessionDuration: programMeta.sessionDuration
+      }),
+      '',
+      `TASK: Generate the COMPLETE WORKOUT for the day "${day}".`,
+      (extra && extra.focus ? `DAY_FOCUS: ${extra.focus}` : ''),
+      (extra && extra.focusMuscleGroup ? `MUSCLE_EMPHASIS: ${extra.focusMuscleGroup}` : ''),
+      (extra && Array.isArray(extra.usedExercises) && extra.usedExercises.length > 0
+        ? `ALREADY_USED_EXERCISES: ${JSON.stringify(extra.usedExercises.slice(0, 30))}`
+        : ''),
+      (extra && Array.isArray(extra.availableEquipment) && extra.availableEquipment.length > 0
+        ? `AVAILABLE_EQUIPMENT: ${JSON.stringify(extra.availableEquipment)}`
+        : ''),
+      'Respond ONLY with a strict JSON object (no prefilled exercise template):',
+      '{',
+      `  "day": "${day}",`,
+      '  "name": "…",',
+      `  "duration": "${programMeta.sessionDuration || '60 min'}",`,
+      '  "exercises": []',
+      '}',
+      'RULES FOR "exercises":',
+      "- Array of objects: { name (string), sets (number), reps (string), rest (string), type (string), targetMuscles (string[]) }",
+      '- Minimum 4 relevant exercises.',
+      '- Choose the NUMBER of exercises based on level (beginner: 4–5, intermediate: 5–6, advanced: 6–8).',
+      '- Adjust reps/rest based on goal: hypertrophy (8–12, 60–90s) / strength (3–6, 120–180s) / fat loss (12–20, 30–60s).',
+      '- Vary patterns (push/pull/legs/core) and avoid repeating the exact same exercise across other days; use variations if needed.',
+      '- If MUSCLE_EMPHASIS is present this week, slightly increase volume without unbalancing the session.',
+      '- If DAY_FOCUS = Upper: include no leg exercises. If Lower: no upper body exercises (except core).',
+      '- Use ONLY the available equipment and vary tools across days if possible.',
+      "- Be creative and avoid using canned templates.",
+      '- NO text outside JSON.'
+    ].join('\\n');
+  }
   return [
     'Tu es un coach de musculation. Réponds STRICTEMENT en français.',
     `PROFIL: ${JSON.stringify(profile)}`,
@@ -199,14 +296,20 @@ function recommendProgramSpec(profile) {
 }
 
 async function generateWorkoutProgramsAuto(profile, rec, query = '', focusMuscleGroup = '') {
+  const lang = getAppLanguage();
+  const levelForQuery = (lang === 'en' && ['débutant','intermédiaire','avancé'].includes(String(rec.level)))
+    ? (rec.level === 'débutant' ? 'beginner' : (rec.level === 'intermédiaire' ? 'intermediate' : 'advanced'))
+    : rec.level;
   // Build contextual query for the LLM
   const patternHint = rec.pattern === 'UL-4'
-    ? 'pattern Upper/Lower 4 jours (Haut/Bas alternés)'
+    ? (lang === 'en' ? 'pattern Upper/Lower 4 days (alternating upper/lower)' : 'pattern Upper/Lower 4 jours (Haut/Bas alternés)')
     : rec.pattern === 'PPL-5'
-      ? 'pattern Push/Pull/Legs 5 jours'
-      : 'pattern FullBody 3 jours (séances globales)';
+      ? (lang === 'en' ? 'pattern Push/Pull/Legs 5 days' : 'pattern Push/Pull/Legs 5 jours')
+      : (lang === 'en' ? 'pattern FullBody 3 days (global sessions)' : 'pattern FullBody 3 jours (séances globales)');
 
-  const enrichedQuery = `${query} ${patternHint}. Fréquence souhaitée: ${rec.frequency} jours/semaine. Niveau: ${rec.level}.`;
+  const enrichedQuery = lang === 'en'
+    ? `${query} ${patternHint}. Desired frequency: ${rec.frequency} days/week. Level: ${levelForQuery}.`
+    : `${query} ${patternHint}. Fréquence souhaitée: ${rec.frequency} jours/semaine. Niveau: ${levelForQuery}.`;
 
   // 1) Métadonnées IA pour le type recommandé
   let meta;
@@ -256,7 +359,8 @@ async function generateWorkoutProgramsAuto(profile, rec, query = '', focusMuscle
       if (ex && typeof ex.name === 'string') used.add(ex.name.trim());
     });
   }
-  workouts.sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day));
+  const dayOrder = getDayOrder(lang);
+  workouts.sort((a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day));
 
   return [{
     id: meta.id,
@@ -274,23 +378,16 @@ async function generateWorkoutProgramsAuto(profile, rec, query = '', focusMuscle
 }
 
 /* ───────── Validation & Normalisation ───────── */
-function normalizeDayName(d) {
-  if (!d) return d;
-  const map = {
-    'lundi': 'Lundi', 'mardi': 'Mardi', 'mercredi': 'Mercredi', 'jeudi': 'Jeudi',
-    'vendredi': 'Vendredi', 'samedi': 'Samedi', 'dimanche': 'Dimanche'
-  };
-  const key = String(d).trim().toLowerCase();
-  return map[key] || d;
-}
 
 function validateScheduleProg(p) {
   const errs = [];
-  const s = Array.isArray(p && p.schedule) ? p.schedule.map(normalizeDayName) : [];
+  const lang = getAppLanguage();
+  const dayOrder = getDayOrder(lang);
+  const s = Array.isArray(p && p.schedule) ? p.schedule : [];
 
   if (s.length < 3 || s.length > 7) errs.push('schedule length 3..7');
   if (new Set(s).size !== s.length) errs.push('schedule unique days');
-  if (s.some(d => !DAY_ORDER.includes(d))) errs.push('schedule must be FR names');
+  if (s.some(d => !dayOrder.includes(String(d)))) errs.push('schedule must be valid day names');
 
   ['id', 'type', 'title', 'description', 'level', 'duration', 'frequency', 'sessionDuration'].forEach(k => {
     if (!p || !p[k]) errs.push(`missing ${k}`);
@@ -435,9 +532,13 @@ async function callJSONBestEffort(llmFn, prompt) {
 async function requestScheduleMetaStrict(profile, type, query, options = {}) {
   let lastErr = 'init';
   for (let i = 1; i <= MAX_RETRIES_JSON; i++) {
+    const lang = getAppLanguage();
     const prompt = i === 1
       ? buildSchedulePromptSingle(profile, type, query, options)
-      : buildSchedulePromptSingle(profile, type, `${query}\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`, options);
+      : (lang === 'en'
+          ? buildSchedulePromptSingle(profile, type, `${query}\nFix: ${lastErr}\n(Remember: strict JSON, no text outside JSON)`, options)
+          : buildSchedulePromptSingle(profile, type, `${query}\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`, options)
+        );
 
     try {
       // pass bound method so "this" inside generateCustomContent is correct
@@ -455,7 +556,23 @@ async function requestScheduleMetaStrict(profile, type, query, options = {}) {
   if (USE_LOCAL_FALLBACK) {
     console.warn(`[LLM] schedule generation failed for ${type} , using local fallback`);
     // petit secours formaté (facultatif)
-    const fallback = {
+    const lang = getAppLanguage();
+    const fallback = lang === 'en' ? {
+      id: `program_${type}_${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`,
+      type,
+      title: type === 'fullbody' ? 'Fullbody 3 days' : (type === 'halfbody' ? 'Halfbody 4 days' : 'Split 5 days'),
+      description: 'Locally generated fallback program.',
+      level: 'intermediate',
+      duration: '8 weeks',
+      frequency: type === 'fullbody' ? '3x/week' : (type === 'halfbody' ? '4x/week' : '5x/week'),
+      sessionDuration: '60 min',
+      tips: ['Hydrate', '10 min warm-up'],
+      schedule: type === 'fullbody'
+        ? ['Monday', 'Wednesday', 'Friday']
+        : type === 'halfbody'
+          ? ['Monday', 'Tuesday', 'Thursday', 'Friday']
+          : ['Monday', 'Tuesday', 'Thursday', 'Friday', 'Saturday']
+    } : {
       id: `program_${type}_${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`,
       type,
       title: type === 'fullbody' ? 'Fullbody 3 jours' : (type === 'halfbody' ? 'Halfbody 4 jours' : 'Split 5 jours'),
@@ -479,9 +596,13 @@ async function requestScheduleMetaStrict(profile, type, query, options = {}) {
 async function requestWorkoutDayStrict(meta, day, profile, extra = {}) {
   let lastErr = 'init';
   for (let i = 1; i <= MAX_RETRIES_JSON; i++) {
+    const lang = getAppLanguage();
     const prompt = i === 1
       ? buildDayPrompt(meta, day, profile, extra)
-      : buildDayPrompt(meta, day, profile, extra) + `\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`;
+      : (lang === 'en'
+          ? buildDayPrompt(meta, day, profile, extra) + `\nFix: ${lastErr}\n(Remember: strict JSON, no text outside JSON)`
+          : buildDayPrompt(meta, day, profile, extra) + `\nCorrige: ${lastErr}\n(Rappelle-toi: JSON strict, aucun texte hors JSON)`
+        );
     try {
       // pass bound method so "this" inside generateCustomContent is correct
       const obj = await callJSONBestEffort(mistralService.generateCustomContent.bind(mistralService), prompt);
@@ -511,14 +632,15 @@ async function requestWorkoutDayStrict(meta, day, profile, extra = {}) {
 }
 
 async function generateWorkoutProgramsStaged(profile, query = '') {
+  const lang = getAppLanguage();
   // 1) Métadonnées IA pour chaque type x niveau
   const types = ['fullbody', 'halfbody', 'split'];
-  const levels = ['débutant', 'intermédiaire', 'avancé'];
+  const levels = lang === 'en' ? ['beginner', 'intermediate', 'advanced'] : ['débutant', 'intermédiaire', 'avancé'];
   const metas = [];
   // request one meta per (type, level) to produce multiple variations
   for (const type of types) {
     for (const level of levels) {
-      const levelQuery = `${query} niveau: ${level}`;
+      const levelQuery = lang === 'en' ? `${query} level: ${level}` : `${query} niveau: ${level}`;
       const meta = await requestScheduleMetaStrict(profile, type, levelQuery);
       // ensure meta.level reflects requested level (some LLMs may ignore; we enforce)
       meta.level = meta.level || level;
@@ -534,7 +656,8 @@ async function generateWorkoutProgramsStaged(profile, query = '') {
       const w = await requestWorkoutDayStrict(meta, day, profile);
       workouts.push(w);
     }
-    workouts.sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day));
+    const dayOrder = getDayOrder(lang);
+    workouts.sort((a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day));
     programs.push({
       id: meta.id,
       type: meta.type,
@@ -663,8 +786,9 @@ export const mistralSearchService = {
           level: inferLevelFromProfile(profile)
         };
       }
+      const lang = getAppLanguage();
       const focusMuscleGroup = criteria?.focusMuscle || criteria?.focusMuscleGroup || '';
-      if (focusMuscleGroup) queryTxt += `accent sur ${focusMuscleGroup} `;
+      if (focusMuscleGroup) queryTxt += (lang === 'en' ? `focus on ${focusMuscleGroup} ` : `accent sur ${focusMuscleGroup} `);
       const programs = await generateWorkoutProgramsAuto(profile, rec, queryTxt, focusMuscleGroup);
 
       return programs.map((program) => ({
@@ -673,7 +797,7 @@ export const mistralSearchService = {
         description: program.description,
         level: program.level,
         duration: program.duration,
-        equipment: equip.length > 0 ? equip.join(', ') : 'Aucun',
+        equipment: equip.length > 0 ? equip.join(', ') : (lang === 'en' ? 'None' : 'Aucun'),
         source: 'Mistral AI',
         thumbnail: program.thumbnail || `https://source.unsplash.com/400x300/?fitness+${loc || 'workout'}`,
         workouts: program.workouts,

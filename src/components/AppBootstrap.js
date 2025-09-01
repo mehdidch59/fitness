@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { profileSyncService } from '../services/profileSync';
 import { initApiWithPopups } from '../services/api';
 import { persistenceService } from '../services/persistenceService';
+import { useI18n } from '../utils/i18n';
 
 /**
  * Composant d'initialisation de l'application
@@ -14,6 +15,7 @@ const AppBootstrap = () => {
   const popupManager = usePopup();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const hasInitialized = useRef(false);
   useEffect(() => {
     // Éviter la double initialisation
@@ -87,10 +89,10 @@ const AppBootstrap = () => {
         const timeoutId = setTimeout(() => {
           popupManager.showPopup({
             type: 'info',
-            title: 'Bienvenue dans votre app fitness',
-            content: 'Cette application va vous aider à atteindre vos objectifs fitness avec des programmes personnalisés.',
-            primaryButtonText: 'Commencer',
-            secondaryButtonText: 'Compléter mon profil',
+            title: t('welcome.title', 'Bienvenue dans votre app fitness'),
+            content: t('welcome.content', 'Cette application va vous aider à atteindre vos objectifs fitness avec des programmes personnalisés.'),
+            primaryButtonText: t('welcome.primary', 'Commencer'),
+            secondaryButtonText: t('welcome.secondary', 'Compléter mon profil'),
             onPrimaryAction: () => {
               localStorage.setItem('hasSeenWelcome', 'true');
             },
@@ -112,10 +114,10 @@ const AppBootstrap = () => {
         const profileTimeoutId = setTimeout(() => {
           popupManager.showPopup({
             type: 'warning',
-            title: 'Complétez votre profil',
-            content: 'Pour une expérience optimale, veuillez compléter votre profil.',
-            primaryButtonText: 'Compléter maintenant',
-            secondaryButtonText: 'Plus tard',
+            title: t('profileIncomplete.title', 'Complétez votre profil'),
+            content: t('profileIncomplete.content', 'Pour une expérience optimale, veuillez compléter votre profil.'),
+            primaryButtonText: t('profileIncomplete.primary', 'Compléter maintenant'),
+            secondaryButtonText: t('profileIncomplete.secondary', 'Plus tard'),
             onPrimaryAction: () => {
               navigate('/auth');
             }
@@ -127,7 +129,7 @@ const AppBootstrap = () => {
     };
 
     checkProfile();
-  }, [popupManager, navigate, user]);
+  }, [popupManager, navigate, user, t]);
 
   return null;
 };
