@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import {
-  useMassGainRecipes,
+  useMassGoalAwareRecipes,
   useFavoriteMutations,
   useRecipeView,
   useIsRecipeFavorite,
@@ -51,16 +51,16 @@ class ErrorBoundary extends React.Component {
         <div className="p-6 bg-red-50 border border-red-200 rounded-xl">
           <div className="flex items-center mb-3">
             <AlertCircle size={20} className="text-red-600 mr-2" />
-            <h3 className="font-semibold text-red-800">{(window.__i18n_t && window.__i18n_t('nutrition.error.title','Une erreur s\'est produite')) || 'Une erreur s\'est produite'}</h3>
+            <h3 className="font-semibold text-red-800">{(window.__i18n_t && window.__i18n_t('nutrition.error.title', 'Une erreur s\'est produite')) || 'Une erreur s\'est produite'}</h3>
           </div>
           <p className="text-red-700 text-sm mb-4">
-            {(window.__i18n_t && window.__i18n_t('nutrition.error.desc',"Impossible d'afficher cette section. Essayez de rafraîchir la page.")) || "Impossible d'afficher cette section. Essayez de rafraîchir la page."}
+            {(window.__i18n_t && window.__i18n_t('nutrition.error.desc', "Impossible d'afficher cette section. Essayez de rafraîchir la page.")) || "Impossible d'afficher cette section. Essayez de rafraîchir la page."}
           </p>
           <button
             onClick={() => window.location.reload()}
             className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm hover:bg-red-200"
           >
-            {(window.__i18n_t && window.__i18n_t('common.refreshPage','Rafraîchir la page')) || 'Rafraîchir la page'}
+            {(window.__i18n_t && window.__i18n_t('common.refreshPage', 'Rafraîchir la page')) || 'Rafraîchir la page'}
           </button>
         </div>
       );
@@ -192,14 +192,14 @@ const RecipeDetail = ({
 
   return (
     <ErrorBoundary>
-      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen overflow-x-hidden">
+      <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen overflow-x-hidden">
         <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-5xl mx-auto">
           <button
             onClick={onBack}
             className="flex items-center text-purple-700 hover:text-purple-800 font-medium"
           >
             <ArrowLeft size={20} className="mr-2" />
-            {(window.__i18n_t && window.__i18n_t('nutrition.backToRecipes','Retour aux recettes')) || 'Retour aux recettes'}
+            {(window.__i18n_t && window.__i18n_t('nutrition.backToRecipes', 'Retour aux recettes')) || 'Retour aux recettes'}
           </button>
 
           <button
@@ -217,10 +217,10 @@ const RecipeDetail = ({
               className={`mr-2 ${isFavorite ? 'fill-current' : ''}`}
             />
             {!user
-              ? ((window.__i18n_t && window.__i18n_t('nutrition.loginForFav','Se connecter pour favoris')) || 'Se connecter pour favoris')
+              ? ((window.__i18n_t && window.__i18n_t('nutrition.loginForFav', 'Se connecter pour favoris')) || 'Se connecter pour favoris')
               : isAddingToFavorites || isRemovingFromFavorites
-                ? ((window.__i18n_t && window.__i18n_t('common.loading','Chargement...')) || 'Chargement...')
-                : isFavorite ? ((window.__i18n_t && window.__i18n_t('nutrition.removeFav','Retirer des favoris')) || 'Retirer des favoris') : ((window.__i18n_t && window.__i18n_t('nutrition.addFav','Ajouter aux favoris')) || 'Ajouter aux favoris')
+                ? ((window.__i18n_t && window.__i18n_t('common.loading', 'Chargement...')) || 'Chargement...')
+                : isFavorite ? ((window.__i18n_t && window.__i18n_t('nutrition.removeFav', 'Retirer des favoris')) || 'Retirer des favoris') : ((window.__i18n_t && window.__i18n_t('nutrition.addFav', 'Ajouter aux favoris')) || 'Ajouter aux favoris')
             }
           </button>
         </div>
@@ -305,7 +305,7 @@ const RecipeDetail = ({
             </div>
 
             {recipe.massGainScore && (
-              <div className="mb-6 p-4 bg-purple-50 rounded-xl">
+              <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/30 rounded-xl">
                 <div className="flex items-center justify-between">
                   <span className="text-purple-800 font-medium">{t('nutrition.massGainScore', 'Score Prise de Masse')}</span>
                   <div className="flex items-center">
@@ -320,28 +320,28 @@ const RecipeDetail = ({
                 </div>
               </div>
             )}            <div className="mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">{t('nutrition.ingredients', 'Ingrédients')}</h3>
-              <div className="bg-gray-50 p-4 rounded-xl">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('nutrition.ingredients', 'Ingrédients')}</h3>
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
                 {recipe.ingredients && recipe.ingredients.length > 0 ? (
                   <ul className="space-y-2">
                     {recipe.ingredients.map((ingredient, index) => {
                       // Gérer différents formats d'ingrédients
                       let ingredientText = '';
                       let quantityText = '';
-                      
+
                       if (typeof ingredient === 'string') {
                         // Si l'ingrédient est une chaîne simple
                         ingredientText = ingredient;
                       } else if (typeof ingredient === 'object' && ingredient !== null) {
                         // Si l'ingrédient est un objet avec des propriétés
                         ingredientText = ingredient.name || ingredient.ingredient || 'Ingrédient';
-                        quantityText = ingredient.quantity && ingredient.unit 
+                        quantityText = ingredient.quantity && ingredient.unit
                           ? `${ingredient.quantity} ${ingredient.unit}`
                           : ingredient.quantity || '';
                       } else {
                         ingredientText = 'Ingrédient';
                       }
-                      
+
                       return (
                         <li key={`ingredient-${index}-${ingredientText}`} className="flex justify-between items-center">
                           <span className="text-gray-700">{ingredientText}</span>
@@ -355,7 +355,7 @@ const RecipeDetail = ({
                     })}
                   </ul>
                 ) : (
-                  <p className="text-gray-600 italic">{(window.__i18n_t && window.__i18n_t('nutrition.noIngredients','Ingrédients non spécifiés')) || 'Ingrédients non spécifiés'}</p>
+                  <p className="text-gray-600 italic">{(window.__i18n_t && window.__i18n_t('nutrition.noIngredients', 'Ingrédients non spécifiés')) || 'Ingrédients non spécifiés'}</p>
                 )}
               </div>
             </div>
@@ -472,9 +472,9 @@ function NutritionView() {
     onSuccess,
     onError
   }), [onSuccess, onError]);
-  
+
   // Hooks principaux avec options stables
-  const { 
+  const {
     data: recipes,
     isLoading,
     isError,
@@ -482,7 +482,7 @@ function NutritionView() {
     generateNew,
     isGenerating,
     refetch: refetchRecipes
-  } = useMassGainRecipes(hookOptions);
+  } = useMassGoalAwareRecipes(hookOptions);
 
   // Hook pour les favoris
   const favoritesHookOptions = useMemo(() => ({
@@ -509,11 +509,11 @@ function NutritionView() {
   // Détecter le changement d'utilisateur et forcer la mise à jour des queries
   useEffect(() => {
     const currentUserId = user?.uid;
-    
+
     if (currentUserId !== lastUserId) {
       console.log('🔄 Changement d\'utilisateur détecté:', lastUserId, '->', currentUserId);
       setLastUserId(currentUserId);
-      
+
       if (currentUserId) {
         // Nouvel utilisateur connecté - charger SEULEMENT les recettes existantes
         console.log('👤 Chargement des recettes EXISTANTES pour nouvel utilisateur:', currentUserId);
@@ -538,7 +538,7 @@ function NutritionView() {
         setShowAuthPrompt(true);
         return;
       }
-      
+
       setError(null);
       actions.setSearchStatus(t('nutrition.generatingNewRecipes', 'Génération de nouvelles recettes...'));
       generateNew();
@@ -555,7 +555,7 @@ function NutritionView() {
     } else {
       console.log('❌ Aucun utilisateur connecté dans NutritionView');
     }
-  }, [user?.uid]);  const handleNutritionGeneration = useCallback(async () => {
+  }, [user?.uid]); const handleNutritionGeneration = useCallback(async () => {
     try {
       // Vérification préliminaire de l'authentification
       if (!user?.uid) {
@@ -566,7 +566,7 @@ function NutritionView() {
       }
 
       console.log('🚀 Démarrage génération nutrition pour utilisateur:', user.uid);
-      
+
       setIsGeneratingNutrition(true);
       setGenerationStage(t('nutrition.stage.start', 'Démarrage de la génération du plan nutritionnel...'));
       setGenerationProgress(0);
@@ -575,31 +575,27 @@ function NutritionView() {
       // Update progress incrementally
       setGenerationProgress(20);
       setGenerationStage(t('nutrition.stage.analysis', 'Analyse des besoins nutritionnels...'));
-        // Récupérer le profil utilisateur depuis le localStorage ou définir des valeurs par défaut
+      // Récupérer le profil utilisateur depuis le localStorage ou définir des valeurs par défaut
       let userProfile = {};
       try {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-          const parsedUser = JSON.parse(userData);
-          console.log('👤 Données utilisateur récupérées:', parsedUser?.uid);
+        const upRaw = localStorage.getItem('userProfile');
+        if (upRaw) {
+          const up = JSON.parse(upRaw);
           userProfile = {
-            goal: 'prise de masse',
-            level: parsedUser.fitnessLevel || 'intermédiaire',
-            weight: parsedUser.weight || 75,
-            height: parsedUser.height || 175,
-            age: parsedUser.age || 25,
-            gender: parsedUser.gender || 'homme'
+            goal: up.goal || 'maintain',
+            level: up.level || up.activityLevel || 'intermédiaire',
+            weight: up.weight || 75,
+            height: up.height || 175,
+            age: up.age || 25,
+            gender: up.gender || 'homme',
+            dietType: up.dietType || 'omnivore'
           };
+        } else {
+          userProfile = { goal: 'maintain', level: 'intermédiaire', weight: 75, height: 175, age: 25, gender: 'homme' };
         }
       } catch (error) {
-        console.log('⚠️ Erreur parsing données utilisateur, utilisation profil par défaut:', error);
-        userProfile = {
-          goal: 'prise de masse',
-          level: 'intermédiaire',
-          weight: 75,
-          age: 25,
-          gender: 'homme'
-        };
+        console.log('⚠️ Erreur lecture profil, utilisation profil par défaut:', error);
+        userProfile = { goal: 'maintain', level: 'intermédiaire', weight: 75, height: 175, age: 25, gender: 'homme' };
       }
 
       setGenerationProgress(40);
@@ -608,13 +604,13 @@ function NutritionView() {
       // Générer de nouvelles recettes via Mistral uniquement
       try {
         console.log('🤖 Génération via Mistral avec profil:', userProfile);
-        
-        const newRecipes = await mistralService.generateMassGainRecipes(userProfile);
-        
+
+        const newRecipes = await mistralService.generateGoalAlignedRecipes(userProfile);
+
         if (!newRecipes || newRecipes.length === 0) {
           throw new Error('Aucune recette générée par Mistral');
         }
-        
+
         console.log('✅ Nouvelles recettes générées via Mistral:', newRecipes.length);
 
         setGenerationProgress(70);
@@ -624,7 +620,7 @@ function NutritionView() {
           if (!currentUserId) {
             throw new Error('Utilisateur non connecté - impossible de sauvegarder');
           }
-          
+
           console.log('💾 Sauvegarde avec userId:', currentUserId);
           await nutritionFirestoreService.saveMultipleRecipes(newRecipes, currentUserId, { explicitSave: true });
           console.log('✅ Recettes sauvegardées en base');
@@ -670,7 +666,7 @@ function NutritionView() {
       console.error('❌ Erreur lors de la génération du plan nutritionnel:', error);
       setGenerationStage(t('nutrition.stage.error', 'Erreur lors de la génération - Veuillez réessayer'));
       setError(error?.message || t('nutrition.generationPlanError', 'Erreur lors de la génération du plan nutritionnel'));
-      
+
       setTimeout(() => {
         setGenerationProgress(0);
         setGenerationStage('');
@@ -751,7 +747,7 @@ function NutritionView() {
   // Vue principale avec la liste des recettes
   return (
     <ErrorBoundary>
-      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen overflow-x-hidden">
+      <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen overflow-x-hidden">
         {showAuthPrompt && <AuthPrompt onClose={handleCloseAuthPrompt} />}
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 max-w-5xl mx-auto">
@@ -785,7 +781,7 @@ function NutritionView() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200/80 p-4 rounded-xl mb-6">
             <div className="flex items-center">
               <AlertCircle size={20} className="text-red-600 mr-3" />
               <div>
@@ -797,13 +793,13 @@ function NutritionView() {
         )}
 
         {viewMode === 'favorites' && !user && (
-          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-6">
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200/80 p-4 rounded-xl mb-6">
             <div className="flex items-center">
               <LogIn size={20} className="text-amber-700 mr-3" />
               <div>
                 <p className="text-amber-900 font-medium">{t('nutrition.authRequired', 'Connexion requise')}</p>
                 <p className="text-amber-800 text-sm">{t('nutrition.loginForFavAccess', 'Connectez-vous pour accéder à vos favoris')}</p>
-                <button 
+                <button
                   onClick={() => setShowAuthPrompt(true)}
                   className="mt-2 text-amber-800 underline text-sm font-medium"
                 >
@@ -815,13 +811,13 @@ function NutritionView() {
         )}
 
         {!user && viewMode === 'discover' && (
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200/80 p-4 rounded-xl mb-6">
             <div className="flex items-center">
               <LogIn size={20} className="text-blue-700 mr-3" />
               <div>
                 <p className="text-blue-900 font-medium">{t('nutrition.limitedAccess', 'Accès limité')}</p>
                 <p className="text-blue-800 text-sm">{t('nutrition.loginForPersonalized', 'Connectez-vous pour générer des recettes personnalisées')}</p>
-                <button 
+                <button
                   onClick={() => setShowAuthPrompt(true)}
                   className="mt-2 text-blue-800 underline text-sm font-medium"
                 >
@@ -1121,7 +1117,7 @@ function NutritionView() {
                 <p className="text-gray-600 mb-4">
                   {!user ? t('nutrition.loginForPersonalized', 'Connectez-vous pour accéder à vos recettes personnalisées') : t('nutrition.noRecipesFound', 'Aucune recette trouvée')}
                 </p>
-                
+
                 {!user ? (
                   <button
                     onClick={() => setShowAuthPrompt(true)}
@@ -1130,22 +1126,22 @@ function NutritionView() {
                     {t('nutrition.loginToStart', 'Se connecter pour commencer')}
                   </button>
                 ) : (
-                  <button 
-                    onClick={() => refetchRecipes()} 
+                  <button
+                    onClick={() => refetchRecipes()}
                     disabled={isLoading}
-                    className="w-full mb-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium flex items-center justify-center disabled:opacity-50"
+                    className="w-full mb-4 py-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md transition-all disabled:opacity-50"
                   >
                     <RefreshCw size={18} className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                     {t('nutrition.reloadRecipes', 'Recharger les recettes')}
                   </button>
                 )}
-                
+
                 <button
                   onClick={handleNutritionGeneration}
                   disabled={isGeneratingNutrition || !user}
-                  className={`w-full py-4 rounded-2xl font-semibold text-white transition-all relative overflow-hidden ${isGeneratingNutrition || !user
+                  className={`w-full py-4 rounded-xl font-semibold text-white transition-all relative overflow-hidden ${isGeneratingNutrition || !user
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-emerald-500 dark:via-emerald-600 dark:to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 dark:hover:from-emerald-600 dark:hover:via-emerald-700 dark:hover:to-teal-700 shadow-lg hover:shadow-xl'
+                    : 'bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 hover:from-purple-600 hover:to-pink-600 dark:hover:from-indigo-600 dark:hover:to-violet-700 shadow-lg hover:shadow-xl'
                     }`}
                 >
                   {/* Barre de progression animée */}
@@ -1177,7 +1173,6 @@ function NutritionView() {
                       </>
                     ) : (
                       <div className="flex items-center">
-                        <Apple size={20} className="mr-2" />
                         <div className="flex flex-col">
                           <span>{t('nutrition.generatePlanCtaTitle', 'Génération Plan Nutritionnel')}</span>
                           <span className="text-xs opacity-90">

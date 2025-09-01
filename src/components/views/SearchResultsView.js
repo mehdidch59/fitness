@@ -69,15 +69,15 @@ const SearchResultsView = () => {
   };
   
   return (
-    <div className="p-4 sm:p-6">
+    <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">{t('search.title', 'Recherche')}</h1>
       
-      <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 max-w-3xl mx-auto">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-4 mb-6 max-w-3xl mx-auto">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
           <input
             type="text"
             placeholder={t('search.placeholder', 'Rechercher des exercices, recettes...')}
-            className="flex-1 p-3 border border-gray-300 rounded-xl"
+            className="flex-1 p-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -110,7 +110,7 @@ const SearchResultsView = () => {
         </div>
       </div>
       
-      <div className="text-center text-gray-600 text-sm max-w-3xl mx-auto">
+      <div className="text-center text-gray-600 dark:text-gray-300 text-sm max-w-3xl mx-auto">
         <p>{t('search.personalized', 'Toutes les recherches sont personnalisées selon votre objectif')}: {state.userProfile.fitnessGoal || t('common.undefined', 'Non défini')}</p>
         <p className="mt-2">{t('search.popupInfo', 'Les résultats s\'afficheront dans un popup pour une meilleure expérience mobile.')}</p>
       </div>

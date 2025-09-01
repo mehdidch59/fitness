@@ -238,19 +238,26 @@ export class JSONParsingUtils {
       fats: this.parseNumber(recipe.fats, 0),
       
       // Autres valeurs numériques
-      time: this.parseNumber(recipe.time, 15),
+      time: this.parseNumber(typeof recipe.time !== 'undefined' ? recipe.time : recipe.cookTime, 15),
       servings: this.parseNumber(recipe.servings, 1),
+      estimatedCost: this.parseNumber(recipe.estimatedCost, null),
+      costPerServing: this.parseNumber(recipe.costPerServing, null),
+      wasteScore: this.parseNumber(recipe.wasteScore, null),
+      creativityScore: this.parseNumber(recipe.creativityScore, null),
+      seasonScore: this.parseNumber(recipe.seasonScore, null),
       
       // Arrays
       ingredients: this.normalizeArray(recipe.ingredients),
       instructions: this.normalizeArray(recipe.instructions),
       tips: this.normalizeArray(recipe.tips),
       tags: this.normalizeArray(recipe.tags),
+      nutritionHighlights: this.normalizeArray(recipe.nutritionHighlights),
       
       // Métadonnées
       source: 'IA Nutritionnelle',
       aiGenerated: true,
-      massGainScore: this.parseNumber(recipe.massGainScore, 0)
+      massGainScore: this.parseNumber(recipe.massGainScore, 0),
+      moodBenefits: typeof recipe.moodBenefits === 'string' ? recipe.moodBenefits : undefined
     };
   }
 

@@ -3,6 +3,7 @@
  */
 
 import { mistralService } from './mistralService';
+import { JSONParsingUtils } from '../utils/JSONParsingUtils';
 
 class AdvancedAIService {
   constructor() {
@@ -10,6 +11,56 @@ class AdvancedAIService {
     this.userPreferences = new Map();
     this.moodHistory = new Map();
     this.seasonalIngredients = this.initSeasonalData();
+  }
+
+  // === Contexte profil et alignement objectif ===
+  buildProfileContext(userProfile = {}) {
+    const goal = userProfile.goal || 'maintain';
+    const gender = userProfile.gender || 'non spécifié';
+    const age = userProfile.age || 'NA';
+    const weight = userProfile.weight || 'NA';
+    const height = userProfile.height || 'NA';
+    const activity = userProfile.activityLevel || 'modéré';
+    const diet = userProfile.dietType || 'omnivore';
+    return `Objectif: ${goal}\nGenre: ${gender}\nÂge: ${age}\nPoids: ${weight}kg\nTaille: ${height}cm\nActivité: ${activity}\nRégime: ${diet}`;
+  }
+
+  getGoalGuidelines(goal = 'maintain', userProfile = {}) {
+    const weight = Number(userProfile.weight || 70);
+    const proteinPerKg = goal === 'gain_muscle' ? 1.6 : goal === 'lose_weight' ? 1.5 : 1.2;
+    const proteinTarget = Math.round(proteinPerKg * weight);
+    const perMealProtein = Math.max(20, Math.round(proteinTarget / 3));
+    const calorieRanges = {
+      gain_muscle: [500, 800],
+      lose_weight: [300, 550],
+      maintain: [400, 700],
+    };
+    const range = calorieRanges[goal] || calorieRanges.maintain;
+    return { perMealProtein, calorieRange: range };
+  }
+
+  scoreRecipeForGoal(recipe, goal = 'maintain', userProfile = {}) {
+    const { perMealProtein, calorieRange } = this.getGoalGuidelines(goal, userProfile);
+    const protein = Number(recipe?.protein || 0);
+    const calories = Number(recipe?.calories || 0);
+    const proteinScore = Math.max(0, Math.min(60, ((protein - perMealProtein) / perMealProtein) * 60 + 30));
+    const [minC, maxC] = calorieRange;
+    let calScore = 0;
+    if (calories >= minC && calories <= maxC) {
+      calScore = 40;
+    } else if (calories > 0) {
+      const dist = calories < minC ? (minC - calories) : (calories - maxC);
+      const scale = Math.max(minC, 1);
+      calScore = Math.max(0, 40 - (dist / scale) * 40);
+    }
+    return Math.round(Math.max(0, Math.min(100, proteinScore + calScore)));
+  }
+
+  adaptRecipesToGoal(recipes = [], userProfile = {}) {
+    const goal = userProfile.goal || 'maintain';
+    const scored = (recipes || []).map(r => ({ ...r, goalFitScore: this.scoreRecipeForGoal(r, goal, userProfile) }));
+    scored.sort((a, b) => (b.goalFitScore || 0) - (a.goalFitScore || 0));
+    return scored;
   }
 
   /**
@@ -25,34 +76,37 @@ class AdvancedAIService {
       const prompt = `Tu es un chef IA. Analyse ces ingrédients disponibles et crée 3 recettes créatives et nutritives.
 
 INGRÉDIENTS DÉTECTÉS: ${detectedIngredients.join(', ')}
-PROFIL UTILISATEUR: ${userProfile.goal}, ${userProfile.dietType || 'omnivore'}
+
+PROFIL UTILISATEUR:
+${this.buildProfileContext(userProfile)}
 
 Contraintes:
 - Utiliser UNIQUEMENT les ingrédients détectés
 - Éviter le gaspillage alimentaire
-- Adapter au profil nutritionnel
+- Adapter au profil nutritionnel et à l'objectif
 - Temps de préparation raisonnable
 
 Format JSON:
-[{
-  "name": "Nom créatif",
-  "description": "Description appétissante",
-  "ingredients": [{"name": "ingredient", "quantity": "quantité", "fromFridge": true}],
-  "instructions": ["étape 1", "étape 2"],
-  "calories": number,
-  "protein": number,
-  "cookTime": number,
-  "wasteScore": number,
-  "creativityScore": number
-}]`;
+[
+  {
+    "name": "Nom créatif",
+    "description": "Description appétissante",
+    "ingredients": [{"name": "ingredient", "quantity": "quantité", "fromFridge": true}],
+    "instructions": ["étape 1", "étape 2"],
+    "calories": number,
+    "protein": number,
+    "cookTime": number
+  }
+]`;
 
-      const recipes = await this.mistralService.generateCustomContent(prompt);
+      const content = await this.mistralService.generateCustomContent(prompt, { response_format: 'json' });
+      const parsed = JSONParsingUtils.safeJSONParse(content, []);
+      const recipes = JSONParsingUtils.normalizeRecipes(parsed);
       
       return {
-        detectedIngredients,
-        recipes: recipes || [],
-        wasteReduction: this.calculateWasteReduction(detectedIngredients),
-        suggestions: this.getShoppingComplement(detectedIngredients, userProfile)
+        detectedIngredients: (detectedIngredients || []).map(name => ({ name, quantity: '' })),
+        recipes: this.adaptRecipesToGoal(recipes, userProfile),
+        wasteReduction: this.calculateWasteReduction?.(detectedIngredients) || 0
       };
       
     } catch (error) {
@@ -96,25 +150,29 @@ Format JSON:
 OBJECTIF MOOD: ${moodProfile.focus}
 INGRÉDIENTS BOOST: ${moodProfile.boost}
 À ÉVITER: ${moodProfile.avoid}
-PROFIL: ${userProfile.goal}, ${userProfile.weight || 70}kg
+
+PROFIL UTILISATEUR:
+${this.buildProfileContext(userProfile)}
 
 Chaque recette doit:
 - Améliorer l'humeur naturellement
-- Être nutritionnellement adaptée
+- Être alignée avec l'objectif (calories et protéines adaptées)
 - Apporter les nutriments manquants pour ce mood
 
-Format JSON identique aux autres recettes avec champ supplémentaire "moodBenefits".`;
+Format JSON identique aux autres recettes (avec champ optionnel "moodBenefits").`;
 
-      const recipes = await this.mistralService.generateCustomContent(prompt);
+      const content = await this.mistralService.generateCustomContent(prompt, { response_format: 'json' });
+      const parsed = JSONParsingUtils.safeJSONParse(content, []);
+      const recipes = JSONParsingUtils.normalizeRecipes(parsed);
       
       // Sauvegarder dans l'historique mood
       this.saveMoodHistory(userProfile.userId, mood, context);
       
       return {
         mood,
-        recipes: recipes || [],
-        moodInsights: this.getMoodInsights(userProfile.userId),
-        recommendations: this.getMoodRecommendations(mood)
+        recipes: this.adaptRecipesToGoal(recipes, userProfile),
+        moodInsights: this.getMoodInsights?.(userProfile.userId),
+        recommendations: this.getMoodRecommendations?.(mood)
       };
       
     } catch (error) {
@@ -133,32 +191,34 @@ Format JSON identique aux autres recettes avec champ supplémentaire "moodBenefi
       const prompt = `Tu es un expert en nutrition économique. Crée un plan repas complet.
 
 BUDGET TOTAL: ${budget}€ pour ${duration} jours (${budgetPerDay.toFixed(2)}€/jour)
-PROFIL: ${userProfile.goal}, ${userProfile.dietType || 'omnivore'}
+
+PROFIL UTILISATEUR:
+${this.buildProfileContext(userProfile)}
 
 Contraintes strictes:
 - Respecter le budget absolu
 - Maximiser la nutrition par euro dépensé
 - Ingrédients de base polyvalents
 - Minimiser le gaspillage
+- Adapter calories/protéines à l'objectif
 
 Crée 5 recettes économiques avec:
 - Coût estimé par portion
 - Rendement (nb portions)
-- Valeur nutritionnelle
+- Valeur nutritionnelle (calories, protéines)
 - Instructions de conservation
 
 Format JSON avec champs: "estimatedCost", "servings", "costPerServing", "nutritionScore".`;
 
-      const recipes = await this.mistralService.generateCustomContent(prompt);
+      const content = await this.mistralService.generateCustomContent(prompt, { response_format: 'json' });
+      const parsed = JSONParsingUtils.safeJSONParse(content, []);
+      const recipes = JSONParsingUtils.normalizeRecipes(parsed);
       
       return {
         budget,
         duration,
         budgetPerDay,
-        recipes: recipes || [],
-        shoppingList: this.generateBudgetShoppingList(recipes, budget),
-        savings: this.calculatePotentialSavings(recipes, userProfile),
-        tips: this.getBudgetTips(budgetPerDay)
+        recipes: this.adaptRecipesToGoal(recipes, userProfile)
       };
       
     } catch (error) {
@@ -362,7 +422,12 @@ Format JSON avec sections: "analysis", "actionableAdvice", "nutritionAdjustments
 
   getFridgeScanFallback() {
     return {
-      detectedIngredients: ['œufs', 'lait', 'tomates', 'fromage'],
+      detectedIngredients: [
+        { name: 'œufs', quantity: '3' },
+        { name: 'lait', quantity: '200ml' },
+        { name: 'tomates', quantity: '2' },
+        { name: 'fromage', quantity: '50g' }
+      ],
       recipes: [
         {
           name: 'Omelette aux tomates et fromage',

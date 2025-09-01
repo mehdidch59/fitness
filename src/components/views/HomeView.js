@@ -67,8 +67,8 @@ function HomeView() {
   return (
     <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <div className="bg-gradient-to-br from-purple-600 to-pink-600 dark:from-indigo-700 dark:to-violet-700 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
-        <h1 className="text-3xl font-bold mb-2">Fitness IA 💪</h1>
-        <p className="opacity-90 text-lg">{t('home.subtitle', 'Programmes personnalisés par recherche web')}</p>
+        <h1 className="text-3xl font-bold mb-2">ZenFit 💪</h1>
+        <p className="opacity-90 text-lg">{t('home.subtitle', 'Programmes personnalisés avec l\'IA')}</p>
       </div>
 
       <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">

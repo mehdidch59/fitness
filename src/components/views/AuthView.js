@@ -115,11 +115,11 @@ function AuthView() {
 
   // Formulaire de connexion/inscription
   return (
-    <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
-          <div className="bg-purple-100 p-4 rounded-full inline-flex mb-4">
-            <User size={32} className="text-purple-600" />
+          <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full inline-flex mb-4">
+            <User size={32} className="text-purple-600 dark:text-purple-300" />
           </div>
           <h2 className="text-3xl font-bold mb-2">
             {isLogin ? t('auth.login', 'Connexion') : t('auth.signup', 'Inscription')}
@@ -127,20 +127,21 @@ function AuthView() {
           <p className="text-gray-600">
             {isLogin ? t('auth.welcomeBack', 'Bon retour parmi nous !') : t('auth.createAccount', 'Créez votre compte fitness')}
           </p>
-        </div>        <div className="bg-white rounded-2xl shadow-lg p-6">
+        </div>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6">
           {/* Afficher l'erreur Firebase s'il y en a une */}
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400/80 text-red-700 dark:text-red-200 rounded">
               {error}
             </div>
           )}
           
           {/* Toggle connexion/inscription */}
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
             <button
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-                isLogin ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600'
+                isLogin ? 'bg-white dark:bg-gray-900 text-purple-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
               {t('auth.login', 'Connexion')}
@@ -148,7 +149,7 @@ function AuthView() {
             <button
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-                !isLogin ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600'
+                !isLogin ? 'bg-white dark:bg-gray-900 text-purple-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
               {t('auth.signup', 'Inscription')}
@@ -257,7 +258,7 @@ function AuthView() {
                 placeholder="john@example.com"
                 required
               />
-              <Mail className="absolute right-3 top-9 text-gray-400" size={20} />
+              <Mail className="absolute right-3 top-9 text-gray-400 dark:text-gray-500" size={20} />
             </div>
 
             <div className="relative">
@@ -272,7 +273,7 @@ function AuthView() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-400"
+                className="absolute right-3 top-9 text-gray-400 dark:text-gray-500"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -280,7 +281,7 @@ function AuthView() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6 hover:shadow-md transition-shadow"
             >
               {isLogin ? t('auth.loginCta', 'Se connecter') : t('auth.createCta', 'Créer mon compte')}
             </button>

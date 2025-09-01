@@ -25,6 +25,25 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>React App</title>
+    <script>
+      (function() {
+        try {
+          var raw = localStorage.getItem('fitness_app_appSettings');
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            var theme = parsed && parsed.data && parsed.data.theme;
+            if (theme === 'dark') {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+            if (parsed && parsed.data && parsed.data.language) {
+              document.documentElement.setAttribute('lang', parsed.data.language);
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

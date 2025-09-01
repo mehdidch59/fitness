@@ -17,6 +17,59 @@ class MistralNutritionService {
   }
 
   /**
+   * Génère des recettes alignées sur l'objectif utilisateur (prise de masse, perte de poids, maintien)
+   */
+  async generateGoalAlignedRecipes(userProfile = {}) {
+    try {
+      console.log('🤖 Génération recettes alignées objectif via Mistral...');
+
+      if (!this.isAvailable()) {
+        throw new Error('Service Mistral non configuré - vérifiez votre clé API');
+      }
+
+      const profileText = this.buildProfileContext(userProfile);
+      const goalText = this.getGoalInstruction(userProfile?.goal);
+
+      const prompt = `Tu es un nutritionniste expert. Génère exactement 5 recettes adaptées à l'objectif utilisateur.\n\nPROFIL UTILISATEUR:\n${profileText}\n\nCONTRAINTES OBJECTIF:\n${goalText}\n\nEXIGENCES GÉNÉRALES:\n- Équilibre nutritionnel et simplicité\n- Ingrédients disponibles facilement\n- Préparation < 30 min si possible\n\nFORMAT RÉPONSE OBLIGATOIRE (JSON valide uniquement):\n\`\`\`json\n[\n  {\n    "name": "Nom de la recette",\n    "description": "Courte description",\n    "mealType": "petit-dejeuner|dejeuner|diner|collation",\n    "calories": 600,\n    "protein": 35,\n    "carbs": 60,\n    "fats": 20,\n    "time": 20,\n    "difficulty": "Facile|Moyen|Difficile",\n    "servings": 1,\n    "ingredients": [ {"name": "...", "quantity": "...", "unit": "..."} ],\n    "instructions": ["Étape 1", "Étape 2"],\n    "tips": ["Astuce 1"],\n    "nutritionTips": "Conseil nutritionnel bref"\n  }\n]\n\`\`\`\n\nIMPORTANT: Réponds UNIQUEMENT avec le JSON valide, aucun texte supplémentaire.`;
+
+      const content = await this.callMistralAPI(prompt);
+      const parsed = JSONParsingUtils.safeJSONParse(content, []);
+      const recipes = JSONParsingUtils.normalizeRecipes(parsed);
+      return recipes;
+    } catch (error) {
+      console.error('❌ Erreur génération recettes alignées objectif:', error);
+      throw new Error(`Échec génération recettes: ${error.message}`);
+    }
+  }
+
+  buildProfileContext(profile = {}) {
+    try {
+      const g = profile.goal || 'maintain';
+      const gender = profile.gender || 'non spécifié';
+      const age = profile.age || 25;
+      const weight = profile.weight || 70;
+      const height = profile.height || 175;
+      const level = profile.level || profile.activityLevel || 'intermédiaire';
+      const dietType = profile.dietType || 'omnivore';
+      return `Objectif: ${g}\nGenre: ${gender}\nÂge: ${age}\nPoids: ${weight}kg\nTaille: ${height}cm\nNiveau/Activité: ${level}\nRégime: ${dietType}`;
+    } catch {
+      return 'Objectif: maintain';
+    }
+  }
+
+  getGoalInstruction(goal) {
+    switch (goal) {
+      case 'gain_muscle':
+        return `Prise de masse: 500–800 kcal/recette, protéines élevées (≥25–35g/repas).`;        
+      case 'lose_weight':
+        return `Perte de poids: 300–550 kcal/recette, protéines soutenues (≥20–30g/repas), densité calorique modérée.`;
+      case 'maintain':
+      default:
+        return `Maintien: 400–700 kcal/recette, protéines modérées à élevées (≥20–30g/repas).`;
+    }
+  }
+
+  /**
    * Génère des recettes de prise de masse avec parsing robuste
    * SANS fallback automatique - retourne une erreur si échec
    */

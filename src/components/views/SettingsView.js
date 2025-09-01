@@ -209,19 +209,19 @@ function SettingsView() {
   ];
 
   return (
-    <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 max-w-5xl mx-auto">
         <div className="flex items-center">
           <button
             onClick={() => navigateWithConfirmation('/auth')}
-            className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
+            className="mr-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
           >
-            <ArrowLeft size={24} className="text-gray-700" />
+            <ArrowLeft size={24} className="text-gray-700 dark:text-gray-200" />
           </button>
           <h2 className="text-2xl font-bold">{t('settings.title', 'Paramètres')}</h2>
           {hasUnsavedChanges && (
-            <span className="ml-3 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+            <span className="ml-3 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 text-xs rounded-full">
               {t('settings.unsaved', 'Modifications non sauvegardées')}
             </span>
           )}
@@ -237,8 +237,8 @@ function SettingsView() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors ${activeTab === tab.id
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                 }`}
             >
               <Icon size={18} className="mr-2" />
@@ -249,7 +249,7 @@ function SettingsView() {
       </div>
 
       {/* Contenu des tabs */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 max-w-5xl mx-auto">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 space-y-6 max-w-5xl mx-auto">
         {activeTab === 'profile' && (
           <>
             <h3 className="text-xl font-bold mb-4">{t('settings.personalInfo', 'Informations personnelles')}</h3>
@@ -305,7 +305,7 @@ function SettingsView() {
               />
             </div>
 
-            <div className="mt-8 border-t pt-6">
+            <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
               <h3 className="text-xl font-bold mb-4">{t('settings.account', 'Compte')}</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -319,7 +319,7 @@ function SettingsView() {
                   />
                   {!user?.emailVerified && (
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-orange-700 bg-orange-100 px-2 py-1 rounded">Email non vérifié</span>
+                      <span className="text-sm text-orange-700 dark:text-orange-200 bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded">Email non vérifié</span>
                       <button
                         onClick={async () => {
                           setAccountLoading(true);
@@ -437,11 +437,11 @@ function SettingsView() {
 
             <div className="mt-8 border-t pt-6">
               <h3 className="text-xl font-bold mb-4">{t('settings.preferences', 'Préférences de l\'application')}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.language', 'Langue')}</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">{t('settings.language', 'Langue')}</label>
                   <select
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-lg px-3 py-2"
                     value={appLanguage}
                     onChange={(e) => setAppLanguage(e.target.value)}
                   >
@@ -505,19 +505,19 @@ function SettingsView() {
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Équipement à domicile
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    'dumbbells', 'kettlebell', 'resistanceBands', 'pullupBar',
-                    'bench', 'yoga', 'jumpRope', 'foam'
-                  ].map(equipment => (
-                    <button
-                      key={equipment}
-                      onClick={() => handleEquipmentToggle(equipment)}
-                      className={`p-3 rounded-xl border-2 transition-colors ${formData.homeEquipment.includes(equipment)
-                          ? 'border-purple-500 bg-purple-50 text-purple-700'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-purple-200'
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                'dumbbells', 'kettlebell', 'resistanceBands', 'pullupBar',
+                'bench', 'yoga', 'jumpRope', 'foam'
+              ].map(equipment => (
+                <button
+                  key={equipment}
+                  onClick={() => handleEquipmentToggle(equipment)}
+                  className={`p-3 rounded-xl border-2 transition-colors ${formData.homeEquipment.includes(equipment)
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200'
+                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:border-purple-200 dark:hover:border-purple-400/50'
                         }`}
-                    >
+                >
                       {equipment === 'dumbbells' && 'Haltères'}
                       {equipment === 'kettlebell' && 'Kettlebell'}
                       {equipment === 'resistanceBands' && 'Bandes élastiques'}
@@ -565,7 +565,7 @@ function SettingsView() {
       </div>      {/* Bouton de sauvegarde */}
       <button
         onClick={handleSave}
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6 flex items-center justify-center"
+        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6 flex items-center justify-center hover:shadow-md transition-shadow"
       >
         <Save className="mr-2" size={20} />
         Sauvegarder les modifications

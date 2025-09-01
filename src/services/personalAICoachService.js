@@ -24,13 +24,13 @@ class PersonalAICoachService {
   /**
    * CONSEILLER NUTRITIONNEL - Analyse des habitudes
    */
-  async analyzeNutritionalHabits(userId, timeframe = 'week') {
+  async analyzeNutritionalHabits(userId, timeframe = 'week', userProfileOverride = null) {
     try {
       console.log(`🧠 Analyse habitudes nutritionnelles: ${userId} (${timeframe})`);
       
       // Récupérer l'historique des repas
       const mealHistory = await this.getMealHistory(userId, timeframe);
-      const userProfile = await this.getUserProfile(userId);
+      const userProfile = userProfileOverride || await this.getUserProfile(userId);
       
       // Analyser les patterns
       const analysis = {
@@ -352,7 +352,23 @@ class PersonalAICoachService {
   }
 
   async getUserProfile(userId) {
-    // Récupérer le profil utilisateur
+    try {
+      // Tenter de charger depuis localStorage
+      const raw = localStorage.getItem('userProfile');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          weight: parsed.weight || 70,
+          height: parsed.height || 175,
+          age: parsed.age || 30,
+          goal: parsed.goal || 'maintain',
+          activityLevel: parsed.activityLevel || 'moderate',
+          displayName: parsed.name || 'Utilisateur',
+          gender: parsed.gender || 'unspecified'
+        };
+      }
+    } catch {}
+    // Fallback par défaut
     return {
       weight: 70,
       height: 175,

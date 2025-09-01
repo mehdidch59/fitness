@@ -258,7 +258,7 @@ function UltraRobustWorkoutView() {
 
   const renderFilters = () => (
     <div className="p-4 max-w-5xl mx-auto">
-      <div className="bg-white shadow rounded-2xl p-4">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <p className="text-sm text-gray-600 mb-2">{t('workout.searchLabel', 'Recherche')}</p>
@@ -268,7 +268,7 @@ function UltraRobustWorkoutView() {
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 placeholder={t('workout.searchPlaceholder', 'Filtrer par titre / description...')}
-                className="bg-gray-100 dark:bg-gray-800 outline-none w-full text-sm"
+                className="bg-gray-100 dark:bg-gray-800 outline-none w-full text-sm text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
           </div>
@@ -428,14 +428,14 @@ function UltraRobustWorkoutView() {
   const renderStats = () => (
     <div className="p-4 max-w-5xl mx-auto">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl shadow flex items-center">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-4 rounded-xl shadow-sm flex items-center">
           <Calendar className="text-purple-500 mr-3" />
           <div>
             <p className="text-sm text-gray-600">{t('workout.stats.programs', 'Programmes')}</p>
             <p className="text-2xl font-bold">{generatedPrograms?.length || 0}</p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl shadow flex items-center">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-4 rounded-xl shadow-sm flex items-center">
           <BarChart2 className="text-blue-500 mr-3" />
           <div>
             <p className="text-sm text-gray-600">{t('workout.stats.generations', 'Générations')}</p>
@@ -498,7 +498,7 @@ function UltraRobustWorkoutView() {
   const renderProgramsList = () => (
     <div className="p-4 max-w-5xl mx-auto">
       {generatedPrograms.length === 0 ? (
-        <div className="bg-white border rounded-2xl p-6 text-center text-gray-600">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center text-gray-600 dark:text-gray-300">
           {t('workout.noPrograms', 'Aucun programme généré pour le moment.')}
         </div>
       ) : (
@@ -583,7 +583,7 @@ function UltraRobustWorkoutView() {
               return okLevel && okSearch && okAccent;
             })
             .map((program, idx) => (
-              <div key={program.id || idx} className={`relative bg-white rounded-2xl shadow p-4 ${selectionMode ? 'pl-10' : ''}`}>
+              <div key={program.id || idx} className={`relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-4 ${selectionMode ? 'pl-10' : ''}`}>
                 {selectionMode && (
                   <button
                     onClick={() => {

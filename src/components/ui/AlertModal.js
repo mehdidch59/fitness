@@ -44,14 +44,14 @@ const AlertModal = ({
   const colors = getColors();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-xs w-full shadow-2xl text-center">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 max-w-xs w-full shadow-2xl text-center">
         {title && (
           <h3 className={`text-xl font-bold mb-4 ${colors.title}`}>{title}</h3>
         )}
 
         {message && (
-          <p className="mb-6 text-gray-700">{message}</p>
+          <p className="mb-6 text-gray-700 dark:text-gray-300">{message}</p>
         )}
 
         <div className="flex flex-col space-y-3">
@@ -65,7 +65,7 @@ const AlertModal = ({
           {secondaryButtonText && onSecondaryClick && (
             <button
               onClick={onSecondaryClick}
-              className="w-full bg-gray-200 text-gray-800 py-3 rounded-xl font-semibold transition-all hover:bg-gray-300 active:scale-98"
+              className="w-full bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-3 rounded-xl font-semibold transition-all hover:bg-gray-300 dark:hover:bg-gray-700 active:scale-98"
             >
               {secondaryButtonText}
             </button>

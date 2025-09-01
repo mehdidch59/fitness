@@ -152,11 +152,11 @@ function ProfileView() {
   // Afficher un loader pendant le chargement
   if (isLoading) {
     return (
-      <div className="pb-20 p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="pb-20 p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement de votre profil...</p>
-          <p className="text-sm text-gray-400 mt-2">UID: {user?.uid}</p>
+          <p className="text-gray-600 dark:text-gray-300">Chargement de votre profil...</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">UID: {user?.uid}</p>
         </div>
       </div>
     );
@@ -170,44 +170,44 @@ function ProfileView() {
 
   // Mode affichage
   return (
-    <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">{t('profile.title', 'Mon Profil')}</h2>
 
       {complete ? (
         <>
           {/* Carte principale avec IMC */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 max-w-4xl mx-auto">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 mb-6 max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center">
-                <div className="bg-purple-100 p-3 rounded-full mr-4">
-                  <User size={28} className="text-purple-600" />
+                <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full mr-4">
+                  <User size={28} className="text-purple-600 dark:text-purple-300" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold">{userProfile.name}</h3>
-                  <p className="text-gray-600">{userProfile.age} {t('profile.years','ans')} • {getGenderText(userProfile.gender)}</p>
+                  <p className="text-gray-600 dark:text-gray-300">{userProfile.age} {t('profile.years','ans')} • {getGenderText(userProfile.gender)}</p>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-600 text-sm mb-1">{t('profile.height','Taille')}</p>
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">{t('profile.height','Taille')}</p>
                 <p className="text-lg font-semibold">{userProfile.height} cm</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-600 text-sm mb-1">{t('profile.weight','Poids')}</p>
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">{t('profile.weight','Poids')}</p>
                 <p className="text-lg font-semibold">{userProfile.weight} kg</p>
               </div>
             </div>
 
             {bmi && (
-              <div className="bg-purple-50 p-4 rounded-xl mb-4">
+              <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-xl mb-4">
                 <div className="flex justify-between items-center">
-                  <h4 className="font-semibold text-purple-900">{t('profile.bmi','IMC')}</h4>
+                  <h4 className="font-semibold text-purple-900 dark:text-purple-200">{t('profile.bmi','IMC')}</h4>
                   <span className={`font-bold text-xl ${bmiCategory.color}`}>{bmi}</span>
                 </div>
                 <p className={`text-sm ${bmiCategory.color}`}>{bmiCategory.text}</p>
-                <div className="mt-3 bg-gray-200 h-2 rounded-full overflow-hidden">
+                <div className="mt-3 bg-gray-200 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-blue-500 via-green-500 to-red-500"
                     style={{
@@ -227,25 +227,25 @@ function ProfileView() {
 
           {/* Cartes d'informations supplémentaires */}
           <div className="space-y-4">
-            <div className="bg-white rounded-xl p-4 shadow-md">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
               <div className="flex items-center">
-                <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                  <Target size={20} className="text-blue-600" />
+                <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg mr-3">
+                  <Target size={20} className="text-blue-600 dark:text-blue-300" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-gray-600 text-sm">{t('profile.goalLabel', 'Objectif')}</h4>
+                  <h4 className="text-gray-600 dark:text-gray-300 text-sm">{t('profile.goalLabel', 'Objectif')}</h4>
                   <p className="font-semibold">{getGoalText(userProfile.goal)}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-4 shadow-md">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
               <div className="flex items-center">
-                <div className="bg-green-100 p-2 rounded-lg mr-3">
-                  <Activity size={20} className="text-green-600" />
+                <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg mr-3">
+                  <Activity size={20} className="text-green-600 dark:text-green-300" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-gray-600 text-sm">{t('profile.activityLevelLabel', "Niveau d'activité")}</h4>
+                  <h4 className="text-gray-600 dark:text-gray-300 text-sm">{t('profile.activityLevelLabel', "Niveau d'activité")}</h4>
                   <p className="font-semibold">{getActivityText(userProfile.activityLevel)}</p>
                 </div>
               </div>
@@ -254,7 +254,7 @@ function ProfileView() {
 
           <Link
             to="/settings"
-            className="w-full mt-4 inline-flex items-center justify-center bg-white border border-gray-300 text-gray-800 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+            className="w-full mt-4 inline-flex items-center justify-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <SettingsIcon className="mr-2" size={18} />
             {t('settings.title','Paramètres')}
@@ -269,12 +269,12 @@ function ProfileView() {
           </button>
         </>
       ) : (
-        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 text-center max-w-4xl mx-auto">
-          <div className="bg-yellow-100 p-3 rounded-full inline-flex mb-2">
-            <User size={24} className="text-yellow-600" />
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 space-y-6 text-center max-w-4xl mx-auto">
+          <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-full inline-flex mb-2">
+            <User size={24} className="text-yellow-600 dark:text-yellow-300" />
           </div>
           <h3 className="text-lg font-semibold">Complétez votre profil</h3>
-          <p className="text-gray-600 text-sm">{t('profile.completeDesc', 'Pour calculer votre IMC et personnaliser votre expérience')}</p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">{t('profile.completeDesc', 'Pour calculer votre IMC et personnaliser votre expérience')}</p>
           <Link
             to="/settings"
             className="w-full inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-3 rounded-xl font-semibold mt-2"

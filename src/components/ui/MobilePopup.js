@@ -81,27 +81,27 @@ const MobilePopup = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className={`bg-white rounded-3xl overflow-hidden shadow-2xl mx-4 ${fullScreen ? 'w-full h-full max-w-full' : 'max-w-sm w-full max-h-[90vh]'}`}
+            className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-3xl overflow-hidden shadow-2xl mx-4 ${fullScreen ? 'w-full h-full max-w-full' : 'max-w-sm w-full max-h-[90vh]'}`}
             onClick={e => e.stopPropagation()}
           >
             {/* Barre supérieure avec titre et bouton de fermeture */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center">
                 <span className={`${styles.iconBg} w-8 h-8 rounded-full flex items-center justify-center text-lg mr-2`}>
                   {styles.icon}
                 </span>
-                <h3 className={`font-bold ${styles.titleColor}`}>{title}</h3>
+                <h3 className={`font-bold ${styles.titleColor} dark:text-gray-100`}>{title}</h3>
               </div>
               <button 
                 onClick={onClose}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 ✕
               </button>
@@ -109,12 +109,12 @@ const MobilePopup = ({
 
             {/* Contenu du popup */}
             <div className="p-4 overflow-y-auto max-h-[60vh]">
-              {content && <div className="text-gray-700 mb-4">{content}</div>}
+              {content && <div className="text-gray-700 dark:text-gray-300 mb-4">{content}</div>}
               {children}
             </div>
 
             {/* Boutons d'action */}
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-4 border-t border-gray-100 dark:border-gray-800">
               <div className="flex flex-col space-y-3">
                 <button
                   onClick={onPrimaryAction || onClose}
@@ -126,7 +126,7 @@ const MobilePopup = ({
                 {secondaryButtonText && (
                   <button
                     onClick={onSecondaryAction}
-                    className="w-full bg-gray-200 text-gray-800 py-3 rounded-xl font-semibold transition-all hover:bg-gray-300 active:scale-95"
+                    className="w-full bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-3 rounded-xl font-semibold transition-all hover:bg-gray-300 dark:hover:bg-gray-700 active:scale-95"
                   >
                     {secondaryButtonText}
                   </button>

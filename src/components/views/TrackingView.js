@@ -22,10 +22,10 @@ function TrackingView() {
 
   if (!isAuthenticated) {
     return (
-      <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+      <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
         <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">{t('tracking.title', 'Statistiques')}</h2>
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-200 max-w-xl mx-auto text-center">
-          <p className="text-gray-700 mb-4">{t('tracking.loginPrompt', 'Connectez-vous pour accéder au suivi.')}</p>
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-purple-200 dark:border-purple-700/50 max-w-xl mx-auto text-center">
+          <p className="text-gray-700 dark:text-gray-300 mb-4">{t('tracking.loginPrompt', 'Connectez-vous pour accéder au suivi.')}</p>
           <Link
             to="/auth"
             className="inline-block px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-semibold"
@@ -38,7 +38,7 @@ function TrackingView() {
   }
 
   return (
-    <div className="pb-20 p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">{t('tracking.title', 'Statistiques')}</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 max-w-5xl mx-auto">
@@ -54,7 +54,7 @@ function TrackingView() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl p-6 shadow-lg mb-6 max-w-5xl mx-auto">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm mb-6 max-w-5xl mx-auto">
         <h3 className="font-bold text-lg mb-4">{t('tracking.weeklyActivity', 'Activité hebdomadaire')}</h3>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={chartData}>
@@ -72,11 +72,11 @@ function TrackingView() {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-2xl p-6 shadow-lg max-w-5xl mx-auto">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm max-w-5xl mx-auto">
         <h3 className="font-bold text-lg mb-4">{t('tracking.history', 'Historique')}</h3>
         <div className="space-y-3">
           {activityHistory.map((log, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
               <div className="flex items-center">
                 {log.type === 'workout' ? (
                   <Dumbbell className="text-purple-600 mr-3" size={20} />
@@ -96,7 +96,7 @@ function TrackingView() {
           
           {activityHistory.length === 0 && (
             <div className="text-center py-4">
-              <p className="text-gray-500">{t('tracking.noActivity', 'Aucune activité enregistrée')}</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('tracking.noActivity', 'Aucune activité enregistrée')}</p>
             </div>
           )}
         </div>

@@ -85,7 +85,7 @@ export function useAuth() {
 /**
  * HOOK PRINCIPAL POUR LES RECETTES DE PRISE DE MASSE - Version Sans Génération Automatique
  */
-export function useMassGainRecipes(options = {}) {
+export function useMassGoalAwareRecipes(options = {}) {
   const { user, timestamp } = useAuth();
   const queryClient = useQueryClient();
 
@@ -120,12 +120,20 @@ export function useMassGainRecipes(options = {}) {
   }), [user?.uid, stableOnSuccess, stableOnError]);
 
   // Clé de query stable qui change quand l'utilisateur change
+  const goalFromProfile = (() => {
+    try {
+      const up = localStorage.getItem('userProfile');
+      if (up) return JSON.parse(up)?.goal || 'maintain';
+    } catch {}
+    return 'maintain';
+  })();
   const queryKey = useMemo(() => [
     'nutrition',
-    'massGain',
+    'goalRecipes',
+    goalFromProfile,
     user?.uid || 'anonymous',
     timestamp
-  ], [user?.uid, timestamp]);
+  ], [goalFromProfile, user?.uid, timestamp]);
 
   // Query fonction qui NE génère PAS automatiquement - seulement récupération
   const queryFn = useCallback(async () => {
@@ -179,7 +187,7 @@ export function useMassGainRecipes(options = {}) {
 
   // Mutation pour générer de nouvelles recettes MANUELLEMENT
   const generateNewRecipes = useMutation({
-    mutationKey: ['generateMassGainRecipes', user?.uid],
+    mutationKey: ['generateGoalRecipes', user?.uid],
     mutationFn: useCallback(async (customProfile = {}) => {
       console.log('🆕 useNutrition: Génération MANUELLE nouvelles recettes...');
 
@@ -204,19 +212,29 @@ export function useMassGainRecipes(options = {}) {
         console.log('⚠️ Utilisation profil par défaut');
       }
 
+      // Charger le vrai userProfile si dispo
+      let appUserProfile = {};
+      try {
+        const up = localStorage.getItem('userProfile');
+        if (up) appUserProfile = JSON.parse(up) || {};
+      } catch {}
+
       const userProfile = {
-        goal: 'prise de masse',
+        goal: appUserProfile.goal || 'maintain',
         level: userProfileData.fitnessLevel || 'intermédiaire',
-        weight: userProfileData.weight || 75,
-        gender: userProfileData.gender || 'male',
-        age: userProfileData.age || 25,
+        weight: appUserProfile.weight || userProfileData.weight || 75,
+        gender: appUserProfile.gender || userProfileData.gender || 'male',
+        age: appUserProfile.age || userProfileData.age || 25,
+        height: appUserProfile.height || 175,
+        activityLevel: appUserProfile.activityLevel || 'modéré',
+        dietType: appUserProfile.dietType || 'omnivore',
         userId: user.uid,
         ...customProfile
       };
 
       console.log('📋 useNutrition: Profil pour génération:', userProfile);
 
-      const newRecipes = await mistralService.generateMassGainRecipes(userProfile);
+      const newRecipes = await mistralService.generateGoalAlignedRecipes(userProfile);
 
       if (newRecipes && newRecipes.length > 0) {
         try {
@@ -236,10 +254,7 @@ export function useMassGainRecipes(options = {}) {
       queryClient.setQueryData(queryKey, newRecipes);
 
       // Invalider et refetch
-      queryClient.invalidateQueries({
-        queryKey: ['nutrition', 'massGain'],
-        refetchType: 'active'
-      });
+      queryClient.invalidateQueries({ queryKey: ['nutrition', 'goalRecipes'] });
 
       console.log('✅ useNutrition: Nouvelles recettes générées et mises en cache');
       stableOnSuccess(newRecipes);
@@ -437,7 +452,7 @@ export function useIsRecipeFavorite(recipeId) {
  * HOOK COMPOSITE POUR L'INTERFACE LEGACY
  */
 export function useNutrition() {
-  const massGainQuery = useMassGainRecipes();
+  const massGainQuery = useMassGoalAwareRecipes();
   const favoriteMutations = useFavoriteMutations();
   const recipeView = useRecipeView();
 

@@ -2,6 +2,8 @@
  * Service simple pour Mistral AI (version démo)
  */
 
+import { JSONParsingUtils } from '../utils/JSONParsingUtils';
+
 class SimpleMistralService {
   constructor() {
     this.parsingStats = {
@@ -10,6 +12,25 @@ class SimpleMistralService {
       templateFallbackRate: 0,
       totalGenerations: 0
     };
+  }
+
+  async getMistralSDKClient() {
+    const apiKey = process.env.REACT_APP_MISTRAL_API_KEY;
+    if (!apiKey) return null;
+    try {
+      const mod = await import('@mistralai/mistralai');
+      const ClientClass = mod?.default || mod?.MistralClient || mod?.Mistral;
+      if (!ClientClass) return null;
+      try {
+        // Try both constructor shapes
+        try { return new ClientClass({ apiKey }); } catch {}
+        return new ClientClass(apiKey);
+      } catch {
+        return null;
+      }
+    } catch {
+      return null;
+    }
   }
 
   getParsingStats() {
@@ -70,57 +91,133 @@ class SimpleMistralService {
   }
 
   async generateCustomContent(prompt, options = {}) {
-    // Appel direct à l'API Mistral (pas de mode démo)
+    const model = process.env.REACT_APP_MISTRAL_MODEL || 'mistral-small';
+    const temperature = typeof options.temperature === 'number' ? options.temperature : 0.2;
+    const max_tokens = typeof options.max_tokens === 'number' ? options.max_tokens : 2048;
+    const response_format = (() => {
+      const rf = options?.response_format;
+      if (!rf) return undefined;
+      if (typeof rf === 'string') {
+        return (rf.toLowerCase() === 'json' || rf.toLowerCase() === 'json_object')
+          ? { type: 'json_object' }
+          : undefined;
+      } else if (typeof rf === 'object' && rf.type) {
+        return rf;
+      }
+      return undefined;
+    })();
+
+    // 1) Essai SDK si dispo
+    try {
+      const client = await this.getMistralSDKClient();
+      if (client) {
+        // Essayer plusieurs signatures possibles selon versions du SDK
+        try {
+          if (client.chat?.complete) {
+            const r = await client.chat.complete({ model, messages: [{ role: 'user', content: String(prompt) }], temperature, max_tokens, response_format });
+            const content = r?.choices?.[0]?.message?.content || r?.output_text || r?.content || '';
+            if (content) return content;
+          } else if (client.chat) {
+            const r = await client.chat({ model, messages: [{ role: 'user', content: String(prompt) }], temperature, max_tokens, response_format });
+            const content = r?.choices?.[0]?.message?.content || r?.output_text || r?.content || '';
+            if (content) return content;
+          }
+        } catch (e) {
+          console.warn('⚠️ SDK Mistral indisponible/erreur, fallback fetch:', e?.message || e);
+        }
+      }
+    } catch {}
+
+    // 2) Fallback fetch
     try {
       const apiKey = process.env.REACT_APP_MISTRAL_API_KEY;
+      if (!apiKey) throw new Error('Clé API Mistral absente (REACT_APP_MISTRAL_API_KEY non définie)');
       const baseURL = 'https://api.mistral.ai/v1/chat/completions';
-      const model = process.env.REACT_APP_MISTRAL_MODEL || 'mistral-small';
 
-      if (!apiKey) {
-        throw new Error('Clé API Mistral absente (REACT_APP_MISTRAL_API_KEY non définie)');
-      }
-
-      const body = {
-        model,
-        messages: [{ role: 'user', content: String(prompt) }],
-        temperature: typeof options.temperature === 'number' ? options.temperature : 0.2,
-        max_tokens: typeof options.max_tokens === 'number' ? options.max_tokens : 2048
-      };
-      // Sanitize/adapter response_format pour éviter 422
-      if (options && options.response_format) {
-        const rf = options.response_format;
-        if (typeof rf === 'string') {
-          // Mapper 'json' -> { type: 'json_object' }
-          if (rf.toLowerCase() === 'json' || rf.toLowerCase() === 'json_object') {
-            body.response_format = { type: 'json_object' };
-          }
-        } else if (typeof rf === 'object' && rf.type) {
-          body.response_format = rf;
-        }
-        // Sinon: ignorer response_format non supporté
-      }
+      const body = { model, messages: [{ role: 'user', content: String(prompt) }], temperature, max_tokens };
+      if (response_format) body.response_format = response_format;
 
       const res = await fetch(baseURL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify(body)
       });
-
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
         throw new Error(`Erreur API Mistral: ${res.status} ${res.statusText} ${txt}`);
       }
-
       const data = await res.json();
       const content = data?.choices?.[0]?.message?.content;
       if (!content) throw new Error('Réponse Mistral invalide (content manquant)');
       return content;
     } catch (e) {
-      // handled above
+      // L'appel échoue, on laisse le consommateur gérer le fallback
+      console.error('❌ generateCustomContent error:', e?.message || e);
     }
+  }
+
+  async generateVisionJSON(prompt, imageUrl, options = {}) {
+    const model = process.env.REACT_APP_MISTRAL_VISION_MODEL || 'pixtral-12b';
+    const temperature = typeof options.temperature === 'number' ? options.temperature : 0.2;
+    const max_tokens = typeof options.max_tokens === 'number' ? options.max_tokens : 2048;
+    const messages = [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: String(prompt) },
+          { type: 'image_url', image_url: String(imageUrl) },
+        ],
+      },
+    ];
+
+    // 1) Essai SDK
+    try {
+      const client = await this.getMistralSDKClient();
+      if (client) {
+        try {
+          if (client.chat?.complete) {
+            const r = await client.chat.complete({ model, messages, temperature, max_tokens, response_format: { type: 'json_object' } });
+            const content = r?.choices?.[0]?.message?.content || r?.output_text || r?.content || '';
+            if (content) return content;
+          } else if (client.chat) {
+            const r = await client.chat({ model, messages, temperature, max_tokens, response_format: { type: 'json_object' } });
+            const content = r?.choices?.[0]?.message?.content || r?.output_text || r?.content || '';
+            if (content) return content;
+          }
+        } catch (e) {
+          console.warn('⚠️ SDK Mistral Vision indisponible/erreur, fallback fetch:', e?.message || e);
+        }
+      }
+    } catch {}
+
+    // 2) Fallback fetch
+    const apiKey = process.env.REACT_APP_MISTRAL_API_KEY;
+    if (!apiKey) throw new Error('Clé API Mistral absente (REACT_APP_MISTRAL_API_KEY)');
+    const baseURL = 'https://api.mistral.ai/v1/chat/completions';
+    const body = { model, messages, temperature, max_tokens, response_format: { type: 'json_object' } };
+
+    const res = await fetch(baseURL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(`Erreur API Mistral (vision): ${res.status} ${res.statusText} ${txt}`);
+    }
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw new Error('Réponse Mistral vision invalide (content manquant)');
+    return content;
+  }
+
+  async extractIngredientsFromImage(imageUrl) {
+    const prompt = `Analyse l'image et renvoie UNIQUEMENT un JSON strict listant les ingrédients visibles du réfrigérateur.\n\nStructure: {\n  "ingredients": [ { "name": "string", "quantity": "string?", "confidence": 0.0-1.0, "freshness": 0-100 } ]\n}\n\nContraintes: noms simples (fr), quantité approximative si identifiable, fraîcheur estimée (0-100), pas de texte hors JSON.`;
+
+    const content = await this.generateVisionJSON(prompt, imageUrl, { max_tokens: 1500 });
+    const parsed = JSONParsingUtils.safeJSONParse(content, { ingredients: [] });
+    const list = Array.isArray(parsed?.ingredients) ? parsed.ingredients : [];
+    return list;
   }
 
   generateMockMealPlan() {
