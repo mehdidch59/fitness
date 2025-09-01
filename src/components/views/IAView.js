@@ -32,7 +32,7 @@ function IAView() {
       title: t('ia.features.coach.title', 'Coach IA Personnel'),
       description: t('ia.features.coach.desc', 'Conseils personnalisés basés sur vos habitudes'),
       icon: Brain,
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-700'
     },
@@ -41,7 +41,7 @@ function IAView() {
       title: t('ia.features.mood.title', 'Recettes par Humeur'),
       description: t('ia.features.mood.desc', 'Des recettes adaptées à votre état d\'esprit'),
       icon: Heart,
-      color: 'from-red-500 to-pink-500',
+      color: 'from-red-500 to-pink-500 dark:from-red-600 dark:to-orange-600',
       bgColor: 'bg-red-50',
       textColor: 'text-red-700'
     },
@@ -217,7 +217,7 @@ function IAView() {
   return (
     <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       {/* Header */}
-      <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
+      <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 dark:from-indigo-700 dark:via-indigo-600 dark:to-orange-600 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-5xl mx-auto">
           <div>
             <h1 className="text-3xl font-bold flex items-center">
@@ -239,7 +239,7 @@ function IAView() {
 
       <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
         {!isLoggedIn && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-2xl p-4">
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <p>{t('ia.loginRequired', 'Connexion requise: connectez-vous pour utiliser les fonctionnalités IA+.')}</p>
               <Link
@@ -391,7 +391,7 @@ function IAView() {
                       <h3 className="text-lg font-semibold">Résultats générés</h3>
                     </div>
                     
-                    <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-4">
+                    <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 border border-green-200 dark:border-gray-700 rounded-xl p-4">
                       {activeFeature === 'coach' && featureResults.personalizedMessage && (
                         <div className="space-y-4">
                           <div className="bg-white p-4 rounded-lg shadow-sm">
@@ -558,7 +558,7 @@ function IAView() {
         </div>
 
         {/* Section d'information */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-6 border border-purple-200 dark:border-gray-700 text-gray-900 dark:text-gray-100">
           <div className="flex items-center mb-4">
             <Sparkles className="text-purple-600 mr-2" />
             <h3 className="text-lg font-semibold text-purple-800">À propos de l'IA+</h3>

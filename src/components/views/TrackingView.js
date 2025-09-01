@@ -55,7 +55,7 @@ function TrackingView() {
           <p className="text-gray-700 mb-4">{t('tracking.loginPrompt', 'Connectez-vous pour accéder au suivi.')}</p>
           <Link
             to="/auth"
-            className="inline-block px-5 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700"
+            className="inline-block px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-semibold"
           >
             {t('common.login', 'Se connecter')}
           </Link>
@@ -69,7 +69,7 @@ function TrackingView() {
       <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">{t('tracking.title', 'Statistiques')}</h2>
 
       <div className="grid grid-cols-2 gap-4 mb-6 max-w-5xl mx-auto">
-        <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white p-6 rounded-2xl">
+        <div className="bg-gradient-to-br from-purple-500 to-pink-500 dark:from-indigo-600 dark:to-violet-700 text-white p-6 rounded-2xl">
           <Activity className="mb-3" size={28} />
           <p className="text-sm opacity-90">{t('tracking.sessions', 'Séances')}</p>
           <p className="text-3xl font-bold">{stats ? stats.workoutsCompleted : 0}</p>

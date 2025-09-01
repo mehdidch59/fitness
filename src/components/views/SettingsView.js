@@ -332,7 +332,7 @@ function SettingsView() {
                             setAccountLoading(false);
                           }
                         }}
-                        className="text-sm px-3 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+                        className="text-sm px-3 py-2 rounded bg-purple-600 hover:bg-purple-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white disabled:opacity-50"
                         disabled={accountLoading}
                       >
                         Vérifier mon email
@@ -447,7 +447,7 @@ function SettingsView() {
                     >{t('settings.themeLight', 'Clair')}</button>
                     <button
                       onClick={() => setAppTheme('dark')}
-                      className={`px-3 py-2 rounded-lg border ${appTheme === 'dark' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-800 border-gray-300'}`}
+                      className={`px-3 py-2 rounded-lg border ${appTheme === 'dark' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-300'}`}
                     >{t('settings.themeDark', 'Sombre')}</button>
                   </div>
                 </div>
@@ -578,7 +578,7 @@ function SettingsView() {
       </div>      {/* Bouton de sauvegarde */}
       <button
         onClick={handleSave}
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold mt-6 flex items-center justify-center"
+        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6 flex items-center justify-center"
       >
         <Save className="mr-2" size={20} />
         Sauvegarder les modifications

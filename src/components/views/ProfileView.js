@@ -255,7 +255,7 @@ function ProfileView() {
 
           <Link
             to="/settings"
-            className="w-full max-w-4xl mx-auto mt-3 inline-flex items-center justify-center bg-white border border-gray-300 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-50"
+            className="w-full mt-4 inline-flex items-center justify-center bg-white border border-gray-300 text-gray-800 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
           >
             <SettingsIcon className="mr-2" size={18} />
             {t('settings.title','Paramètres')}
@@ -263,7 +263,7 @@ function ProfileView() {
 
           <button
             onClick={handleLogout}
-            className="w-full bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold mt-4 flex items-center justify-center hover:bg-gray-300 transition-colors"
+            className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-semibold mt-4 flex items-center justify-center transition-colors"
           >
             <LogOut className="mr-2" size={20} />
             {t('profile.logout','Se déconnecter')}
@@ -278,7 +278,7 @@ function ProfileView() {
           <p className="text-gray-600 text-sm">Pour calculer votre IMC et personnaliser votre expérience</p>
           <Link
             to="/settings"
-            className="w-full inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold mt-2"
+            className="w-full inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-3 rounded-xl font-semibold mt-2"
           >
             <SettingsIcon className="mr-2" size={18} />
             Ouvrir les paramètres

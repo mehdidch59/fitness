@@ -92,7 +92,7 @@ const SearchResultsView = () => {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
-            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-xl text-center font-semibold"
+            className="bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white p-4 rounded-xl text-center font-semibold"
             onClick={findMassGainRecipes}
             disabled={isLoading}
           >

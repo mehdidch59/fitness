@@ -20,7 +20,7 @@ const AlertModal = ({
       case 'error':
         return {
           title: 'text-red-600',
-          button: 'bg-gradient-to-r from-red-500 to-pink-500'
+          button: 'bg-gradient-to-r from-red-500 to-pink-500 dark:from-red-600 dark:to-red-700'
         };
       case 'success':
         return {
@@ -36,7 +36,7 @@ const AlertModal = ({
       default:
         return {
           title: 'text-yellow-600',
-          button: 'bg-gradient-to-r from-purple-500 to-pink-500'
+          button: 'bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600'
         };
     }
   };

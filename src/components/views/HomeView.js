@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Calendar, Search, Settings, Play, Apple, RefreshCw, Zap, Camera, Trophy } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useWorkouts } from '../../hooks/useWorkouts';
@@ -66,7 +66,7 @@ function HomeView() {
 
   return (
     <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
-      <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
+      <div className="bg-gradient-to-br from-purple-600 to-pink-600 dark:from-indigo-700 dark:to-violet-700 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
         <h1 className="text-3xl font-bold mb-2">Fitness IA 💪</h1>
         <p className="opacity-90 text-lg">{t('home.subtitle', 'Programmes personnalisés par recherche web')}</p>
       </div>
@@ -85,7 +85,7 @@ function HomeView() {
           </div>        </div>
 
         {/* Nouvelles fonctionnalités avancées */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-700 dark:to-purple-800 text-white p-6 rounded-2xl shadow-lg">
           <div className="flex items-center mb-4">
             <Zap className="mr-3" size={28} />
             <h3 className="text-xl font-bold">{t('home.advanced.title', 'Fonctionnalités IA Avancées')}</h3>
@@ -111,7 +111,7 @@ function HomeView() {
           
           <Link
             to="/advanced"
-            className="block w-full bg-white text-indigo-600 py-3 px-6 rounded-xl font-bold text-center hover:bg-gray-100 transition-colors"
+            className="block w-full bg-white dark:bg-gray-800 text-indigo-600 dark:text-white py-3 px-6 rounded-xl font-bold text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             {t('home.advanced.cta', 'Découvrir les Fonctionnalités IA+')}
           </Link>
@@ -119,7 +119,7 @@ function HomeView() {
 
         <div className="space-y-4">
         {(!equipmentProfile.location || !nutritionProfile.dietType) && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-yellow-200">
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-yellow-200 dark:border-yellow-700">
             <Settings className="mx-auto mb-3 text-yellow-500" size={32} />
             <h3 className="font-semibold text-center mb-4">{t('home.required', 'Configuration requise')}</h3>
             <button
@@ -142,7 +142,7 @@ function HomeView() {
             disabled={loadingWorkout || isLoadingWorkouts || !equipmentProfile.location}
             className={`w-full py-6 rounded-2xl font-bold text-xl flex items-center justify-center space-x-3 transition-all ${!equipmentProfile.location
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
+              : 'bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white hover:shadow-lg'
               }`}
           >
             {loadingWorkout || isLoadingWorkouts ? (
@@ -163,7 +163,7 @@ function HomeView() {
             disabled={loadingRecipes || isAddingPlan || !nutritionProfile.dietType}
             className={`w-full py-6 rounded-2xl font-bold text-xl flex items-center justify-center space-x-3 transition-all ${!nutritionProfile.dietType
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:shadow-lg'
+              : 'bg-gradient-to-r from-green-500 to-blue-500 dark:from-emerald-500 dark:to-teal-600 text-white hover:shadow-lg'
               }`}
           >
             {loadingRecipes || isAddingPlan ? (
@@ -181,20 +181,13 @@ function HomeView() {
         </div>
 
         {searchStatus && (
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
-            <p className="text-blue-800 text-center font-medium">{searchStatus}</p>
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-4 rounded-xl">
+            <p className="text-blue-800 dark:text-blue-200 text-center font-medium">{searchStatus}</p>
           </div>
         )}
-
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-4">
-          <div className="flex items-center justify-center">
-            <Search className="text-blue-600 mr-2" size={20} />
-            <span className="text-blue-800 font-semibold">{t('home.realtime', 'Recherche web en temps réel')}</span>
-          </div>
-        </div>
       </div>
     </div>
   );
 }
 
-export default HomeView; 
+export default HomeView;

@@ -46,9 +46,9 @@ const SaveIndicator = ({
   };
 
   const getStatusColor = () => {
-    if (isSaving) return 'text-blue-600 bg-blue-50';
-    if (hasUnsavedChanges) return 'text-orange-600 bg-orange-50';
-    return 'text-green-600 bg-green-50';
+    if (isSaving) return 'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-200 dark:bg-blue-900/30 dark:border-blue-700';
+    if (hasUnsavedChanges) return 'text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-700';
+    return 'text-green-600 bg-green-50 border-green-200 dark:text-green-200 dark:bg-green-900/30 dark:border-green-700';
   };
 
   return (

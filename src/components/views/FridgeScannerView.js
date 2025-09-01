@@ -88,7 +88,7 @@ const FridgeScannerView = () => {
               <button
                 onClick={triggerFileInput}
                 disabled={isScanning}
-                className="flex items-center justify-center px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center px-6 py-3 bg-purple-600 hover:bg-purple-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Upload size={20} className="mr-2" />
                 {isScanning ? t('fridge.scanningShort','Analyse...') : t('fridge.chooseImage','Choisir une image')}
@@ -266,7 +266,7 @@ const FridgeScannerView = () => {
                     </div>
                   )}
                   
-                  <button className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                  <button className="w-full bg-purple-600 dark:bg-indigo-600 text-white py-2 rounded-lg hover:bg-purple-700 dark:hover:bg-indigo-700 transition-colors">
                     Voir la recette
                   </button>
                 </div>
@@ -337,7 +337,7 @@ const FridgeScannerView = () => {
           onClick={() => setActiveTab('scanner')}
           className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
             activeTab === 'scanner'
-              ? 'bg-purple-600 text-white'
+              ? 'bg-purple-600 dark:bg-indigo-600 text-white'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -348,7 +348,7 @@ const FridgeScannerView = () => {
           disabled={!scanResult}
           className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
             activeTab === 'results' && scanResult
-              ? 'bg-purple-600 text-white'
+              ? 'bg-purple-600 dark:bg-indigo-600 text-white'
               : 'text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'
           }`}
         >

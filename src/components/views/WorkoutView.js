@@ -239,7 +239,7 @@ function UltraRobustWorkoutView() {
   // --- UI existante (inchangée) ---
 
   const renderHeader = () => (
-    <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white p-8 rounded-b-3xl shadow-lg">
+    <div className="bg-gradient-to-br from-purple-600 to-pink-600 dark:from-indigo-700 dark:to-violet-700 text-white p-8 rounded-b-3xl shadow-lg">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t('workout.headerTitle', 'Programmes 💪')}</h1>
         <BookOpen className="opacity-90" />
@@ -262,7 +262,7 @@ function UltraRobustWorkoutView() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <p className="text-sm text-gray-600 mb-2">{t('workout.searchLabel', 'Recherche')}</p>
-            <div className="flex items-center bg-gray-100 rounded-xl p-2">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-2">
               <Search size={18} className="text-gray-500 mr-2" />
               <input
                 value={searchTerm}
@@ -287,7 +287,7 @@ function UltraRobustWorkoutView() {
                   onClick={() => setDifficultyFilter(opt.value)}
                   className={`px-3 py-1 rounded-full text-sm transition-colors ${difficultyFilter === opt.value
                     ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                 >
                   {opt.label}
@@ -302,7 +302,7 @@ function UltraRobustWorkoutView() {
               <button
                 onClick={handleRealisticGeneration}
                 disabled={isGenerating || !user}
-                className={`px-3 py-2 rounded-xl text-white text-sm flex items-center ${isGenerating || !user ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+                className={`px-3 py-2 rounded-xl text-white text-sm flex items-center ${isGenerating || !user ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 dark:bg-indigo-600 dark:hover:bg-indigo-700'
                   }`}
               >
                 {isGenerating ? (
@@ -341,7 +341,7 @@ function UltraRobustWorkoutView() {
                     setGenerationStage('');
                   }
                 }}
-                className="px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800 hover:bg-gray-200"
+                className="px-3 py-2 rounded-xl text-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
               >
                 {t('workout.filteredHistory', 'Charger historiques (filtres)')}
               </button>
@@ -353,7 +353,7 @@ function UltraRobustWorkoutView() {
                   setFocusMuscle('');
                   try { localStorage.removeItem('wf_filters'); } catch { }
                 }}
-                className="px-3 py-2 rounded-xl text-sm bg-white border border-gray-300 text-gray-800 hover:bg-gray-50"
+                className="px-3 py-2 rounded-xl text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 {t('workout.resetFilters', 'Réinitialiser filtres')}
               </button>
@@ -367,11 +367,11 @@ function UltraRobustWorkoutView() {
             <div className="flex gap-2">
               <button
                 onClick={() => setModeAuto(true)}
-                className={`px-3 py-1 rounded-lg text-sm ${modeAuto ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                className={`px-3 py-1 rounded-lg text-sm ${modeAuto ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
               >{t('workout.auto')}</button>
               <button
                 onClick={() => setModeAuto(false)}
-                className={`px-3 py-1 rounded-lg text-sm ${!modeAuto ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                className={`px-3 py-1 rounded-lg text-sm ${!modeAuto ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
               >{t('workout.manual')}</button>
             </div>
           </div>
@@ -388,8 +388,8 @@ function UltraRobustWorkoutView() {
                     <button
                       key={t.key}
                       onClick={() => setManualType(t.key)}
-                      className={`px-3 py-1 rounded-full text-sm ${manualType === t.key ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                    >{t.label}</button>
+                    className={`px-3 py-1 rounded-full text-sm ${manualType === t.key ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
+                  >{t.label}</button>
                   ))}
                 </div>
               </div>
@@ -397,7 +397,7 @@ function UltraRobustWorkoutView() {
                 <p className="text-sm text-gray-600 mb-2">{t('workout.daysPerWeek')}</p>
                 <div className="flex gap-2">
                   {[3, 4, 5, 6].map(n => (
-                    <button key={n} onClick={() => setManualDays(n)} className={`px-3 py-1 rounded-full text-sm ${manualDays === n ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700'}`}>{n}</button>
+                    <button key={n} onClick={() => setManualDays(n)} className={`px-3 py-1 rounded-full text-sm ${manualDays === n ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'}`}>{n}</button>
                   ))}
                 </div>
               </div>
@@ -464,7 +464,7 @@ function UltraRobustWorkoutView() {
         disabled={isGenerating || !user}
         className={`w-full py-4 rounded-2xl font-semibold text-white transition-all relative overflow-hidden ${isGenerating || !user
           ? 'bg-gray-400 cursor-not-allowed'
-          : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl'
+          : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 dark:from-blue-500 dark:via-indigo-600 dark:to-violet-600 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 dark:hover:from-blue-600 dark:hover:via-indigo-700 dark:hover:to-violet-700 shadow-lg hover:shadow-xl'
           }`}
       >
         {/* Barre de progression animée */}
@@ -520,7 +520,7 @@ function UltraRobustWorkoutView() {
                 if (selectionMode) setSelectedProgramIds(new Set());
                 setSelectionMode(!selectionMode);
               }}
-              className={`px-3 py-1 rounded-lg text-sm ${selectionMode ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              className={`px-3 py-1 rounded-lg text-sm ${selectionMode ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
             >
               {selectionMode ? t('workout.cancelSelection', 'Annuler sélection') : t('workout.select', 'Sélectionner')}
             </button>
@@ -541,7 +541,7 @@ function UltraRobustWorkoutView() {
                   setGenerationStage('');
                 }
               }}
-              className="px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 flex items-center"
+              className="px-3 py-2 rounded-xl text-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center"
             >
               <RefreshCw size={16} className="mr-2" /> {t('workout.refresh')}
             </button>
@@ -566,7 +566,7 @@ function UltraRobustWorkoutView() {
                       return next;
                     });
                   }}
-                  className="px-3 py-1 rounded-lg text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  className="px-3 py-1 rounded-lg text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
                 >
                   {t('workout.selectAll', 'Tout sélectionner')}
                 </button>
@@ -604,7 +604,7 @@ function UltraRobustWorkoutView() {
                         return next;
                       });
                     }}
-                    className="absolute top-4 left-4 p-1 rounded-md hover:bg-gray-100"
+                    className="absolute top-4 left-4 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                     aria-label={t('workout.selectProgramAria', 'Sélectionner le programme')}
                   >
                     {selectedProgramIds.has(program.id) ? <CheckSquare size={18} className="text-purple-600" /> : <Square size={18} className="text-gray-400" />}
@@ -662,7 +662,7 @@ function UltraRobustWorkoutView() {
                 </div>
                 <div className="mt-3 flex gap-2 flex-wrap">
                   {(program.workouts || []).map((w) => (
-                    <span key={w.day} className="text-xs bg-gray-100 rounded px-2 py-1">
+                    <span key={w.day} className="text-xs bg-gray-100 dark:bg-gray-800 rounded px-2 py-1">
                       {w.day}: {(w.exercises || []).length} {t('workout.program.exercisesShort', 'exos')}
                     </span>
                   ))}
@@ -680,13 +680,13 @@ function UltraRobustWorkoutView() {
 
     return (
       <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center transition-opacity duration-300 ease-in-out ${detailsAnim ? 'bg-black/60 opacity-100' : 'bg-black/60 opacity-0'}`}>
-        <div className={`bg-white w-full sm:w-[640px] max-h-[85vh] rounded-t-2xl sm:rounded-2xl overflow-hidden transform transition-transform duration-300 ease-in-out ${detailsAnim ? 'translate-y-0' : 'translate-y-full sm:translate-y-0 sm:scale-95 sm:opacity-0'}`}>
+        <div className={`bg-white dark:bg-gray-900 w-full sm:w-[640px] max-h-[85vh] rounded-t-2xl sm:rounded-2xl overflow-hidden transform transition-transform duration-300 ease-in-out ${detailsAnim ? 'translate-y-0' : 'translate-y-full sm:translate-y-0 sm:scale-95 sm:opacity-0'}`}>
           {/* Drag handle */}
           <div className="w-full flex justify-center pt-2 sm:hidden">
             <div className="h-1.5 w-12 bg-gray-300 rounded-full" />
           </div>
           {/* Header sticky */}
-          <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b">
+          <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/80 backdrop-blur border-b">
             <div className="flex items-center justify-between p-4">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-base truncate pr-3 flex items-center gap-2">
@@ -714,7 +714,7 @@ function UltraRobustWorkoutView() {
               </div>
               <button
                 onClick={closeDetails}
-                className="p-2 rounded-full hover:bg-gray-100 active:scale-95"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
                 aria-label={t('workout.close', 'Fermer')}
               >
                 <X size={20} />
@@ -744,7 +744,7 @@ function UltraRobustWorkoutView() {
                   {isExpanded && (
                     <div className="p-3 space-y-2">
                       {exercises.map((e, i) => (
-                        <div key={i} className="text-sm bg-gray-50 rounded-lg p-2">
+                        <div key={i} className="text-sm bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
                           <div className="flex items-center justify-between">
                             <div className="font-medium pr-2 truncate">{e.name}</div>
                             <div className="text-xs text-gray-600 whitespace-nowrap">
@@ -786,14 +786,14 @@ function UltraRobustWorkoutView() {
 
       {/* Confirmation suppression */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5">
+          <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-6">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-5">
             <h4 className="text-lg font-semibold mb-2">{t('workout.deleteConfirmTitle', 'Confirmer la suppression')}</h4>
             <p className="text-sm text-gray-600 mb-4">{t('workout.deleteConfirmPrefix', 'Supprimer définitivement')} {pendingDeleteIds.length} {t('workout.deleteConfirmSuffix', 'programme(s) ?')}</p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200"
+                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
               >
                 {t('workout.cancel', 'Annuler')}
               </button>

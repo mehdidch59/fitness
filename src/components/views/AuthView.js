@@ -280,7 +280,7 @@ function AuthView() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold mt-6"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6"
             >
               {isLogin ? t('auth.loginCta', 'Se connecter') : t('auth.createCta', 'Créer mon compte')}
             </button>

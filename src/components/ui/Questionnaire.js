@@ -226,7 +226,7 @@ function Questionnaire() {
                 actions.setQuestionnaire(false);
                 navigate('/auth');
               }}
-              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-2xl font-semibold"
+              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-3 rounded-2xl font-semibold"
             >
               Se connecter
             </button>
@@ -243,7 +243,7 @@ function Questionnaire() {
 
         <div className="bg-gray-200 rounded-full h-2 mb-6">
           <div
-            className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
+            className="bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 h-2 rounded-full transition-all"
             style={{ width: `${((questionnaireStep + 1) / questions.length) * 100}%` }}
           />
         </div>
@@ -282,7 +282,7 @@ function Questionnaire() {
               </button>
               <button
                 onClick={handleEquipmentSave}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-2xl font-semibold text-lg"
+                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-2xl font-semibold text-lg"
                 disabled={selectedEquipment.length === 0}
               >
                 Enregistrer {selectedEquipment.length > 0 && `(${selectedEquipment.length})`}

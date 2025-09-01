@@ -242,7 +242,7 @@ const RecipeDetail = ({
                 e.target.nextSibling.style.display = 'flex';
               }}
             />
-            <div className="hidden w-full h-full bg-gradient-to-r from-purple-700 to-pink-700 items-center justify-center">
+            <div className="hidden w-full h-full bg-gradient-to-r from-purple-700 to-pink-700 dark:from-indigo-700 dark:to-violet-700 items-center justify-center">
               <Apple size={48} className="text-white" />
             </div>
 
@@ -1125,7 +1125,7 @@ function NutritionView() {
                 {!user ? (
                   <button
                     onClick={() => setShowAuthPrompt(true)}
-                    className="w-full mb-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium"
+                    className="w-full mb-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-medium"
                   >
                     Se connecter pour commencer
                   </button>
@@ -1133,7 +1133,7 @@ function NutritionView() {
                   <button 
                     onClick={() => refetchRecipes()} 
                     disabled={isLoading}
-                    className="w-full mb-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center justify-center disabled:opacity-50"
+                    className="w-full mb-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium flex items-center justify-center disabled:opacity-50"
                   >
                     <RefreshCw size={18} className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                     Recharger les recettes
@@ -1145,7 +1145,7 @@ function NutritionView() {
                   disabled={isGeneratingNutrition || !user}
                   className={`w-full py-4 rounded-2xl font-semibold text-white transition-all relative overflow-hidden ${isGeneratingNutrition || !user
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-yellow-600 via-red-600 to-pink-700 hover:from-yellow-700 hover:via-red-700 hover:to-pink-800 shadow-lg hover:shadow-xl'
+                    : 'bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-emerald-500 dark:via-emerald-600 dark:to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 dark:hover:from-emerald-600 dark:hover:via-emerald-700 dark:hover:to-teal-700 shadow-lg hover:shadow-xl'
                     }`}
                 >
                   {/* Barre de progression animée */}
