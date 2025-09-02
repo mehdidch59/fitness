@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MotionSection, MotionButton } from '../ui/animations';
 import { Calendar, Search, Settings, Play, Apple, RefreshCw, Zap, Camera, Trophy } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useWorkouts } from '../../hooks/useWorkouts';
@@ -65,7 +66,7 @@ function HomeView() {
   };
 
   return (
-    <div className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
+    <MotionSection className="pb-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <div className="bg-gradient-to-br from-purple-600 to-pink-600 dark:from-indigo-700 dark:to-violet-700 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
         <h1 className="text-3xl font-bold mb-2">ZenFit 💪</h1>
         <p className="opacity-90 text-lg">{t('home.subtitle', 'Programmes personnalisés avec l\'IA')}</p>
@@ -122,7 +123,7 @@ function HomeView() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-700">
             <Settings className="mx-auto mb-3 text-yellow-500" size={32} />
             <h3 className="font-semibold text-center mb-4">{t('home.required', 'Configuration requise')}</h3>
-            <button
+            <MotionButton
               onClick={() => {
                 if (!isAuthenticated) {
                   navigate('/auth');
@@ -133,11 +134,11 @@ function HomeView() {
               className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-md hover:from-yellow-600 hover:to-red-600 active:scale-95 transition-all duration-200"
             >
               {t('home.openSettings', 'Ouvrir les paramètres')}
-            </button>
+            </MotionButton>
           </div>
         )}
 
-          <button
+          <MotionButton
             onClick={handleGenerateWorkout}
             disabled={loadingWorkout || isLoadingWorkouts || !equipmentProfile.location}
             className={`w-full py-6 rounded-2xl font-bold text-xl flex items-center justify-center space-x-3 transition-all ${!equipmentProfile.location
@@ -156,9 +157,9 @@ function HomeView() {
                 <span>{t('home.generateWorkout', 'Générer Programme IA')}</span>
               </>
             )}
-          </button>
+          </MotionButton>
 
-          <button
+          <MotionButton
             onClick={handleGenerateNutrition}
             disabled={loadingRecipes || isAddingPlan || !nutritionProfile.dietType}
             className={`w-full py-6 rounded-2xl font-bold text-xl flex items-center justify-center space-x-3 transition-all ${!nutritionProfile.dietType
@@ -177,7 +178,7 @@ function HomeView() {
                 <span>{t('home.findRecipes', 'Trouver Recettes IA')}</span>
               </>
             )}
-          </button>
+          </MotionButton>
         </div>
 
         {searchStatus && (
@@ -186,7 +187,7 @@ function HomeView() {
           </div>
         )}
       </div>
-    </div>
+    </MotionSection>
   );
 }
 

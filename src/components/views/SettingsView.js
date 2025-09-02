@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Save, User, Target, Dumbbell, Apple } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { MotionSection, MotionButton } from '../ui/animations';
 import { useAppContext } from '../../context/AppContext';
 import { useFormPersistence } from '../../hooks/useFormPersistence';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
@@ -209,7 +210,7 @@ function SettingsView() {
   ];
 
   return (
-    <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
+    <MotionSection className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 max-w-5xl mx-auto">
         <div className="flex items-center">
@@ -567,14 +568,14 @@ function SettingsView() {
           </>
         )}
       </div>      {/* Bouton de sauvegarde */}
-      <button
+      <MotionButton
         onClick={handleSave}
         className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6 flex items-center justify-center hover:shadow-md transition-shadow"
       >
         <Save className="mr-2" size={20} />
         {t('settings.save', 'Sauvegarder les modifications')}
-      </button>
-    </div>
+      </MotionButton>
+    </MotionSection>
   );
 }
 

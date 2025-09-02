@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain, Camera, Heart, TrendingUp,
   Sparkles, Clock, Target, Zap, Star,
@@ -32,6 +33,21 @@ function IAView() {
   const fileInputCameraRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const isLoggedIn = Boolean(user?.uid);
+
+  // Animations
+  const listContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.05 } }
+  };
+  const listItem = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 22 } }
+  };
+  const sectionFade = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+    exit: { opacity: 0, y: -6, transition: { duration: 0.18 } }
+  };
 
   // Fonctionnalités IA disponibles
   const features = [
@@ -286,19 +302,22 @@ function IAView() {
             {t('ia.features.title', 'Fonctionnalités Disponibles')}
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" variants={listContainer} initial="hidden" animate="show">
             {features.map((feature) => {
               const Icon = feature.icon;
               const isActive = activeFeature === feature.id;
 
               return (
-                <button
+                <motion.button
                   key={feature.id}
                   onClick={() => setActiveFeature(feature.id)}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${isActive
                     ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200 shadow-sm'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-purple-300 dark:hover:border-purple-400/50 hover:shadow-sm'
                     }`}
+                  variants={listItem}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <div className={`flex items-center mb-2 ${feature.id === 'budget' ? 'gap-4' : 'gap-2'}`}>
                     <Icon size={24} className={isActive ? 'text-purple-700 dark:text-purple-200' : 'text-gray-700 dark:text-gray-300'} />
@@ -309,14 +328,15 @@ function IAView() {
                   <p className={`text-sm ${feature.id === 'budget' ? 'mt-1' : ''} ${isActive ? 'text-purple-900/80 dark:text-purple-200/90' : 'text-gray-600 dark:text-gray-300'}`}>
                     {feature.description}
                   </p>
-                </button>
+                </motion.button>
               );
             })}
-          </div>
+          </motion.div>
         </div>
 
         {/* Zone de contenu actif */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6">
+          <AnimatePresence mode="wait">
           {features.map((feature) => {
             if (activeFeature !== feature.id) return null;
 
@@ -324,7 +344,7 @@ function IAView() {
             const featureResults = results[feature.id];
 
             return (
-              <div key={feature.id}>
+              <motion.div key={feature.id} variants={sectionFade} initial="hidden" animate="show" exit="exit">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
                     <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 mr-4">
@@ -336,13 +356,15 @@ function IAView() {
                     </div>
                   </div>
 
-                  <button
+                  <motion.button
                     onClick={() => handleFeatureAction(feature.id)}
                     disabled={isLoading || !isLoggedIn}
                     className={`px-6 py-3.5 rounded-xl font-semibold flex items-center transition-all ${isLoading || !isLoggedIn
                       ? 'bg-gray-400 cursor-not-allowed text-white'
                       : 'bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white hover:from-purple-600 hover:to-pink-600 dark:hover:from-indigo-600 dark:hover:to-violet-700 shadow-lg hover:shadow-xl'
                       }`}
+                    whileHover={!isLoading && isLoggedIn ? { scale: 1.02, y: -1 } : {}}
+                    whileTap={!isLoading && isLoggedIn ? { scale: 0.98 } : {}}
                   >
                     {isLoading ? (
                       <>
@@ -355,7 +377,7 @@ function IAView() {
                         <span className="tracking-wider">{isLoggedIn ? t('common.generate', 'Générer') : t('ia.loginRequiredShort', 'Connexion requise')}</span>
                       </>
                     )}
-                  </button>
+                  </motion.button>
                 </div>
 
                 {/* Paramètres spécifiques selon la fonctionnalité */}
@@ -500,8 +522,9 @@ function IAView() {
                         <span className="text-sm text-gray-600 dark:text-gray-300">{uploadedImageName}</span>
                       )}
                     </div>
-                    <div
+                    <motion.div
                       className={`mt-3 border-2 border-dashed rounded-xl p-6 text-center transition-colors ${isDragging ? 'border-purple-500 bg-purple-50/40 dark:bg-purple-900/10' : 'border-gray-300 dark:border-gray-700'}`}
+                      animate={{ scale: isDragging ? 1.02 : 1 }}
                       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                       onDragLeave={() => setIsDragging(false)}
                       onDrop={(e) => {
@@ -516,7 +539,7 @@ function IAView() {
                       }}
                     >
                       <p className="text-sm text-gray-600 dark:text-gray-300">Glissez-déposez une image ici<br />ou utilisez le bouton ci-dessus</p>
-                    </div>
+                    </motion.div>
                     <input
                       ref={fileInputGalleryRef}
                       type="file"
@@ -534,7 +557,14 @@ function IAView() {
                     />
                     {uploadedPreview && (
                       <div className="mt-3">
-                        <img src={uploadedPreview} alt="Aperçu" className="h-28 rounded-lg border border-gray-200 dark:border-gray-700 object-cover" />
+                        <motion.img
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.2 }}
+                          src={uploadedPreview}
+                          alt="Aperçu"
+                          className="h-28 rounded-lg border border-gray-200 dark:border-gray-700 object-cover"
+                        />
                       </div>
                     )}
                   </div>
@@ -738,9 +768,10 @@ function IAView() {
                     </p>
                   </div>
                 )}
-              </div>
+              </motion.div>
             );
           })}
+          </AnimatePresence>
         </div>
 
         {/* Section d'information */}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User, Mail, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { MotionSection, MotionButton } from '../ui/animations';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { profileSyncService } from '../../services/profileSync';
@@ -115,7 +116,7 @@ function AuthView() {
 
   // Formulaire de connexion/inscription
   return (
-    <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
+    <MotionSection className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full inline-flex mb-4">
@@ -138,22 +139,22 @@ function AuthView() {
           
           {/* Toggle connexion/inscription */}
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
-            <button
+            <MotionButton
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
                 isLogin ? 'bg-white dark:bg-gray-900 text-purple-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
               {t('auth.login', 'Connexion')}
-            </button>
-            <button
+            </MotionButton>
+            <MotionButton
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
                 !isLogin ? 'bg-white dark:bg-gray-900 text-purple-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
               {t('auth.signup', 'Inscription')}
-            </button>
+            </MotionButton>
           </div>
 
           <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
@@ -270,25 +271,25 @@ function AuthView() {
                 placeholder="••••••••"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-400 dark:text-gray-500"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+            <MotionButton
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-9 text-gray-400 dark:text-gray-500"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </MotionButton>
             </div>
 
-            <button
+            <MotionButton
               type="submit"
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 text-white py-4 rounded-xl font-semibold mt-6 hover:shadow-md transition-shadow"
             >
               {isLogin ? t('auth.loginCta', 'Se connecter') : t('auth.createCta', 'Créer mon compte')}
-            </button>
+            </MotionButton>
           </form>
         </div>
       </div>
-    </div>
+    </MotionSection>
   );
 }
 

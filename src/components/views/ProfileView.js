@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { User, Activity, Target, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../utils/i18n';
+import { MotionSection, MotionButton } from '../ui/animations';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
@@ -170,7 +171,7 @@ function ProfileView() {
 
   // Mode affichage
   return (
-    <div className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
+    <MotionSection className="pb-20 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-900 min-h-screen">
       <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">{t('profile.title', 'Mon Profil')}</h2>
 
       {complete ? (
@@ -260,13 +261,13 @@ function ProfileView() {
             {t('settings.title','Paramètres')}
           </Link>
 
-          <button
+          <MotionButton
             onClick={handleLogout}
             className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-semibold mt-4 flex items-center justify-center transition-colors"
           >
             <LogOut className="mr-2" size={20} />
             {t('profile.logout','Se déconnecter')}
-          </button>
+          </MotionButton>
         </>
       ) : (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 space-y-6 text-center max-w-4xl mx-auto">
@@ -284,7 +285,7 @@ function ProfileView() {
           </Link>
         </div>
       )}
-    </div>
+    </MotionSection>
   );
 }
 
