@@ -2,6 +2,7 @@
  * Service d'IA et Personnalisation Simplifié (version démo)
  */
 
+import { debounce } from 'lodash';  // New: For debouncing
 
 class SimpleAIPersonalizationService {
   constructor() {
@@ -72,7 +73,12 @@ class SimpleAIPersonalizationService {
     
     const availableIngredients = ingredients.map(ing => ing.name.toLowerCase());
     
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    // New: Debounced API call for performance
+    const debouncedCall = debounce(async () => {
+      await new Promise(resolve => setTimeout(resolve, 1200));
+    }, 300);
+    
+    await debouncedCall();
     
     return [
       {
@@ -94,7 +100,10 @@ class SimpleAIPersonalizationService {
           protein: 15,
           carbs: 35,
           fat: 12
-        }
+        },
+        // New: Add accessibility labels for IA-generated content
+        ariaLabel: `Recette 1: Création du Chef - Une recette personnalisée avec vos ingrédients`,
+        role: 'article'
       },
       {
         name: 'Sauté Express',
@@ -115,7 +124,10 @@ class SimpleAIPersonalizationService {
           protein: 18,
           carbs: 25,
           fat: 14
-        }
+        },
+        // New: Add accessibility labels for IA-generated content
+        ariaLabel: `Recette 2: Sauté Express - Un plat rapide et savoureux`,
+        role: 'article'
       }
     ];
   }

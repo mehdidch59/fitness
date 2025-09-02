@@ -6,6 +6,8 @@ import { db } from '../../firebase';
 import { Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../utils/i18n';
+import { useSwipeable } from 'react-swipeable';
+import { Toaster } from 'react-hot-toast';  // New: For toast notifications
 
 function Questionnaire() {
   const { questionnaireStep, equipmentProfile, nutritionProfile, actions } = useAppContext();
@@ -205,6 +207,24 @@ function Questionnaire() {
     handleNext();
   };
 
+  // New: Handle swipe gestures for mobile navigation
+  const handleSwipeLeft = () => {
+    if (questionnaireStep < questions.length - 1) {
+      actions.setQuestionnaireStep(questionnaireStep + 1);
+    }
+  };
+  
+  const handleSwipeRight = () => {
+    if (questionnaireStep > 0) {
+      actions.setQuestionnaireStep(questionnaireStep - 1);
+    }
+  };
+  
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: handleSwipeLeft,
+    onSwipedRight: handleSwipeRight
+  });
+
   // Si l'utilisateur n'est pas connecté, empêcher l'accès au QCM et proposer la connexion
   if (!user) {
     return (
@@ -239,13 +259,17 @@ function Questionnaire() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div
+      {...swipeHandlers}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+    >
       <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
         <h3 className="text-2xl font-bold mb-6 text-center">{t('questionnaire.title', 'Configuration')}</h3>
 
-        <div className="bg-gray-200 rounded-full h-2 mb-6">
+        {/* Enhanced progress bar with animation */}
+        <div className="bg-gray-200 rounded-full h-2 mb-6 overflow-hidden">
           <div
-            className="bg-gradient-to-r from-purple-500 to-pink-500 dark:from-indigo-500 dark:to-violet-600 h-2 rounded-full transition-all"
+            className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${((questionnaireStep + 1) / questions.length) * 100}%` }}
           />
         </div>
@@ -260,11 +284,10 @@ function Questionnaire() {
                 <button
                   key={option.value}
                   onClick={() => handleEquipmentToggle(option.value)}
-                  className={`w-full p-4 border-2 rounded-2xl text-left transition-all flex items-center justify-between ${
-                    selectedEquipment.includes(option.value)
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-200'
-                  }`}
+                  className={`w-full p-4 border-2 rounded-2xl text-left transition-all flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 min-h-[44px] ${selectedEquipment.includes(option.value) ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-200'}`}
+                  aria-pressed={selectedEquipment.includes(option.value)}  // New: ARIA for toggle state
+                  aria-label={`Toggle ${option.label} selection`}  // New: Descriptive label
+                  tabIndex={0}
                 >
                   <div className="text-lg">{option.label}</div>
                   {selectedEquipment.includes(option.value) && (
@@ -299,7 +322,9 @@ function Questionnaire() {
                 <button
                   key={option.value}
                   onClick={() => handleOptionSelect(option.value)}
-                  className="w-full p-4 border-2 rounded-2xl text-left transition-all hover:shadow-md border-gray-200 hover:border-purple-500"
+                  className="w-full p-4 border-2 rounded-2xl text-left transition-all hover:shadow-md border-gray-200 hover:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 min-h-[44px]"  // New: Focus styles and 44px min height
+                  aria-label={`Sélectionner ${option.label}`}  // New: ARIA label
+                  tabIndex={0}
                 >
                   <div className="text-lg">{option.label}</div>
                 </button>
@@ -314,6 +339,9 @@ function Questionnaire() {
           </>
         )}
 
+        {/* New: Toaster for notifications */}
+        <Toaster position="top-center" />
+        
         {/* Debug info - à retirer en production */}
         <div className="mt-4 p-3 bg-gray-100 rounded-lg text-xs">
           <p className="font-semibold">🔍 Debug:</p>

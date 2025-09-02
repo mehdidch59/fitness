@@ -4,8 +4,9 @@
 
 /* Styles personnalisés */
 :root {
-  --primary-gradient: linear-gradient(to right, theme('colors.purple.500'), theme('colors.pink.500'));
-  --secondary-gradient: linear-gradient(to right, theme('colors.green.500'), theme('colors.green.600'));
+  --primary-gradient: linear-gradient(to right, #8b5cf6, #ec4899);
+  --secondary-bg: #f3f4f6;
+  --touch-target-min: 44px;
 }
 
 body {
@@ -17,6 +18,9 @@ body {
 }
 
 /* Mode sombre (class-based) */
+.dark {
+  --secondary-bg: #1f2937;
+}
 .dark body {
   background-color: rgb(17 24 39);
   color: rgb(243 244 246);

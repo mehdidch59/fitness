@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import {
   Dumbbell, BarChart2, Clock, ArrowRight, Search,
-  X, ChevronDown, ChevronUp, Trash2, CheckSquare, Square,
+  Trash2, CheckSquare, Square,
   AlertCircle, Calendar,
   Play, RotateCcw, BookOpen, RefreshCw
 } from 'lucide-react';
@@ -12,6 +12,7 @@ import { mistralSearchService } from '../../services/mistralIntegration';
 import { workoutFirestoreService } from '../../services/workoutFirestoreService';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../firebase';
+import toast, { Toaster } from 'react-hot-toast';
 
 function UltraRobustWorkoutView() {
   const {
@@ -39,6 +40,11 @@ function UltraRobustWorkoutView() {
   const [detailsAnim, setDetailsAnim] = useState(false);
   const [lastGeneration, setLastGeneration] = useState(null);
   const [programStats, setProgramStats] = useState(null);
+  
+  const handleError = (message) => {
+  setError(message);
+  try { toast.error(message); } catch {}
+};
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedProgramIds, setSelectedProgramIds] = useState(new Set());
@@ -230,6 +236,7 @@ function UltraRobustWorkoutView() {
       console.error('❌ Erreur génération programmes:', err);
       setError(err?.message || 'Erreur inconnue');
       actions.setSearchStatus('❌ Échec de la génération');
+      handleError(err?.message || 'Erreur inconnue');  // New: Show toast on error
     } finally {
       setIsGenerating(false);
       setTimeout(() => setGenerationStage(''), 1500);
@@ -388,8 +395,8 @@ function UltraRobustWorkoutView() {
                     <button
                       key={t.key}
                       onClick={() => setManualType(t.key)}
-                    className={`px-3 py-1 rounded-full text-sm ${manualType === t.key ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
-                  >{t.label}</button>
+                      className={`px-3 py-1 rounded-full text-sm ${manualType === t.key ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
+                    >{t.label}</button>
                   ))}
                 </div>
               </div>
@@ -428,14 +435,14 @@ function UltraRobustWorkoutView() {
   const renderStats = () => (
     <div className="p-4 max-w-5xl mx-auto">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-4 rounded-xl shadow-sm flex items-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-4 rounded-xl shadow-sm flex items-center">
           <Calendar className="text-purple-500 mr-3" />
           <div>
             <p className="text-sm text-gray-600">{t('workout.stats.programs', 'Programmes')}</p>
             <p className="text-2xl font-bold">{generatedPrograms?.length || 0}</p>
           </div>
         </div>
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-4 rounded-xl shadow-sm flex items-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-4 rounded-xl shadow-sm flex items-center">
           <BarChart2 className="text-blue-500 mr-3" />
           <div>
             <p className="text-sm text-gray-600">{t('workout.stats.generations', 'Générations')}</p>
@@ -495,11 +502,45 @@ function UltraRobustWorkoutView() {
     </div>
   );
 
+  const SkeletonLoader = () => (
+    <div className="animate-pulse bg-gray-200 h-20 rounded-xl mb-4"></div>
+  );
+
   const renderProgramsList = () => (
     <div className="p-4 max-w-5xl mx-auto">
-      {generatedPrograms.length === 0 ? (
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center text-gray-600 dark:text-gray-300">
+      {isGenerating ? (
+        // New: Show skeletons during loading
+        <>
+          <SkeletonLoader />
+          <SkeletonLoader />
+          <SkeletonLoader />
+        </>
+      ) : generatedPrograms.length === 0 ? (
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center text-gray-600 dark:text-gray-300">
           {t('workout.noPrograms', 'Aucun programme généré pour le moment.')}
+          <div className="mt-4">
+            <button
+              onClick={async () => {
+                if (!user?.uid) return;
+                setIsGenerating(true);
+                setGenerationStage(t('workout.refreshingPrograms', 'Rafraîchissement des programmes...'));
+                try {
+                  const saved = await workoutFirestoreService.loadGeneratedPrograms(user.uid);
+                  setGeneratedPrograms(saved?.programs || []);
+                  setLastGeneration(saved?.generatedAt || new Date());
+                  actions.setSearchStatus(t('workout.programsRefreshed', 'Programmes rafraîchis'));
+                } catch (e) {
+                  actions.setSearchStatus(`${t('workout.refreshError', 'Erreur rafraîchissement')}: ${e.message}`);
+                } finally {
+                  setIsGenerating(false);
+                  setGenerationStage('');
+                }
+              }}
+              className="px-3 py-2 rounded-xl text-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center"
+            >
+              <RefreshCw size={16} className="mr-2" /> {t('workout.refresh')}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -643,7 +684,7 @@ function UltraRobustWorkoutView() {
                         setExpandedDayIndex(0);
                         setShowDetails(true);
                       }}
-                      className="mt-2 inline-flex items-center text-sm text-purple-600 hover:text-purple-700"
+                      className="mt-2 inline-flex items-center text-sm text-purple-600 hover:text-purple-700 active:opacity-90 transition-opacity duration-150"
                     >
                       {t('workout.details')} <ArrowRight size={16} className="ml-1" />
                     </button>
@@ -668,91 +709,14 @@ function UltraRobustWorkoutView() {
     if (!program) return null;
 
     return (
-      <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center transition-opacity duration-300 ease-in-out ${detailsAnim ? 'bg-black/60 opacity-100' : 'bg-black/60 opacity-0'}`}>
-        <div className={`bg-white dark:bg-gray-900 w-full sm:w-[640px] max-h-[85vh] rounded-t-2xl sm:rounded-2xl overflow-hidden transform transition-transform duration-300 ease-in-out ${detailsAnim ? 'translate-y-0' : 'translate-y-full sm:translate-y-0 sm:scale-95 sm:opacity-0'}`}>
-          {/* Drag handle */}
-          <div className="w-full flex justify-center pt-2 sm:hidden">
-            <div className="h-1.5 w-12 bg-gray-300 rounded-full" />
-          </div>
-          {/* Header sticky */}
-          <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/80 backdrop-blur border-b">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-base truncate pr-3 flex items-center gap-2">
-                  <span className="truncate">{program.title}</span>
-                  {program.focusMuscle && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium whitespace-nowrap">
-                      {t('workout.program.accent', 'Accent')}: {program.focusMuscle}
-                    </span>
-                  )}
-                </h3>
-                <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-700">
-                  {program.type && (
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100">{t('workout.program.type', 'Type')}: {program.type}</span>
-                  )}
-                  {program.pattern && (
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100">{t('workout.program.pattern', 'Pattern')}: {program.pattern}</span>
-                  )}
-                  {program.frequency && (
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100">{program.frequency}</span>
-                  )}
-                  {(program.sessionDuration || program.sessionDuration === 0) && (
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100">{program.sessionDuration}</span>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={closeDetails}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
-                aria-label={t('workout.close', 'Fermer')}
-              >
-                <X size={20} />
-              </button>
-            </div>
-          </div>
-          <div className="p-4 overflow-y-auto max-h-[75vh] touch-pan-y">
-            {(program.workouts || []).map((w, idx) => {
-              const isExpanded = expandedDayIndex === idx;
-              const exercises = Array.isArray(w.exercises) ? w.exercises : [];
-              return (
-                <div key={w.day || idx} className="mb-3 border rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => setExpandedDayIndex(isExpanded ? -1 : idx)}
-                    className="w-full flex items-center justify-between p-3 bg-gray-50"
-                    aria-expanded={isExpanded}
-                  >
-                    <div className="flex items-center gap-2 text-left">
-                      <span className="font-medium text-sm">{w.day || `${t('workout.program.day', 'Jour')} ${idx + 1}`}</span>
-                      <span className="text-xs text-gray-500">
-                        {exercises.length} {t('workout.program.exercisesShort', 'exos')} • {w.duration || program.sessionDuration || `60 ${t('workout.program.minutesShort', 'min')}`}
-                      </span>
-                    </div>
-                    {isExpanded ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
-                  </button>
-
-                  {isExpanded && (
-                    <div className="p-3 space-y-2">
-                      {exercises.map((e, i) => (
-                        <div key={i} className="text-sm bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-                          <div className="flex items-center justify-between">
-                            <div className="font-medium pr-2 truncate">{e.name}</div>
-                            <div className="text-xs text-gray-600 whitespace-nowrap">
-                              {typeof e.sets === 'number' ? `${e.sets}x` : ''}{e.reps || ''}{e.rest ? ` • ${t('workout.program.rest', 'repos')} ${e.rest}` : ''}
-                            </div>
-                          </div>
-                          {e.notes && (
-                            <div className="text-xs text-gray-500 mt-1">{e.notes}</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <Suspense fallback={<SkeletonLoader />}>
+        program={program}
+        showDetails={showDetails}
+        closeDetails={closeDetails}
+        detailsAnim={detailsAnim}
+        expandedDayIndex={expandedDayIndex}
+        setExpandedDayIndex={setExpandedDayIndex}
+      </Suspense>
     );
   };
 
@@ -771,11 +735,14 @@ function UltraRobustWorkoutView() {
         <Questionnaire />
       )}
 
+      {/* New: Toaster for notifications */}
+      <Toaster position="top-center" />
+
       {showDetails && renderProgramDetails()}
 
       {/* Confirmation suppression */}
       {showDeleteConfirm && (
-          <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-6">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-5">
             <h4 className="text-lg font-semibold mb-2">{t('workout.deleteConfirmTitle', 'Confirmer la suppression')}</h4>
             <p className="text-sm text-gray-600 mb-4">{t('workout.deleteConfirmPrefix', 'Supprimer définitivement')} {pendingDeleteIds.length} {t('workout.deleteConfirmSuffix', 'programme(s) ?')}</p>
