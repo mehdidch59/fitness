@@ -32,7 +32,7 @@ L'application utilise une architecture moderne et optimisée :
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/username/fitness.git
+git clone https://github.com/mehdidch59/fitness.git
 cd fitness
 
 # Installer les dépendances
