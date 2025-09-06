@@ -39,8 +39,8 @@ function Navbar() {
                 to={path}
                 className={({ isActive }) => `
                   flex flex-col items-center justify-center min-w-0 flex-1 px-3 py-2 text-[11px] sm:text-xs rounded-xl
-                  ${isActive ? 'text-blue-600 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/20' : 'text-gray-600 dark:text-gray-300'}
-                  hover:text-blue-600 transition-all duration-200 hover:scale-[1.04] active:scale-95
+                  ${isActive ? 'text-red-600 bg-red-50 dark:text-red-300 dark:bg-red-900/20' : 'text-gray-600 dark:text-gray-300'}
+                  hover:text-red-600 transition-all duration-200 hover:scale-[1.04] active:scale-95
                 `}
               >
                 <Icon className="h-6 w-6 mb-1" />
